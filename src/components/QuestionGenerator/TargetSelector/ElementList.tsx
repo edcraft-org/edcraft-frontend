@@ -3,6 +3,7 @@ import type {
     LoopElement,
     BranchElement,
 } from "../../../types/api.types";
+import { ElementType, getElementTypeLabel } from "../../../constants";
 
 type ElementItem = LoopElement | BranchElement | { name: string };
 
@@ -29,15 +30,15 @@ export function ElementList({
 
     const getDisplayText = (element: ElementItem): string => {
         switch (elementType) {
-            case "loop": {
+            case ElementType.Loop: {
                 const loop = element as LoopElement;
                 return `${loop.loop_type} ${loop.condition} [line ${loop.line_number}]`;
             }
-            case "branch": {
+            case ElementType.Branch: {
                 const branch = element as BranchElement;
                 return `${branch.condition} [line ${branch.line_number}]`;
             }
-            case "variable": {
+            case ElementType.Variable: {
                 const variable = element as { name: string };
                 return variable.name;
             }
@@ -48,12 +49,10 @@ export function ElementList({
 
     const getLabel = (): string => {
         switch (elementType) {
-            case "variable":
+            case ElementType.Variable:
                 return "Select Variable(s):";
             default:
-                return `Select ${
-                    elementType.charAt(0).toUpperCase() + elementType.slice(1)
-                }:`;
+                return `Select ${getElementTypeLabel(elementType)}:`;
         }
     };
 
@@ -67,7 +66,7 @@ export function ElementList({
                     const displayText = getDisplayText(element);
 
                     // Handle variable multi-select
-                    if (elementType === "variable" && onVariableToggle) {
+                    if (elementType === ElementType.Variable && onVariableToggle) {
                         const variable = element as { name: string };
                         const variableName = variable.name;
                         const isSelected = selectedVariableNames.includes(variableName);

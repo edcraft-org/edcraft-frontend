@@ -7,6 +7,7 @@ import type {
     ScopePathItem,
     Modifier,
 } from "../../../types/api.types";
+import { ElementType, Modifier as ModifierEnum, isSelectionModifier } from "../../../constants";
 import {
     findSubtreeInCodeTree,
     reconstructTreeFromPath,
@@ -72,10 +73,10 @@ export function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps
         const types: TargetElementType[] = [];
         const tree = selectionState.currentTree;
 
-        if (tree.function_indices.length > 0) types.push("function");
-        if (tree.loop_indices.length > 0) types.push("loop");
-        if (tree.branch_indices.length > 0) types.push("branch");
-        if (tree.variables.length > 0) types.push("variable");
+        if (tree.function_indices.length > 0) types.push(ElementType.Function);
+        if (tree.loop_indices.length > 0) types.push(ElementType.Loop);
+        if (tree.branch_indices.length > 0) types.push(ElementType.Branch);
+        if (tree.variables.length > 0) types.push(ElementType.Variable);
 
         return types;
     }, [selectionState.currentTree]);
@@ -84,18 +85,18 @@ export function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps
     const availableModifiers = useMemo((): string[] => {
         if (!selectionState.type || selectionState.elementId === null) return [];
 
-        if (selectionState.type === "function") {
+        if (selectionState.type === ElementType.Function) {
             if (selectionState.functionLineStage) {
-                return ["arguments", "return_value"];
+                return [ModifierEnum.Arguments, ModifierEnum.ReturnValue];
             }
         }
 
-        if (selectionState.type === "loop") {
-            return ["loop_iterations"];
+        if (selectionState.type === ElementType.Loop) {
+            return [ModifierEnum.LoopIterations];
         }
 
-        if (selectionState.type === "branch") {
-            return ["branch_true", "branch_false"];
+        if (selectionState.type === ElementType.Branch) {
+            return [ModifierEnum.BranchTrue, ModifierEnum.BranchFalse];
         }
 
         return [];
@@ -103,16 +104,16 @@ export function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps
 
     // Get elements for non-function types
     const availableElements = useMemo(() => {
-        if (!selectionState.type || selectionState.type === "function") return [];
+        if (!selectionState.type || selectionState.type === ElementType.Function) return [];
 
         const tree = selectionState.currentTree;
 
         switch (selectionState.type) {
-            case "loop":
+            case ElementType.Loop:
                 return tree.loop_indices.map((id) => codeInfo.loops[id]);
-            case "branch":
+            case ElementType.Branch:
                 return tree.branch_indices.map((id) => codeInfo.branches[id]);
-            case "variable":
+            case ElementType.Variable:
                 return tree.variables.map((v) => ({ name: v }));
             default:
                 return [];
@@ -171,7 +172,7 @@ export function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps
                 }
 
                 const target: TargetSelection = {
-                    type: "function",
+                    type: ElementType.Function,
                     element_id: allIds,
                     name: selectionState.functionNameSelected || undefined,
                     scope_path: selectionState.scopePath,
@@ -201,7 +202,7 @@ export function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps
 
                 const selectedFunc = matchingFunctions[actualIndex];
                 const target: TargetSelection = {
-                    type: "function",
+                    type: ElementType.Function,
                     element_id: selectedFunc.globalId,
                     name: selectedFunc.name,
                     line_number: selectedFunc.line_number,
@@ -241,7 +242,7 @@ export function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps
 
             if (newSelectedVariables.length > 0) {
                 const target: TargetSelection = {
-                    type: "variable",
+                    type: ElementType.Variable,
                     element_id: 0,
                     name: newSelectedVariables.join(","),
                     scope_path: selectionState.scopePath,
@@ -257,7 +258,7 @@ export function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps
     // Handle element selection for loop/branch
     const handleElementSelect = useCallback(
         (elementId: number) => {
-            if (!selectionState.type || selectionState.type === "function") return;
+            if (!selectionState.type || selectionState.type === ElementType.Function) return;
 
             const element = availableElements[elementId];
             let globalId: number | undefined;
@@ -265,16 +266,16 @@ export function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps
             let lineNumber: number | undefined;
             let condition: string | undefined;
 
-            if (selectionState.type === "loop") {
+            if (selectionState.type === ElementType.Loop) {
                 globalId = selectionState.currentTree.loop_indices[elementId];
                 const loop = element as { line_number: number };
                 lineNumber = loop.line_number;
-            } else if (selectionState.type === "branch") {
+            } else if (selectionState.type === ElementType.Branch) {
                 globalId = selectionState.currentTree.branch_indices[elementId];
                 const branch = element as { line_number: number; condition: string };
                 lineNumber = branch.line_number;
                 condition = branch.condition;
-            } else if (selectionState.type === "variable") {
+            } else if (selectionState.type === ElementType.Variable) {
                 const variable = element as { name: string };
                 name = variable.name;
             }
@@ -369,7 +370,7 @@ export function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps
         );
 
         const newLoopInIterationScope =
-            selectionState.type === "loop" && selectionState.modifier === "loop_iterations"
+            selectionState.type === ElementType.Loop && selectionState.modifier === ModifierEnum.LoopIterations
                 ? globalElementId
                 : null;
 
@@ -419,13 +420,13 @@ export function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps
     // Determine if navigation into scope is possible
     const canNavigateInto = useMemo(() => {
         if (!selectionState.type || selectionState.elementId === null) return false;
-        if (selectionState.type === "variable") return false;
-        if (selectionState.type === "function" && selectionState.elementId === -1) return false;
+        if (selectionState.type === ElementType.Variable) return false;
+        if (selectionState.type === ElementType.Function && selectionState.elementId === -1) return false;
 
         if (
-            selectionState.type === "function" &&
-            (selectionState.modifier === "arguments" ||
-                selectionState.modifier === "return_value")
+            selectionState.type === ElementType.Function &&
+            selectionState.modifier &&
+            isSelectionModifier(selectionState.modifier)
         ) {
             return false;
         }
@@ -448,7 +449,7 @@ export function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps
                 onTypeSelect={handleTypeSelect}
             />
 
-            {selectionState.type === "function" && (
+            {selectionState.type === ElementType.Function && (
                 <FunctionSelector
                     codeInfo={codeInfo}
                     functionIndices={selectionState.currentTree.function_indices}
@@ -459,7 +460,7 @@ export function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps
                 />
             )}
 
-            {selectionState.type && selectionState.type !== "function" && (
+            {selectionState.type && selectionState.type !== ElementType.Function && (
                 <ElementList
                     elementType={selectionState.type}
                     elements={availableElements}
@@ -467,7 +468,7 @@ export function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps
                     selectedVariableNames={selectionState.selectedVariableNames}
                     onElementSelect={handleElementSelect}
                     onVariableToggle={
-                        selectionState.type === "variable"
+                        selectionState.type === ElementType.Variable
                             ? handleVariableToggle
                             : undefined
                     }

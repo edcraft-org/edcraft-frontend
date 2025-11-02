@@ -1,6 +1,13 @@
 // API Type Definitions
 // Mirrors the backend Pydantic models
 
+import type {
+    LoopType,
+    Modifier as ModifierEnum,
+    OutputType as OutputTypeEnum,
+    QuestionType as QuestionTypeEnum,
+} from "../constants";
+
 export interface FunctionElement {
     name: string;
     type: "function";
@@ -12,7 +19,7 @@ export interface FunctionElement {
 export interface LoopElement {
     type: "loop";
     line_number: number;
-    loop_type: string; // 'for' | 'while'
+    loop_type: LoopType;
     condition: string;
 }
 
@@ -68,12 +75,7 @@ export interface AnalyseCodeRequest {
 }
 
 export type TargetElementType = "function" | "loop" | "branch" | "variable";
-export type Modifier =
-    | "arguments"
-    | "return_value"
-    | "loop_iterations"
-    | "branch_true"
-    | "branch_false";
+export type Modifier = ModifierEnum;
 
 export interface ScopePathItem {
     type: TargetElementType;
@@ -105,8 +107,8 @@ export interface AlgorithmInput {
     input_data: Record<string, unknown>;
 }
 
-export type OutputType = "list" | "count" | "first" | "last";
-export type QuestionType = "mcq" | "mrq" | "short_answer";
+export type OutputType = OutputTypeEnum;
+export type QuestionType = QuestionTypeEnum;
 
 export interface GenerateQuestionRequest {
     code: string;

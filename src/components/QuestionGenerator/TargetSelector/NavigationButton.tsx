@@ -1,4 +1,5 @@
 import type { TargetElementType, Modifier } from "../../../types/api.types";
+import { ElementType, Modifier as ModifierEnum, isNavigationModifier } from "../../../constants";
 
 interface NavigationButtonProps {
     canNavigateInto: boolean;
@@ -19,12 +20,15 @@ export function NavigationButton({
 
     let buttonText = `View elements inside this ${elementType}`;
 
-    if (elementType === "loop" && selectedModifier === "loop_iterations") {
-        buttonText = "View elements inside this loop (iterations)";
-    } else if (elementType === "branch" && selectedModifier === "branch_true") {
-        buttonText = "View elements inside this branch (when true)";
-    } else if (elementType === "branch" && selectedModifier === "branch_false") {
-        buttonText = "View elements inside this branch (when false)";
+    // Customize button text for navigation modifiers
+    if (selectedModifier && isNavigationModifier(selectedModifier)) {
+        if (elementType === ElementType.Loop && selectedModifier === ModifierEnum.LoopIterations) {
+            buttonText = "View elements inside this loop (iterations)";
+        } else if (elementType === ElementType.Branch && selectedModifier === ModifierEnum.BranchTrue) {
+            buttonText = "View elements inside this branch (when true)";
+        } else if (elementType === ElementType.Branch && selectedModifier === ModifierEnum.BranchFalse) {
+            buttonText = "View elements inside this branch (when false)";
+        }
     }
 
     return (

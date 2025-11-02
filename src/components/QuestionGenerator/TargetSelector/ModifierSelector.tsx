@@ -1,4 +1,5 @@
 import type { Modifier } from "../../../types/api.types";
+import { getModifierLabel } from "../../../constants";
 
 interface ModifierSelectorProps {
     availableModifiers: string[];
@@ -36,10 +37,7 @@ export function ModifierSelector({
                                     : "bg-white border-gray-300 hover:bg-gray-50"
                             }`}
                         >
-                            {modifier
-                                .split("_")
-                                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                                .join(" ")}
+                            {getModifierLabel(modifier as Modifier)}
                         </button>
                     );
                 })}

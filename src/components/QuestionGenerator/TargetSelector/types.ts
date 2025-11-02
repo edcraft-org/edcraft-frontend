@@ -9,6 +9,7 @@ import type {
     CodeInfo,
     TargetSelection,
 } from "../../../types/api.types";
+import { ElementType } from "../../../constants";
 
 /**
  * Discriminated union for available elements in the selection list
@@ -33,18 +34,18 @@ export type AvailableElement =
  */
 export type ElementTypeState =
     | {
-          type: "function";
+          type: typeof ElementType.Function;
           nameSelected: string | null;
           lineStage: boolean;
           selectedLineNumbers: number[];
       }
-    | { type: "branch"; conditionSelected: "true" | "false" | null }
+    | { type: typeof ElementType.Branch; conditionSelected: "true" | "false" | null }
     | {
-          type: "loop";
+          type: typeof ElementType.Loop;
           iterationsSelected: boolean;
           currentLoopInScope: number | null;
       }
-    | { type: "variable"; selectedNames: string[] }
+    | { type: typeof ElementType.Variable; selectedNames: string[] }
     | { type: null };
 
 /**

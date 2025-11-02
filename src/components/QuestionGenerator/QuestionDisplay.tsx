@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { GenerateQuestionResponse, QuestionType } from "../../types/api.types";
+import { QuestionType as QuestionTypeEnum } from "../../constants";
 
 interface QuestionDisplayProps {
     response: GenerateQuestionResponse;
@@ -50,7 +51,7 @@ export function QuestionDisplay({ response, questionType }: QuestionDisplayProps
             </div>
 
             {/* Options for MCQ/MRQ */}
-            {(questionType === "mcq" || questionType === "mrq") &&
+            {(questionType === QuestionTypeEnum.MCQ || questionType === QuestionTypeEnum.MRQ) &&
                 options &&
                 options.length > 0 && (
                     <div className="mb-6">
@@ -103,7 +104,7 @@ export function QuestionDisplay({ response, questionType }: QuestionDisplayProps
                     <h3 className="text-lg font-semibold text-green-800 mb-3">Answer:</h3>
 
                     {/* For MCQ/MRQ, show correct option labels */}
-                    {(questionType === "mcq" || questionType === "mrq") &&
+                    {(questionType === QuestionTypeEnum.MCQ || questionType === QuestionTypeEnum.MRQ) &&
                         correct_indices &&
                         correct_indices.length > 0 && (
                             <div className="mb-3">

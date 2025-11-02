@@ -3,6 +3,7 @@ import type {
     TargetElementType,
     Modifier,
 } from "../types/api.types";
+import { ElementType, Modifier as ModifierEnum, isNavigationModifier } from "../constants";
 
 /**
  * Metadata for a selected element
@@ -31,16 +32,12 @@ export function createScopePathItem(
     // Determine if the modifier should be included in the scope path
     // Only navigation modifiers (loop_iterations, branch_true, branch_false) are included
     const navigationModifier =
-        modifier === "loop_iterations" ||
-        modifier === "branch_true" ||
-        modifier === "branch_false"
-            ? modifier
-            : undefined;
+        modifier && isNavigationModifier(modifier) ? modifier : undefined;
 
     // For branches, use condition as the name
-    if (type === "branch") {
+    if (type === ElementType.Branch) {
         return {
-            type: "branch",
+            type: ElementType.Branch,
             id: elementId,
             name: elementData.condition,
             line_number: elementData.line_number,
@@ -67,27 +64,29 @@ export function getBreadcrumbDisplayName(scope: ScopePathItem): string {
     let displayName = "";
 
     // Build display name with line number
-    if (scope.type === "function") {
+    if (scope.type === ElementType.Function) {
         displayName = scope.name
             ? `${scope.name} (Line ${scope.line_number})`
             : `function (Line ${scope.line_number})`;
-    } else if (scope.type === "branch") {
+    } else if (scope.type === ElementType.Branch) {
         displayName = scope.name
             ? `${scope.name} (Line ${scope.line_number})`
             : `branch (Line ${scope.line_number})`;
-    } else if (scope.type === "loop") {
+    } else if (scope.type === ElementType.Loop) {
         displayName = scope.name || `loop (Line ${scope.line_number})`;
     } else {
         displayName = scope.name || `${scope.type} (Line ${scope.line_number})`;
     }
 
-    // Add modifier suffix for special scopes
-    if (scope.modifier === "loop_iterations") {
-        displayName += " [iterations]";
-    } else if (scope.modifier === "branch_true") {
-        displayName += " [true]";
-    } else if (scope.modifier === "branch_false") {
-        displayName += " [false]";
+    // Add modifier suffix for navigation modifiers
+    if (scope.modifier && isNavigationModifier(scope.modifier)) {
+        if (scope.modifier === ModifierEnum.LoopIterations) {
+            displayName += " [iterations]";
+        } else if (scope.modifier === ModifierEnum.BranchTrue) {
+            displayName += " [true]";
+        } else if (scope.modifier === ModifierEnum.BranchFalse) {
+            displayName += " [false]";
+        }
     }
 
     return displayName;

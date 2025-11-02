@@ -7,6 +7,7 @@ import type {
     OutputType,
     QuestionType,
 } from "../../types/api.types";
+import { OutputType as OutputTypeEnum, QuestionType as QuestionTypeEnum, FormElementType } from "../../constants";
 import { TargetSelector } from "./TargetSelector";
 import { flattenTarget } from "../../utils/transformTarget";
 
@@ -24,8 +25,8 @@ export function QuestionForm({
     isSubmitting,
 }: QuestionFormProps) {
     const [targetSelection, setTargetSelection] = useState<TargetSelection | null>(null);
-    const [outputType, setOutputType] = useState<OutputType>("list");
-    const [questionType, setQuestionType] = useState<QuestionType>("mcq");
+    const [outputType, setOutputType] = useState<OutputType>(OutputTypeEnum.List);
+    const [questionType, setQuestionType] = useState<QuestionType>(QuestionTypeEnum.MCQ);
     const [numDistractors, setNumDistractors] = useState(4);
     const [entryFunction, setEntryFunction] = useState("");
     const [inputDataJson, setInputDataJson] = useState("");
@@ -33,10 +34,10 @@ export function QuestionForm({
 
     // Get form elements from schema
     const outputTypeElement = formSchema.form_elements.find(
-        (el) => el.element_type === "output_type_selector"
+        (el) => el.element_type === FormElementType.OutputTypeSelector
     );
     const questionTypeElement = formSchema.form_elements.find(
-        (el) => el.element_type === "question_type_selector"
+        (el) => el.element_type === FormElementType.QuestionTypeSelector
     );
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -161,7 +162,7 @@ export function QuestionForm({
                 {questionTypeElement && renderFormElement(questionTypeElement)}
 
                 {/* Number of Distractors (only for MCQ/MRQ) */}
-                {(questionType === "mcq" || questionType === "mrq") && (
+                {(questionType === QuestionTypeEnum.MCQ || questionType === QuestionTypeEnum.MRQ) && (
                     <div>
                         <label
                             htmlFor="num-distractors"

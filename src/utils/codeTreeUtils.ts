@@ -1,4 +1,5 @@
 import type { CodeTree, TargetElementType, ScopePathItem } from "../types/api.types";
+import { Modifier } from "../constants";
 
 /**
  * Performs breadth-first search to find a subtree with the specified element
@@ -72,7 +73,7 @@ export function reconstructTreeFromPath(
 export function getLoopInIterationScope(scopePath: ScopePathItem[]): number | null {
     // Iterate backwards to find the innermost loop_iterations scope
     for (let i = scopePath.length - 1; i >= 0; i--) {
-        if (scopePath[i].modifier === "loop_iterations") {
+        if (scopePath[i].modifier === Modifier.LoopIterations) {
             return scopePath[i].id;
         }
     }
