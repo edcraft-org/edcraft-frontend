@@ -1,73 +1,97 @@
-# React + TypeScript + Vite
+# EdCraft Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+EdCraft is an educational tool that helps generate questions.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Code Analysis**: Paste algorithm code and automatically extract its structure (functions, loops, branches, variables)
+- **Interactive Target Selection**: Navigate through code elements using a breadcrumb-based interface
+- **Question Generation**: Generate different types of questions:
+  - Multiple choice questions
+  - Multiple answer questions
+  - Free response questions
+- **Output Types**: Focus questions on different aspects:
+  - Return values
+  - Variable states
+  - Counts
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS 4
+- ESLint
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js (v18 or higher recommended)
+- npm or yarn
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Installation
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
 ```
+
+This will start the development server at `http://localhost:5173`
+
+### Build
+
+```bash
+npm run build
+```
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+### Linting
+
+```bash
+npm run lint
+```
+
+## Project Structure
+
+```
+src/
+├── components/
+│   └── QuestionGenerator/
+│       ├── QuestionGeneratorPage.tsx    # Main page component
+│       ├── CodeInputSection.tsx         # Code input UI
+│       ├── QuestionForm.tsx             # Question configuration form
+│       ├── QuestionDisplay.tsx          # Generated question display
+│       └── TargetSelector/              # Code element selection components
+├── hooks/
+│   └── useCodeAnalysis.ts               # Main state management hook
+├── types/
+│   └── api.types.ts                     # TypeScript type definitions
+└── utils/
+    └── transformTarget.ts               # Data transformation utilities
+```
+
+## How It Works
+
+1. **Paste Code**: User pastes algorithm code into the input area
+2. **Analyze**: The code is sent to the backend for structural analysis
+3. **Select Target**: User navigates through code elements (functions, loops, branches) to select what to query
+4. **Configure Question**: User selects:
+   - Output type (return value, variable state, line count)
+   - Question type (multiple choice, multiple answer, free response)
+   - Test input data
+5. **Generate**: A tailored practice question is generated based on the configuration
+
+## License
+
+MIT License - see the [LICENSE](LICENSE) file for details
