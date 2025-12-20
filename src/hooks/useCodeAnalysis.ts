@@ -57,7 +57,7 @@ export function useCodeAnalysis(): UseCodeAnalysisReturn {
         try {
             const response = await apiService.generateQuestion(request);
             setGeneratedQuestion(response);
-            setQuestionType(request.question_type);
+            setQuestionType(response.question_type);
         } catch (error) {
             setGenerateError(
                 error instanceof Error ? error.message : "Failed to generate question"

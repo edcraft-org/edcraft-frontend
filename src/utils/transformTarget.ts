@@ -17,9 +17,9 @@ import type { TargetSelection, TargetPathItem } from '../types/api.types';
  *
  * API format (flattened array):
  * [
- *   { type: "loop", id: 0, line_number: 3, modifier: "loop_iterations" },
- *   { type: "branch", id: 1, name: "not swapped", line_number: 9, modifier: "branch_false" },
- *   { type: "variable", id: 0, name: "arr" }
+ *   { type: "loop", id: [0], line_number: 3, modifier: "loop_iterations" },
+ *   { type: "branch", id: [1], name: "not swapped", line_number: 9, modifier: "branch_false" },
+ *   { type: "variable", id: [0], name: "arr" }
  * ]
  */
 export function flattenTarget(selection: TargetSelection): TargetPathItem[] {
@@ -29,7 +29,7 @@ export function flattenTarget(selection: TargetSelection): TargetPathItem[] {
   for (const scopeItem of selection.scope_path) {
     result.push({
       type: scopeItem.type,
-      id: scopeItem.id,
+      id: [scopeItem.id],
       name: scopeItem.name,
       line_number: scopeItem.line_number,
       modifier: scopeItem.modifier,
@@ -39,7 +39,9 @@ export function flattenTarget(selection: TargetSelection): TargetPathItem[] {
   // Add the final target element (the actual selected element)
   const finalElement: TargetPathItem = {
     type: selection.type,
-    id: selection.element_id,
+    id: Array.isArray(selection.element_id)
+      ? selection.element_id
+      : [selection.element_id],
   };
 
   // Add optional fields only if they exist

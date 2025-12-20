@@ -96,32 +96,41 @@ export interface TargetSelection {
 
 export interface TargetPathItem {
     type: TargetElementType;
-    id: number | number[]; // Single ID or array for "All" functions
+    id: number[];
     name?: string;
     line_number?: number;
     modifier?: Modifier;
 }
 
-export interface AlgorithmInput {
+export type OutputType = OutputTypeEnum;
+export type QuestionType = QuestionTypeEnum;
+
+export interface QuestionSpec {
+    target: TargetPathItem[];
+    output_type: OutputType;
+    question_type: QuestionType;
+}
+
+export interface ExecutionSpec {
     entry_function: string;
     input_data: Record<string, unknown>;
 }
 
-export type OutputType = OutputTypeEnum;
-export type QuestionType = QuestionTypeEnum;
-
-export interface GenerateQuestionRequest {
-    code: string;
-    target: TargetPathItem[];
-    output_type: OutputType;
-    question_type: QuestionType;
-    algorithm_input: AlgorithmInput;
+export interface GenerationOptions {
     num_distractors: number;
 }
 
+export interface GenerateQuestionRequest {
+    code: string;
+    question_spec: QuestionSpec;
+    execution_spec: ExecutionSpec;
+    generation_options: GenerationOptions;
+}
+
 export interface GenerateQuestionResponse {
-    question: string;
+    text: string;
     answer?: unknown;
-    options?: unknown[] | null; // Shuffled options for MCQ/MRQ (null for short_answer)
-    correct_indices?: number[] | null; // Indices of correct answers in options array (null for short_answer)
+    options?: unknown[] | null;
+    correct_indices?: number[] | null;
+    question_type: QuestionType;
 }

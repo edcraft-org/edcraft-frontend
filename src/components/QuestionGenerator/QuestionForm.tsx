@@ -67,14 +67,18 @@ export function QuestionForm({
 
         const request: GenerateQuestionRequest = {
             code: submittedCode,
-            target: flattenTarget(targetSelection),
-            output_type: outputType,
-            question_type: questionType,
-            algorithm_input: {
+            question_spec: {
+                target: flattenTarget(targetSelection),
+                output_type: outputType,
+                question_type: questionType,
+            },
+            execution_spec: {
                 entry_function: entryFunction,
                 input_data: inputData,
             },
-            num_distractors: numDistractors,
+            generation_options: {
+                num_distractors: numDistractors,
+            },
         };
 
         onSubmit(request);

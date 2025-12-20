@@ -10,7 +10,7 @@ interface QuestionDisplayProps {
 export function QuestionDisplay({ response, questionType }: QuestionDisplayProps) {
     const [showAnswer, setShowAnswer] = useState(false);
 
-    const { question, answer, options, correct_indices } = response;
+    const { text, answer, options, correct_indices } = response;
 
     // Convert option to string for display
     const formatOption = (option: unknown): string => {
@@ -47,7 +47,7 @@ export function QuestionDisplay({ response, questionType }: QuestionDisplayProps
             {/* Question Text */}
             <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-3">Question:</h3>
-                <p className="text-gray-800 leading-relaxed">{question}</p>
+                <p className="text-gray-800 leading-relaxed">{text}</p>
             </div>
 
             {/* Options for MCQ/MRQ */}
