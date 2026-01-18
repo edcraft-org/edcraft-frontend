@@ -1,2 +1,13 @@
 export { default as TemplateBuilderPage } from "./TemplateBuilderPage";
-export * from "./types";
+export { TemplatePreview, SaveTemplateModal, CreateFromTemplateModal } from "./components";
+export {
+  useQuestionTemplates,
+  useQuestionTemplate,
+  useQuestionTemplateAssessmentTemplates,
+  useCreateQuestionTemplate,
+  useUpdateQuestionTemplate,
+  useDeleteQuestionTemplate,
+  useGenerateTemplatePreview,
+  useGenerateFromTemplate,
+} from "./hooks/useQuestionTemplates";
+export type * from "./types";

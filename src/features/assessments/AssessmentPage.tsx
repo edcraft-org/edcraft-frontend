@@ -1,28 +1,204 @@
+// AssessmentPage - View and manage assessment questions
+
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { apiClient, queryKeys } from "@/shared/services";
+import { toast } from "sonner";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, Plus, MoreVertical, GripVertical } from "lucide-react";
-import { ROUTES } from "@/router/paths";
-import type { AssessmentWithQuestions } from "./types/assessment.types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, Plus, MoreVertical, GripVertical, Loader2 } from "lucide-react";
+import { useUserStore } from "@/shared/stores/user.store";
+import {
+  useAssessment,
+  useAddQuestionToAssessment,
+  useLinkQuestionToAssessment,
+  useRemoveQuestionFromAssessment,
+} from "./hooks/useAssessments";
+import {
+  QuestionEditor,
+  AddQuestionModal,
+  LinkOrDuplicateModal,
+} from "@/features/questions";
+import type { Question, OrderedQuestion } from "@/features/questions/types/question.types";
 
 function AssessmentPage() {
   const { assessmentId } = useParams<{ assessmentId: string }>();
   const navigate = useNavigate();
+  const user = useUserStore((state) => state.user);
 
-  const { data: assessment, isLoading } = useQuery({
-    queryKey: queryKeys.assessments.detail(assessmentId || ""),
-    queryFn: () => apiClient.get<AssessmentWithQuestions>(`/assessments/${assessmentId}`),
-    enabled: !!assessmentId,
-  });
+  // Modal states
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showLinkOrDuplicateModal, setShowLinkOrDuplicateModal] = useState(false);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+
+  // Selected question for operations
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
+  const [questionToEdit, setQuestionToEdit] = useState<OrderedQuestion | null>(null);
+  const [questionToRemove, setQuestionToRemove] = useState<OrderedQuestion | null>(null);
+
+  // Fetch assessment
+  const { data: assessment, isLoading } = useAssessment(assessmentId ?? null);
+
+  // Mutations
+  const addQuestion = useAddQuestionToAssessment();
+  const linkQuestion = useLinkQuestionToAssessment();
+  const removeQuestion = useRemoveQuestionFromAssessment();
+
+  // Handle creating a question manually
+  const handleCreateManually = () => {
+    setShowAddModal(false);
+    setShowCreateModal(true);
+  };
+
+  // Handle selecting an existing question
+  const handleSelectExisting = (question: Question) => {
+    setSelectedQuestion(question);
+    setShowLinkOrDuplicateModal(true);
+  };
+
+  // Handle saving a manually created question
+  const handleSaveNewQuestion = (data: {
+    question_type: Question["question_type"];
+    question_text: string;
+    additional_data: Question["additional_data"];
+  }) => {
+    if (!assessmentId || !user) return;
+
+    addQuestion.mutate(
+      {
+        assessmentId,
+        data: {
+          question: {
+            owner_id: user.id,
+            ...data,
+          },
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Question added successfully");
+          setShowCreateModal(false);
+        },
+        onError: (error) => {
+          toast.error(`Failed to add question: ${error.message}`);
+        },
+      }
+    );
+  };
+
+  // Handle linking an existing question
+  const handleLinkQuestion = () => {
+    if (!assessmentId || !selectedQuestion) return;
+
+    linkQuestion.mutate(
+      {
+        assessmentId,
+        data: { question_id: selectedQuestion.id },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Question linked successfully");
+          setShowLinkOrDuplicateModal(false);
+          setSelectedQuestion(null);
+        },
+        onError: (error) => {
+          toast.error(`Failed to link question: ${error.message}`);
+        },
+      }
+    );
+  };
+
+  // Handle duplicating a question
+  const handleDuplicateQuestion = () => {
+    if (!assessmentId || !selectedQuestion || !user) return;
+
+    addQuestion.mutate(
+      {
+        assessmentId,
+        data: {
+          question: {
+            owner_id: user.id,
+            template_id: selectedQuestion.template_id,
+            question_type: selectedQuestion.question_type,
+            question_text: selectedQuestion.question_text,
+            additional_data: selectedQuestion.additional_data,
+          },
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Question duplicated successfully");
+          setShowLinkOrDuplicateModal(false);
+          setSelectedQuestion(null);
+        },
+        onError: (error) => {
+          toast.error(`Failed to duplicate question: ${error.message}`);
+        },
+      }
+    );
+  };
+
+  // Handle removing a question from assessment
+  const handleRemoveQuestion = () => {
+    if (!assessmentId || !questionToRemove) return;
+
+    removeQuestion.mutate(
+      {
+        assessmentId,
+        questionId: questionToRemove.id,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Question removed from assessment");
+          setShowRemoveDialog(false);
+          setQuestionToRemove(null);
+        },
+        onError: (error) => {
+          toast.error(`Failed to remove question: ${error.message}`);
+        },
+      }
+    );
+  };
+
+  // Handle editing a question
+  const handleEditQuestion = (question: OrderedQuestion) => {
+    setQuestionToEdit(question);
+    setShowEditModal(true);
+  };
+
+  // Handle updating an edited question - for now we'll just close the modal
+  // Full edit functionality would require useUpdateQuestion mutation
+  const handleSaveEditedQuestion = () => {
+    // TODO: Implement question update
+    toast.info("Question editing will be available soon");
+    setShowEditModal(false);
+    setQuestionToEdit(null);
+  };
 
   if (isLoading) {
     return <PageSkeleton />;
@@ -35,6 +211,8 @@ function AssessmentPage() {
       </div>
     );
   }
+
+  const sortedQuestions = [...assessment.questions].sort((a, b) => a.order - b.order);
 
   return (
     <div className="p-6 space-y-6">
@@ -49,36 +227,21 @@ function AssessmentPage() {
             <p className="text-muted-foreground mt-1">{assessment.description}</p>
           )}
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Question
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() =>
-                navigate(`${ROUTES.QUESTION_BUILDER}?destination=${assessment.id}`)
-              }
-            >
-              Generate New Question
-            </DropdownMenuItem>
-            <DropdownMenuItem>Create Manually</DropdownMenuItem>
-            <DropdownMenuItem>Add Existing Question</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button onClick={() => setShowAddModal(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Question
+        </Button>
       </div>
 
       {/* Questions List */}
-      {assessment.questions.length === 0 ? (
+      {sortedQuestions.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <p>No questions yet</p>
           <p className="text-sm">Add questions using the button above</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {assessment.questions.map((question, index) => (
+          {sortedQuestions.map((question, index) => (
             <Card key={question.id} className="group">
               <CardHeader className="py-3">
                 <div className="flex items-center gap-3">
@@ -103,9 +266,26 @@ function AssessmentPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
-                      <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">Remove</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEditQuestion(question)}>
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelectedQuestion(question);
+                          setShowLinkOrDuplicateModal(true);
+                        }}
+                      >
+                        Duplicate to Another Assessment
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => {
+                          setQuestionToRemove(question);
+                          setShowRemoveDialog(true);
+                        }}
+                      >
+                        Remove
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -114,6 +294,94 @@ function AssessmentPage() {
           ))}
         </div>
       )}
+
+      {/* Add Question Modal */}
+      <AddQuestionModal
+        open={showAddModal}
+        onOpenChange={setShowAddModal}
+        assessmentId={assessmentId || ""}
+        ownerId={user?.id || ""}
+        onCreateManually={handleCreateManually}
+        onSelectExisting={handleSelectExisting}
+      />
+
+      {/* Create Question Modal */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Create Question</DialogTitle>
+            <DialogDescription>
+              Create a new question to add to this assessment.
+            </DialogDescription>
+          </DialogHeader>
+          <QuestionEditor
+            onSave={handleSaveNewQuestion}
+            onCancel={() => setShowCreateModal(false)}
+            isLoading={addQuestion.isPending}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Question Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Edit Question</DialogTitle>
+            <DialogDescription>
+              Make changes to the question.
+            </DialogDescription>
+          </DialogHeader>
+          {questionToEdit && (
+            <QuestionEditor
+              question={questionToEdit}
+              onSave={handleSaveEditedQuestion}
+              onCancel={() => {
+                setShowEditModal(false);
+                setQuestionToEdit(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Link or Duplicate Modal */}
+      <LinkOrDuplicateModal
+        open={showLinkOrDuplicateModal}
+        onOpenChange={setShowLinkOrDuplicateModal}
+        question={selectedQuestion}
+        ownerId={user?.id || ""}
+        onLink={handleLinkQuestion}
+        onDuplicate={handleDuplicateQuestion}
+        isLoading={linkQuestion.isPending || addQuestion.isPending}
+      />
+
+      {/* Remove Question Confirmation */}
+      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Question?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the question from this assessment. The question itself
+              will not be deleted and can still be found in your question bank.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removeQuestion.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveQuestion}
+              disabled={removeQuestion.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {removeQuestion.isPending && (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              )}
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -1,6 +1,11 @@
+// AssessmentTemplatePage - View and manage assessment template with question templates
+
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { apiClient, queryKeys } from "@/shared/services";
+import { toast } from "sonner";
+import { apiClient } from "@/shared/services/api-client";
+import { queryKeys } from "@/shared/services/query-client";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,13 +15,31 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ArrowLeft, Plus, MoreVertical, Play, Code } from "lucide-react";
 import { ROUTES } from "@/router/paths";
+import { CreateFromTemplateModal } from "@/features/templates";
 import type { AssessmentTemplateWithTemplates } from "./types/assessment-template.types";
+import type { QuestionTemplate } from "@/features/templates/types/template.types";
+import type { GeneratedQuestion } from "@/features/templates/services/template.service";
 
 function AssessmentTemplatePage() {
   const { templateId } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
+
+  // Modal states
+  const [showCreateFromTemplate, setShowCreateFromTemplate] = useState(false);
+  const [showInstantiateDialog, setShowInstantiateDialog] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<QuestionTemplate | null>(null);
 
   const { data: assessmentTemplate, isLoading } = useQuery({
     queryKey: queryKeys.assessmentTemplates.detail(templateId || ""),
@@ -24,6 +47,29 @@ function AssessmentTemplatePage() {
       apiClient.get<AssessmentTemplateWithTemplates>(`/assessment-templates/${templateId}`),
     enabled: !!templateId,
   });
+
+  const handleCreateQuestion = (template: QuestionTemplate) => {
+    setSelectedTemplate(template);
+    setShowCreateFromTemplate(true);
+  };
+
+  const handleQuestionGenerated = (_question: GeneratedQuestion, template: QuestionTemplate) => {
+    // For now, just show the generated question info
+    // In a full implementation, we'd prompt the user to select an assessment to save to
+    toast.success(
+      `Question generated from template "${template.question_text}"`,
+      {
+        description: "You can now save this question to an assessment.",
+      }
+    );
+    // TODO: Open a modal to let user select which assessment to add the question to
+  };
+
+  const handleInstantiate = () => {
+    // TODO: Implement assessment instantiation wizard
+    toast.info("Assessment instantiation will be available soon");
+    setShowInstantiateDialog(false);
+  };
 
   if (isLoading) {
     return <PageSkeleton />;
@@ -50,7 +96,7 @@ function AssessmentTemplatePage() {
             <p className="text-muted-foreground mt-1">{assessmentTemplate.description}</p>
           )}
         </div>
-        <Button variant="outline">
+        <Button variant="outline" onClick={() => setShowInstantiateDialog(true)}>
           <Play className="h-4 w-4 mr-2" />
           Instantiate Assessment
         </Button>
@@ -100,11 +146,13 @@ function AssessmentTemplatePage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleCreateQuestion(template)}>
                         <Play className="h-4 w-4 mr-2" />
                         Create Question
                       </DropdownMenuItem>
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(ROUTES.TEMPLATE_EDIT(template.id))}>
+                        Edit
+                      </DropdownMenuItem>
                       <DropdownMenuItem>Duplicate</DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive">Remove</DropdownMenuItem>
                     </DropdownMenuContent>
@@ -124,6 +172,33 @@ function AssessmentTemplatePage() {
           ))}
         </div>
       )}
+
+      {/* Create From Template Modal */}
+      <CreateFromTemplateModal
+        open={showCreateFromTemplate}
+        onOpenChange={setShowCreateFromTemplate}
+        template={selectedTemplate}
+        onQuestionGenerated={handleQuestionGenerated}
+      />
+
+      {/* Instantiate Assessment Dialog */}
+      <AlertDialog open={showInstantiateDialog} onOpenChange={setShowInstantiateDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Instantiate Assessment</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will create a new assessment with questions generated from each template.
+              You'll need to provide input data for each template to generate the questions.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleInstantiate}>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

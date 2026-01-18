@@ -9,3 +9,4 @@ export {
   PageHeaderSkeleton,
   PageSkeleton,
 } from "./LoadingSkeleton";
+export { DeleteWarningModal } from "./DeleteWarningModal";
