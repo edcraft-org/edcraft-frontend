@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useUserStore } from "@/shared/stores/user.store";
-import { apiClient, queryKeys } from "@/shared/services";
+import { apiClient, queryKeys, ApiError } from "@/shared/services";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { ROUTES } from "@/router/paths";
 import { Button } from "@/components/ui/button";
@@ -22,17 +24,42 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Folder, FileText, LayoutTemplate, Plus, MoreVertical } from "lucide-react";
 import type { FolderContents, FolderPath } from "./types/folder.types";
+import {
+  CreateFolderModal,
+  CreateAssessmentModal,
+  CreateAssessmentTemplateModal,
+} from "./components";
+import { useCreateFolder } from "./hooks/useFolders";
+import { useCreateAssessment } from "@/features/assessments/hooks/useAssessments";
+import { useCreateAssessmentTemplate } from "@/features/assessment-templates/hooks/useAssessmentTemplates";
 
 function FolderPage() {
   const { folderId } = useParams<{ folderId: string }>();
   const navigate = useNavigate();
-  const { user, rootFolderId } = useUserStore();
+  const { user, rootFolderId, hasHydrated } = useUserStore();
+
+  // Modal state
+  const [showCreateFolder, setShowCreateFolder] = useState(false);
+  const [showCreateAssessment, setShowCreateAssessment] = useState(false);
+  const [showCreateTemplate, setShowCreateTemplate] = useState(false);
+
+  // Mutations
+  const createFolder = useCreateFolder();
+  const createAssessment = useCreateAssessment();
+  const createAssessmentTemplate = useCreateAssessmentTemplate();
 
   // Redirect to root if folderId is "root"
   const actualFolderId = folderId === "root" ? rootFolderId : folderId;
 
+  // Determine if this is the root folder
+  const isRootFolder = folderId === "root" || actualFolderId === rootFolderId;
+
   // Fetch folder contents
-  const { data: contents, isLoading: contentsLoading } = useQuery({
+  const {
+    data: contents,
+    isLoading: contentsLoading,
+    error: contentsError,
+  } = useQuery({
     queryKey: queryKeys.folders.contents(actualFolderId || ""),
     queryFn: () => apiClient.get<FolderContents>(`/folders/${actualFolderId}/contents`),
     enabled: !!actualFolderId && !!user,
@@ -44,6 +71,80 @@ function FolderPage() {
     queryFn: () => apiClient.get<FolderPath[]>(`/folders/${actualFolderId}/path`),
     enabled: !!actualFolderId && !!user,
   });
+
+  // Handlers
+  const handleCreateFolder = (name: string, description?: string) => {
+    if (!user || !actualFolderId) return;
+
+    createFolder.mutate(
+      {
+        owner_id: user.id,
+        parent_id: actualFolderId,
+        name,
+        description,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Folder created successfully");
+          setShowCreateFolder(false);
+        },
+        onError: (error) => {
+          toast.error(`Failed to create folder: ${error.message}`);
+        },
+      }
+    );
+  };
+
+  const handleCreateAssessment = (title: string, description?: string) => {
+    if (!user || !actualFolderId) return;
+
+    createAssessment.mutate(
+      {
+        owner_id: user.id,
+        folder_id: actualFolderId,
+        title,
+        description,
+      },
+      {
+        onSuccess: (newAssessment) => {
+          toast.success("Assessment created successfully");
+          setShowCreateAssessment(false);
+          navigate(ROUTES.ASSESSMENT(newAssessment.id));
+        },
+        onError: (error) => {
+          toast.error(`Failed to create assessment: ${error.message}`);
+        },
+      }
+    );
+  };
+
+  const handleCreateAssessmentTemplate = (title: string, description?: string) => {
+    if (!user || !actualFolderId) return;
+
+    createAssessmentTemplate.mutate(
+      {
+        owner_id: user.id,
+        folder_id: actualFolderId,
+        title,
+        description,
+      },
+      {
+        onSuccess: (newTemplate) => {
+          toast.success("Assessment template created successfully");
+          setShowCreateTemplate(false);
+          navigate(ROUTES.ASSESSMENT_TEMPLATE(newTemplate.id));
+        },
+        onError: (error) => {
+          toast.error(`Failed to create template: ${error.message}`);
+        },
+      }
+    );
+  };
+
+  // Show loading while Zustand is hydrating from localStorage
+  if (!hasHydrated) {
+    return <PageSkeleton />;
+  }
 
   if (!user) {
     return (
@@ -57,18 +158,30 @@ function FolderPage() {
     return <PageSkeleton />;
   }
 
-  if (!contents) {
+  // Handle API errors - only show "Folder not found" for actual 404 errors
+  if (contentsError) {
+    if (contentsError instanceof ApiError && contentsError.status === 404) {
+      return (
+        <div className="p-6 text-center text-muted-foreground">
+          Folder not found
+        </div>
+      );
+    }
     return (
       <div className="p-6 text-center text-muted-foreground">
-        Folder not found
+        Error loading folder: {contentsError.message}
       </div>
     );
   }
 
+  // Get folder display name - use "My Projects" for root folder
+  const folderDisplayName = isRootFolder ? "My Projects" : contents?.folder.name ?? "Folder";
+  const folderDescription = contents?.folder.description;
+
   const allResources = [
-    ...contents.folders.map((f) => ({ ...f, resourceType: "folder" as const })),
-    ...contents.assessments.map((a) => ({ ...a, resourceType: "assessment" as const })),
-    ...contents.assessment_templates.map((t) => ({
+    ...(contents?.folders ?? []).map((f) => ({ ...f, resourceType: "folder" as const })),
+    ...(contents?.assessments ?? []).map((a) => ({ ...a, resourceType: "assessment" as const })),
+    ...(contents?.assessment_templates ?? []).map((t) => ({
       ...t,
       resourceType: "assessment_template" as const,
     })),
@@ -79,35 +192,39 @@ function FolderPage() {
       {/* Breadcrumbs */}
       <Breadcrumb>
         <BreadcrumbList>
-          {path.map((folder, index) => (
-            <BreadcrumbItem key={folder.id}>
-              {index < path.length - 1 ? (
-                <>
-                  <BreadcrumbLink
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate(ROUTES.FOLDER(folder.id));
-                    }}
-                  >
-                    {folder.name}
-                  </BreadcrumbLink>
-                  <BreadcrumbSeparator />
-                </>
-              ) : (
-                <BreadcrumbPage>{folder.name}</BreadcrumbPage>
-              )}
-            </BreadcrumbItem>
-          ))}
+          {path.map((folder, index) => {
+            // Use "My Projects" for root folder in breadcrumbs
+            const displayName = folder.id === rootFolderId ? "My Projects" : folder.name;
+            return (
+              <BreadcrumbItem key={folder.id}>
+                {index < path.length - 1 ? (
+                  <>
+                    <BreadcrumbLink
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate(ROUTES.FOLDER(folder.id));
+                      }}
+                    >
+                      {displayName}
+                    </BreadcrumbLink>
+                    <BreadcrumbSeparator />
+                  </>
+                ) : (
+                  <BreadcrumbPage>{displayName}</BreadcrumbPage>
+                )}
+              </BreadcrumbItem>
+            );
+          })}
         </BreadcrumbList>
       </Breadcrumb>
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">{contents.folder.name}</h1>
-          {contents.folder.description && (
-            <p className="text-muted-foreground mt-1">{contents.folder.description}</p>
+          <h1 className="text-2xl font-semibold">{folderDisplayName}</h1>
+          {folderDescription && (
+            <p className="text-muted-foreground mt-1">{folderDescription}</p>
           )}
         </div>
         <DropdownMenu>
@@ -118,15 +235,15 @@ function FolderPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowCreateFolder(true)}>
               <Folder className="h-4 w-4 mr-2" />
               New Folder
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowCreateAssessment(true)}>
               <FileText className="h-4 w-4 mr-2" />
               New Assessment
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowCreateTemplate(true)}>
               <LayoutTemplate className="h-4 w-4 mr-2" />
               New Assessment Template
             </DropdownMenuItem>
@@ -194,6 +311,28 @@ function FolderPage() {
           ))}
         </div>
       )}
+
+      {/* Modals */}
+      <CreateFolderModal
+        open={showCreateFolder}
+        onOpenChange={setShowCreateFolder}
+        onSubmit={handleCreateFolder}
+        isLoading={createFolder.isPending}
+      />
+
+      <CreateAssessmentModal
+        open={showCreateAssessment}
+        onOpenChange={setShowCreateAssessment}
+        onSubmit={handleCreateAssessment}
+        isLoading={createAssessment.isPending}
+      />
+
+      <CreateAssessmentTemplateModal
+        open={showCreateTemplate}
+        onOpenChange={setShowCreateTemplate}
+        onSubmit={handleCreateAssessmentTemplate}
+        isLoading={createAssessmentTemplate.isPending}
+      />
     </div>
   );
 }

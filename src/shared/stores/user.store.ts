@@ -11,12 +11,15 @@ interface UserState {
   isLoading: boolean;
   // Error state
   error: string | null;
+  // Hydration state - true after Zustand has loaded from localStorage
+  hasHydrated: boolean;
 
   // Actions
   setUser: (user: User | null) => void;
   setRootFolderId: (folderId: string | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setHasHydrated: (hydrated: boolean) => void;
   reset: () => void;
 }
 
@@ -25,6 +28,7 @@ const initialState = {
   rootFolderId: null,
   isLoading: false,
   error: null,
+  hasHydrated: false,
 };
 
 export const useUserStore = create<UserState>()(
@@ -40,14 +44,20 @@ export const useUserStore = create<UserState>()(
 
       setError: (error) => set({ error, isLoading: false }),
 
+      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
+
       reset: () => set(initialState),
     }),
     {
       name: "edcraft-user-storage",
-      // Only persist user ID to localStorage
+      // Persist user ID and root folder ID to localStorage
       partialize: (state) => ({
         user: state.user ? { id: state.user.id } : null,
+        rootFolderId: state.rootFolderId,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

@@ -4,9 +4,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { FolderTree } from "@/features/folders/components/FolderTree";
 
 export function Sidebar() {
-  const { user, rootFolderId } = useUserStore();
+  const { rootFolderId, hasHydrated } = useUserStore();
 
-  if (!user || !rootFolderId) {
+  // Show skeleton while Zustand is hydrating from localStorage
+  if (!hasHydrated) {
+    return <SidebarSkeleton />;
+  }
+
+  if (!rootFolderId) {
     return (
       <aside className="w-64 border-r bg-muted/30">
         <div className="p-4">
