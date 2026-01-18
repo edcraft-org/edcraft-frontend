@@ -59,7 +59,7 @@ export function QuestionForm({
             try {
                 inputData = JSON.parse(inputDataJson);
                 setJsonError(null);
-            } catch (error) {
+            } catch {
                 setJsonError("Invalid JSON format");
                 return;
             }
