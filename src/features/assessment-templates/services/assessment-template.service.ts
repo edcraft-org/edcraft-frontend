@@ -3,8 +3,10 @@
 import { apiClient } from "@/shared/services/api-client";
 import type {
   AssessmentTemplate,
+  AssessmentTemplateWithTemplates,
   CreateAssessmentTemplateRequest,
   UpdateAssessmentTemplateRequest,
+  AddQuestionTemplateRequest,
 } from "../types/assessment-template.types";
 
 // Get all assessment templates for a user
@@ -58,4 +60,17 @@ export async function deleteAssessmentTemplate(
   signal?: AbortSignal
 ): Promise<void> {
   return apiClient.delete<void>(`/assessment-templates/${templateId}`, signal);
+}
+
+// Add a question template to an assessment template
+export async function addQuestionTemplateToAssessmentTemplate(
+  templateId: string,
+  data: AddQuestionTemplateRequest,
+  signal?: AbortSignal
+): Promise<AssessmentTemplateWithTemplates> {
+  return apiClient.post<AssessmentTemplateWithTemplates>(
+    `/assessment-templates/${templateId}/question-templates`,
+    data,
+    signal
+  );
 }

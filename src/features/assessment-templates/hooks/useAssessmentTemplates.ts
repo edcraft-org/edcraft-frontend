@@ -8,10 +8,12 @@ import {
   createAssessmentTemplate,
   updateAssessmentTemplate,
   deleteAssessmentTemplate,
+  addQuestionTemplateToAssessmentTemplate,
 } from "../services/assessment-template.service";
 import type {
   CreateAssessmentTemplateRequest,
   UpdateAssessmentTemplateRequest,
+  AddQuestionTemplateRequest,
 } from "../types/assessment-template.types";
 
 // Hook to fetch all assessment templates for a user
@@ -97,6 +99,30 @@ export function useDeleteAssessmentTemplate() {
           queryKey: queryKeys.folders.contents(variables.folderId),
         });
       }
+    },
+  });
+}
+
+// Hook to add a question template to an assessment template
+export function useAddQuestionTemplateToAssessmentTemplate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      templateId,
+      data,
+    }: {
+      templateId: string;
+      data: AddQuestionTemplateRequest;
+      ownerId: string;
+    }) => addQuestionTemplateToAssessmentTemplate(templateId, data),
+    onSuccess: (updatedTemplate, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.assessmentTemplates.detail(updatedTemplate.id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.assessmentTemplates.all(variables.ownerId),
+      });
     },
   });
 }

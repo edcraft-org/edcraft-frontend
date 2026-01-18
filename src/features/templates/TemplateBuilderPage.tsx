@@ -17,10 +17,11 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Code2, Wand2, Save, ArrowLeft, Search } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
+import { useGenerateTemplatePreview } from "./hooks/useQuestionTemplates";
 import {
-  useGenerateTemplatePreview,
-  useCreateQuestionTemplate,
-} from "./hooks/useQuestionTemplates";
+  useCreateAssessmentTemplate,
+  useAddQuestionTemplateToAssessmentTemplate,
+} from "@/features/assessment-templates/hooks/useAssessmentTemplates";
 import { useTemplateCodeAnalysis } from "./hooks/useTemplateCodeAnalysis";
 import { TemplatePreview, SaveTemplateModal } from "./components";
 import { TargetSelector } from "@/components/QuestionGenerator/TargetSelector";
@@ -61,7 +62,8 @@ function TemplateBuilderPage() {
 
   // Mutations
   const generatePreview = useGenerateTemplatePreview();
-  const createTemplate = useCreateQuestionTemplate();
+  const createAssessmentTemplate = useCreateAssessmentTemplate();
+  const addQuestionTemplate = useAddQuestionTemplateToAssessmentTemplate();
 
   // Get entry function options from analysed code
   const entryFunctionOptions = formSchema?.code_info.functions.filter((f) => f.is_definition) || [];
@@ -128,33 +130,81 @@ function TemplateBuilderPage() {
     );
   };
 
-  const handleSaveToNewBank = (_title: string, description?: string) => {
+  const handleSaveToNewBank = (title: string, description?: string) => {
     if (!preview || !user) return;
 
-    createTemplate.mutate(
+    // First create the assessment template, then add the question template to it
+    createAssessmentTemplate.mutate(
       {
         owner_id: user.id,
-        question_type: questionType,
-        question_text: templateName || preview.question_text,
-        description: templateDescription || description,
-        template_config: preview.template_config,
+        folder_id: null,
+        title,
+        description,
       },
       {
-        onSuccess: () => {
-          toast.success("Template saved successfully");
-          setShowSaveModal(false);
-          navigate(-1);
+        onSuccess: (newAssessmentTemplate) => {
+          // Now add the question template to the new assessment template
+          addQuestionTemplate.mutate(
+            {
+              templateId: newAssessmentTemplate.id,
+              ownerId: user.id,
+              data: {
+                question_template: {
+                  owner_id: user.id,
+                  question_type: questionType,
+                  question_text: templateName || preview.question_text,
+                  description: templateDescription || undefined,
+                  template_config: preview.template_config,
+                },
+              },
+            },
+            {
+              onSuccess: () => {
+                toast.success("Template saved successfully");
+                setShowSaveModal(false);
+                navigate(-1);
+              },
+              onError: (error) => {
+                toast.error(`Failed to add template: ${error.message}`);
+              },
+            }
+          );
         },
         onError: (error) => {
-          toast.error(`Failed to save template: ${error.message}`);
+          toast.error(`Failed to create template bank: ${error.message}`);
         },
       }
     );
   };
 
-  const handleSaveToExisting = (_assessmentTemplateId: string) => {
-    toast.info("Saving to existing template bank will be available soon");
-    setShowSaveModal(false);
+  const handleSaveToExisting = (assessmentTemplateId: string) => {
+    if (!preview || !user) return;
+
+    addQuestionTemplate.mutate(
+      {
+        templateId: assessmentTemplateId,
+        ownerId: user.id,
+        data: {
+          question_template: {
+            owner_id: user.id,
+            question_type: questionType,
+            question_text: templateName || preview.question_text,
+            description: templateDescription || undefined,
+            template_config: preview.template_config,
+          },
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Template added successfully");
+          setShowSaveModal(false);
+          navigate(-1);
+        },
+        onError: (error) => {
+          toast.error(`Failed to add template: ${error.message}`);
+        },
+      }
+    );
   };
 
   return (
@@ -387,9 +437,9 @@ function TemplateBuilderPage() {
               <Button
                 className="w-full"
                 onClick={() => setShowSaveModal(true)}
-                disabled={createTemplate.isPending}
+                disabled={createAssessmentTemplate.isPending || addQuestionTemplate.isPending}
               >
-                {createTemplate.isPending ? (
+                {(createAssessmentTemplate.isPending || addQuestionTemplate.isPending) ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     Saving...
@@ -427,7 +477,7 @@ function TemplateBuilderPage() {
         ownerId={user?.id || ""}
         onSaveToNew={handleSaveToNewBank}
         onSaveToExisting={handleSaveToExisting}
-        isLoading={createTemplate.isPending}
+        isLoading={createAssessmentTemplate.isPending || addQuestionTemplate.isPending}
       />
     </div>
   );
