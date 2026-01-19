@@ -1,12 +1,12 @@
-// TemplateBuilderPage - Create question templates (similar to QuestionBuilder but without input data)
+// QuestionGeneratorPage - Generate questions from code with two-column layout
 
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -15,27 +15,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Code2, Wand2, Save, ArrowLeft, Search } from "lucide-react";
+import { Loader2, Code2, Wand2, Save, Search } from "lucide-react";
+import { useCodeAnalysis } from "../../hooks/useCodeAnalysis";
+import { TargetSelector } from "./TargetSelector";
+import { QuestionDisplay } from "./QuestionDisplay";
+import { SaveQuestionModal } from "@/features/questions/components";
 import { useUserStore } from "@/shared/stores/user.store";
-import { useGenerateTemplatePreview } from "./hooks/useQuestionTemplates";
-import {
-  useCreateAssessmentTemplate,
-  useAddQuestionTemplateToAssessmentTemplate,
-} from "@/features/assessment-templates/hooks/useAssessmentTemplates";
-import { useTemplateCodeAnalysis } from "./hooks/useTemplateCodeAnalysis";
-import { TemplatePreview, SaveTemplateModal } from "./components";
-import { TargetSelector } from "@/components/QuestionBuilder/TargetSelector";
-import { flattenTarget } from "@/utils/transformTarget";
-import type { GenerateTemplatePreviewResponse } from "./services/template.service";
-import type { QuestionType } from "@/features/questions/types/question.types";
-import type { TargetSelection } from "@/types/api.types";
+import { useAddQuestionToAssessment, useCreateAssessment } from "@/features/assessments/hooks/useAssessments";
+import { flattenTarget } from "../../utils/transformTarget";
+import type { TargetSelection, OutputType, QuestionType } from "../../types/api.types";
 
-function TemplateBuilderPage() {
-  const { templateId } = useParams<{ templateId?: string }>();
+interface QuestionGeneratorPageProps {
+  destinationAssessmentId?: string;
+}
+
+export function QuestionGeneratorPage({ destinationAssessmentId }: QuestionGeneratorPageProps) {
   const navigate = useNavigate();
   const user = useUserStore((state) => state.user);
   const rootFolderId = useUserStore((state) => state.rootFolderId);
-  const isEditing = !!templateId;
 
   // Code analysis state
   const {
@@ -43,28 +40,31 @@ function TemplateBuilderPage() {
     submittedCode,
     isAnalysing,
     analyseError,
+    isGenerating,
+    generateError,
+    generatedQuestion,
+    questionType: generatedQuestionType,
     analyseCode,
-    reset: resetAnalysis,
-  } = useTemplateCodeAnalysis();
+    generateQuestion,
+    reset,
+  } = useCodeAnalysis();
 
   // Form state
   const [code, setCode] = useState("");
   const [targetSelection, setTargetSelection] = useState<TargetSelection | null>(null);
   const [entryFunction, setEntryFunction] = useState("");
-  const [outputType, setOutputType] = useState<"first" | "last" | "list" | "count">("first");
+  const [outputType, setOutputType] = useState<OutputType>("first");
   const [questionType, setQuestionType] = useState<QuestionType>("mcq");
   const [numDistractors, setNumDistractors] = useState(4);
-  const [templateName, setTemplateName] = useState("");
-  const [templateDescription, setTemplateDescription] = useState("");
+  const [inputDataJson, setInputDataJson] = useState("");
+  const [jsonError, setJsonError] = useState<string | null>(null);
 
-  // Preview and save state
-  const [preview, setPreview] = useState<GenerateTemplatePreviewResponse | null>(null);
+  // Save modal state
   const [showSaveModal, setShowSaveModal] = useState(false);
 
   // Mutations
-  const generatePreview = useGenerateTemplatePreview();
-  const createAssessmentTemplate = useCreateAssessmentTemplate();
-  const addQuestionTemplate = useAddQuestionTemplateToAssessmentTemplate();
+  const addQuestion = useAddQuestionToAssessment();
+  const createAssessment = useCreateAssessment();
 
   // Get entry function options from analysed code
   const entryFunctionOptions = formSchema?.code_info.functions.filter((f) => f.is_definition) || [];
@@ -77,7 +77,6 @@ function TemplateBuilderPage() {
     // Reset previous state
     setTargetSelection(null);
     setEntryFunction("");
-    setPreview(null);
     analyseCode(code);
   };
 
@@ -85,14 +84,13 @@ function TemplateBuilderPage() {
     setCode(newCode);
     // Reset analysis when code changes
     if (formSchema) {
-      resetAnalysis();
+      reset();
       setTargetSelection(null);
       setEntryFunction("");
-      setPreview(null);
     }
   };
 
-  const handleGeneratePreview = () => {
+  const handleGenerateQuestion = () => {
     if (!submittedCode.trim()) {
       toast.error("Please analyse your code first");
       return;
@@ -106,36 +104,43 @@ function TemplateBuilderPage() {
       return;
     }
 
-    generatePreview.mutate(
-      {
-        code: submittedCode,
-        entry_function: entryFunction,
-        question_spec: {
-          target: flattenTarget(targetSelection),
-          output_type: outputType,
-          question_type: questionType,
-        },
-        generation_options: {
-          num_distractors: numDistractors,
-        },
-      },
-      {
-        onSuccess: (data) => {
-          setPreview(data);
-          toast.success("Template preview generated");
-        },
-        onError: (error) => {
-          toast.error(`Failed to generate preview: ${error.message}`);
-        },
+    // Parse input data JSON
+    let inputData: Record<string, unknown> = {};
+    if (inputDataJson.trim()) {
+      try {
+        inputData = JSON.parse(inputDataJson);
+        setJsonError(null);
+      } catch {
+        setJsonError("Invalid JSON format");
+        toast.error("Invalid JSON format in input data");
+        return;
       }
-    );
+    }
+
+    const request = {
+      code: submittedCode,
+      question_spec: {
+        target: flattenTarget(targetSelection),
+        output_type: outputType,
+        question_type: questionType,
+      },
+      execution_spec: {
+        entry_function: entryFunction,
+        input_data: inputData,
+      },
+      generation_options: {
+        num_distractors: numDistractors,
+      },
+    };
+
+    generateQuestion(request);
   };
 
-  const handleSaveToNewBank = (title: string, description: string | undefined, folderId: string) => {
-    if (!preview || !user) return;
+  const handleSaveToNewAssessment = (title: string, description: string | undefined, folderId: string) => {
+    if (!generatedQuestion || !user) return;
 
-    // First create the assessment template, then add the question template to it
-    createAssessmentTemplate.mutate(
+    // First create the assessment
+    createAssessment.mutate(
       {
         owner_id: user.id,
         folder_id: folderId,
@@ -143,66 +148,70 @@ function TemplateBuilderPage() {
         description,
       },
       {
-        onSuccess: (newAssessmentTemplate) => {
-          // Now add the question template to the new assessment template
-          addQuestionTemplate.mutate(
+        onSuccess: (newAssessment) => {
+          // Now add the question to the new assessment
+          addQuestion.mutate(
             {
-              templateId: newAssessmentTemplate.id,
-              ownerId: user.id,
+              assessmentId: newAssessment.id,
               data: {
-                question_template: {
+                question: {
                   owner_id: user.id,
-                  question_type: questionType,
-                  question_text: templateName || preview.question_text,
-                  description: templateDescription || undefined,
-                  template_config: preview.template_config,
+                  question_type: generatedQuestionType || "mcq",
+                  question_text: generatedQuestion.text,
+                  additional_data: {
+                    options: (generatedQuestion.options || []) as string[],
+                    correct_indices: generatedQuestion.correct_indices || [],
+                    answer: String(generatedQuestion.answer || ""),
+                  },
                 },
               },
             },
             {
               onSuccess: () => {
-                toast.success("Template saved successfully");
+                toast.success("Question saved to new assessment");
                 setShowSaveModal(false);
                 navigate(-1);
               },
               onError: (error) => {
-                toast.error(`Failed to add template: ${error.message}`);
+                toast.error(`Failed to add question: ${error.message}`);
               },
             }
           );
         },
         onError: (error) => {
-          toast.error(`Failed to create template bank: ${error.message}`);
+          toast.error(`Failed to create assessment: ${error.message}`);
         },
       }
     );
   };
 
-  const handleSaveToExisting = (assessmentTemplateId: string) => {
-    if (!preview || !user) return;
+  const handleSaveToExistingAssessment = (assessmentId: string) => {
+    if (!generatedQuestion || !user) return;
 
-    addQuestionTemplate.mutate(
+    addQuestion.mutate(
       {
-        templateId: assessmentTemplateId,
-        ownerId: user.id,
+        assessmentId,
         data: {
-          question_template: {
+          question: {
             owner_id: user.id,
-            question_type: questionType,
-            question_text: templateName || preview.question_text,
-            description: templateDescription || undefined,
-            template_config: preview.template_config,
+            question_type: generatedQuestionType || "mcq",
+            question_text: generatedQuestion.text,
+            additional_data: {
+              options: (generatedQuestion.options || []) as string[],
+              correct_indices: generatedQuestion.correct_indices || [],
+              answer: String(generatedQuestion.answer || ""),
+            },
           },
         },
       },
       {
         onSuccess: () => {
-          toast.success("Template added successfully");
+          toast.success("Question added to assessment");
           setShowSaveModal(false);
           navigate(-1);
         },
         onError: (error) => {
-          toast.error(`Failed to add template: ${error.message}`);
+          toast.error(`Failed to add question: ${error.message}`);
         },
       }
     );
@@ -210,51 +219,9 @@ function TemplateBuilderPage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-semibold">
-            {isEditing ? "Edit Template" : "Template Builder"}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Create a reusable question template from code
-          </p>
-        </div>
-      </div>
-
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Left Column - Configuration */}
         <div className="space-y-6">
-          {/* Template Name & Description */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Template Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="template-name">Template Name</Label>
-                <Input
-                  id="template-name"
-                  placeholder="e.g., Fibonacci Return Value"
-                  value={templateName}
-                  onChange={(e) => setTemplateName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="template-description">Description (optional)</Label>
-                <Textarea
-                  id="template-description"
-                  placeholder="Describe what this template generates..."
-                  value={templateDescription}
-                  onChange={(e) => setTemplateDescription(e.target.value)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Code Input */}
           <Card>
             <CardHeader>
@@ -400,6 +367,23 @@ function TemplateBuilderPage() {
                     />
                   </div>
                 )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="input-data">Input Data (JSON)</Label>
+                  <Textarea
+                    id="input-data"
+                    placeholder='{"arr": [5, 2, 8, 1]}'
+                    className="font-mono text-sm min-h-[100px]"
+                    value={inputDataJson}
+                    onChange={(e) => {
+                      setInputDataJson(e.target.value);
+                      setJsonError(null);
+                    }}
+                  />
+                  {jsonError && (
+                    <p className="text-sm text-destructive">{jsonError}</p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}
@@ -408,22 +392,22 @@ function TemplateBuilderPage() {
           {formSchema && (
             <Button
               className="w-full"
-              onClick={handleGeneratePreview}
+              onClick={handleGenerateQuestion}
               disabled={
-                generatePreview.isPending ||
+                isGenerating ||
                 !targetSelection ||
                 !entryFunction
               }
             >
-              {generatePreview.isPending ? (
+              {isGenerating ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Generating Preview...
+                  Generating Question...
                 </>
               ) : (
                 <>
                   <Wand2 className="h-4 w-4 mr-2" />
-                  Generate Template Preview
+                  Generate Question
                 </>
               )}
             </Button>
@@ -432,15 +416,21 @@ function TemplateBuilderPage() {
 
         {/* Right Column - Preview */}
         <div className="space-y-6">
-          {preview ? (
+          {generatedQuestion && generatedQuestionType ? (
             <>
-              <TemplatePreview preview={preview} />
+              <QuestionDisplay response={generatedQuestion} questionType={generatedQuestionType} />
+              {generateError && (
+                <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+                  <h3 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">Error</h3>
+                  <p className="text-red-600 dark:text-red-400">{generateError}</p>
+                </div>
+              )}
               <Button
                 className="w-full"
                 onClick={() => setShowSaveModal(true)}
-                disabled={createAssessmentTemplate.isPending || addQuestionTemplate.isPending}
+                disabled={createAssessment.isPending || addQuestion.isPending}
               >
-                {(createAssessmentTemplate.isPending || addQuestionTemplate.isPending) ? (
+                {(createAssessment.isPending || addQuestion.isPending) ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     Saving...
@@ -448,7 +438,7 @@ function TemplateBuilderPage() {
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    Save Template
+                    Save to Assessment
                   </>
                 )}
               </Button>
@@ -457,13 +447,13 @@ function TemplateBuilderPage() {
             <Card className="h-full min-h-[400px] flex items-center justify-center">
               <CardContent className="text-center text-muted-foreground">
                 <Wand2 className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                <p className="font-medium mb-2">Template Preview</p>
+                <p className="font-medium mb-2">Question Preview</p>
                 <ol className="text-sm text-left list-decimal list-inside space-y-1">
                   <li>Enter your algorithm code</li>
                   <li>Click "Analyse Code" to parse the structure</li>
                   <li>Select the target element to query</li>
                   <li>Configure question parameters</li>
-                  <li>Click "Generate Template Preview"</li>
+                  <li>Click "Generate Question"</li>
                 </ol>
               </CardContent>
             </Card>
@@ -472,17 +462,16 @@ function TemplateBuilderPage() {
       </div>
 
       {/* Save Modal */}
-      <SaveTemplateModal
+      <SaveQuestionModal
         open={showSaveModal}
         onOpenChange={setShowSaveModal}
         ownerId={user?.id || ""}
         currentFolderId={rootFolderId || undefined}
-        onSaveToNew={handleSaveToNewBank}
-        onSaveToExisting={handleSaveToExisting}
-        isLoading={createAssessmentTemplate.isPending || addQuestionTemplate.isPending}
+        onSaveToNew={handleSaveToNewAssessment}
+        onSaveToExisting={handleSaveToExistingAssessment}
+        isLoading={createAssessment.isPending || addQuestion.isPending}
+        preSelectedAssessmentId={destinationAssessmentId}
       />
     </div>
   );
 }
-
-export default TemplateBuilderPage;

@@ -95,7 +95,7 @@ export function AddQuestionModal({
                 <div className="text-left">
                   <div className="font-medium">Generate New Question</div>
                   <div className="text-sm text-muted-foreground">
-                    Use the question generator to create a new question from code
+                    Use the question builder to create a new question from code
                   </div>
                 </div>
               </div>

@@ -1,7 +1,7 @@
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { QuestionGeneratorPage } from "@/components/QuestionGenerator";
+import { QuestionGeneratorPage } from "@/components/QuestionBuilder";
 
 function QuestionBuilderPage() {
   const { questionId } = useParams<{ questionId?: string }>();
@@ -39,7 +39,7 @@ function QuestionBuilderPage() {
       )}
 
       {/* Question Generator */}
-      <QuestionGeneratorPage />
+      <QuestionGeneratorPage destinationAssessmentId={destinationAssessmentId || undefined} />
     </div>
   );
 }
