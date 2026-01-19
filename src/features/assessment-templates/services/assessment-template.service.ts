@@ -74,3 +74,15 @@ export async function addQuestionTemplateToAssessmentTemplate(
     signal
   );
 }
+
+// Remove a question template from an assessment template
+export async function removeQuestionTemplateFromAssessmentTemplate(
+  assessmentTemplateId: string,
+  questionTemplateId: string,
+  signal?: AbortSignal
+): Promise<void> {
+  return apiClient.delete<void>(
+    `/assessment-templates/${assessmentTemplateId}/question-templates/${questionTemplateId}`,
+    signal
+  );
+}

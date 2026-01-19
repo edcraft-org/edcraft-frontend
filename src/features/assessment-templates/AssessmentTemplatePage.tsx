@@ -25,9 +25,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Plus, MoreVertical, Play, Code } from "lucide-react";
+import { ArrowLeft, Plus, MoreVertical, Play, Code, Loader2 } from "lucide-react";
 import { ROUTES } from "@/router/paths";
 import { CreateFromTemplateModal } from "@/features/templates";
+import { useUserStore } from "@/shared/stores/user.store";
+import {
+  useAddQuestionTemplateToAssessmentTemplate,
+  useRemoveQuestionTemplateFromAssessmentTemplate,
+} from "./hooks/useAssessmentTemplates";
 import type { AssessmentTemplateWithTemplates } from "./types/assessment-template.types";
 import type { QuestionTemplate } from "@/features/templates/types/template.types";
 import type { GeneratedQuestion } from "@/features/templates/services/template.service";
@@ -35,11 +40,14 @@ import type { GeneratedQuestion } from "@/features/templates/services/template.s
 function AssessmentTemplatePage() {
   const { templateId } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
+  const user = useUserStore((state) => state.user);
 
   // Modal states
   const [showCreateFromTemplate, setShowCreateFromTemplate] = useState(false);
   const [showInstantiateDialog, setShowInstantiateDialog] = useState(false);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<QuestionTemplate | null>(null);
+  const [templateToRemove, setTemplateToRemove] = useState<QuestionTemplate | null>(null);
 
   const { data: assessmentTemplate, isLoading } = useQuery({
     queryKey: queryKeys.assessmentTemplates.detail(templateId || ""),
@@ -47,6 +55,10 @@ function AssessmentTemplatePage() {
       apiClient.get<AssessmentTemplateWithTemplates>(`/assessment-templates/${templateId}`),
     enabled: !!templateId,
   });
+
+  // Mutations
+  const addQuestionTemplate = useAddQuestionTemplateToAssessmentTemplate();
+  const removeQuestionTemplate = useRemoveQuestionTemplateFromAssessmentTemplate();
 
   const handleCreateQuestion = (template: QuestionTemplate) => {
     setSelectedTemplate(template);
@@ -69,6 +81,57 @@ function AssessmentTemplatePage() {
     // TODO: Implement assessment instantiation wizard
     toast.info("Assessment instantiation will be available soon");
     setShowInstantiateDialog(false);
+  };
+
+  // Handle duplicating a question template
+  const handleDuplicateTemplate = (template: QuestionTemplate) => {
+    if (!templateId || !user) return;
+
+    addQuestionTemplate.mutate(
+      {
+        templateId,
+        ownerId: user.id,
+        data: {
+          question_template: {
+            owner_id: user.id,
+            question_type: template.question_type,
+            question_text: template.question_text,
+            description: template.description,
+            template_config: template.template_config,
+          },
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Question template duplicated successfully");
+        },
+        onError: (error) => {
+          toast.error(`Failed to duplicate template: ${error.message}`);
+        },
+      }
+    );
+  };
+
+  // Handle removing a question template from assessment template
+  const handleRemoveTemplate = () => {
+    if (!templateId || !templateToRemove) return;
+
+    removeQuestionTemplate.mutate(
+      {
+        assessmentTemplateId: templateId,
+        questionTemplateId: templateToRemove.id,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Question template removed from assessment template");
+          setShowRemoveDialog(false);
+          setTemplateToRemove(null);
+        },
+        onError: (error) => {
+          toast.error(`Failed to remove template: ${error.message}`);
+        },
+      }
+    );
   };
 
   if (isLoading) {
@@ -153,8 +216,18 @@ function AssessmentTemplatePage() {
                       <DropdownMenuItem onClick={() => navigate(ROUTES.TEMPLATE_EDIT(template.id))}>
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">Remove</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDuplicateTemplate(template)}>
+                        Duplicate
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => {
+                          setTemplateToRemove(template);
+                          setShowRemoveDialog(true);
+                        }}
+                      >
+                        Remove
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -195,6 +268,34 @@ function AssessmentTemplatePage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleInstantiate}>
               Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Remove Template Confirmation */}
+      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Question Template?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the question template from this assessment template. The template itself
+              will not be deleted and can still be used elsewhere.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removeQuestionTemplate.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveTemplate}
+              disabled={removeQuestionTemplate.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {removeQuestionTemplate.isPending && (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              )}
+              Remove
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

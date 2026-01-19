@@ -9,6 +9,7 @@ import {
   updateAssessmentTemplate,
   deleteAssessmentTemplate,
   addQuestionTemplateToAssessmentTemplate,
+  removeQuestionTemplateFromAssessmentTemplate,
 } from "../services/assessment-template.service";
 import type {
   CreateAssessmentTemplateRequest,
@@ -136,6 +137,26 @@ export function useAddQuestionTemplateToAssessmentTemplate() {
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.assessmentTemplates.all(variables.ownerId),
+      });
+    },
+  });
+}
+
+// Hook to remove a question template from an assessment template
+export function useRemoveQuestionTemplateFromAssessmentTemplate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      assessmentTemplateId,
+      questionTemplateId,
+    }: {
+      assessmentTemplateId: string;
+      questionTemplateId: string;
+    }) => removeQuestionTemplateFromAssessmentTemplate(assessmentTemplateId, questionTemplateId),
+    onSuccess: (_, { assessmentTemplateId }) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.assessmentTemplates.detail(assessmentTemplateId),
       });
     },
   });
