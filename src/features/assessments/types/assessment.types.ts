@@ -17,7 +17,7 @@ export interface AssessmentWithQuestions extends Assessment {
 // Request types
 export interface CreateAssessmentRequest {
   owner_id: string;
-  folder_id?: string | null;
+  folder_id: string;
   title: string;
   description?: string;
 }

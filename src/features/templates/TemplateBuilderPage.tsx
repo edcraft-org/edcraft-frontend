@@ -34,6 +34,7 @@ function TemplateBuilderPage() {
   const { templateId } = useParams<{ templateId?: string }>();
   const navigate = useNavigate();
   const user = useUserStore((state) => state.user);
+  const rootFolderId = useUserStore((state) => state.rootFolderId);
   const isEditing = !!templateId;
 
   // Code analysis state
@@ -131,13 +132,13 @@ function TemplateBuilderPage() {
   };
 
   const handleSaveToNewBank = (title: string, description?: string) => {
-    if (!preview || !user) return;
+    if (!preview || !user || !rootFolderId) return;
 
     // First create the assessment template, then add the question template to it
     createAssessmentTemplate.mutate(
       {
         owner_id: user.id,
-        folder_id: null,
+        folder_id: rootFolderId,
         title,
         description,
       },

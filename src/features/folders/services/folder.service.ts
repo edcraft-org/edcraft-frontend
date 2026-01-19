@@ -41,3 +41,11 @@ export async function moveFolder(
 ): Promise<Folder> {
   return apiClient.patch<Folder>(`/folders/${folderId}/move`, data, signal);
 }
+
+// Get user's root folder
+export async function getUserRootFolder(
+  userId: string,
+  signal?: AbortSignal
+): Promise<Folder> {
+  return apiClient.get<Folder>(`/users/${userId}/root-folder`, signal);
+}

@@ -17,7 +17,7 @@ export interface AssessmentTemplateWithTemplates extends AssessmentTemplate {
 // Request types
 export interface CreateAssessmentTemplateRequest {
   owner_id: string;
-  folder_id?: string | null;
+  folder_id: string;
   title: string;
   description?: string;
 }
@@ -59,7 +59,7 @@ export interface TemplateInputData {
 }
 
 export interface InstantiateAssessmentRequest {
-  folder_id: string | null;
+  folder_id: string;
   title: string;
   description?: string;
   template_inputs: TemplateInputData[];

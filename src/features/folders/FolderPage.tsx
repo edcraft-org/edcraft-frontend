@@ -297,7 +297,10 @@ function FolderPage() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem>Rename</DropdownMenuItem>
                       <DropdownMenuItem>Move</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                      {/* Only show delete for non-root folders */}
+                      {!(resource.resourceType === "folder" && resource.id === rootFolderId) && (
+                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/services/query-client";
+import { ApiError } from "@/shared/services/api-client";
 import {
   createFolder,
   updateFolder,
@@ -95,6 +96,13 @@ export function useDeleteFolder() {
           queryKey: queryKeys.folders.contents(variables.parentId),
         });
       }
+    },
+    onError: (error: ApiError) => {
+      if (error.status === 403) {
+        // User-friendly message for root folder protection
+        throw new Error("Cannot delete root folder. Root folders are protected.");
+      }
+      throw error;
     },
   });
 }
