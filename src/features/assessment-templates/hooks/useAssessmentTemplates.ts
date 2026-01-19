@@ -63,17 +63,31 @@ export function useUpdateAssessmentTemplate() {
     mutationFn: ({
       templateId,
       data,
+      oldFolderId,
     }: {
       templateId: string;
       data: UpdateAssessmentTemplateRequest;
+      oldFolderId?: string | null;
     }) => updateAssessmentTemplate(templateId, data),
-    onSuccess: (updatedTemplate) => {
+    onSuccess: (updatedTemplate, variables) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.assessmentTemplates.detail(updatedTemplate.id),
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.assessmentTemplates.all(updatedTemplate.owner_id),
       });
+      // Invalidate folder contents when template is moved or updated
+      if (updatedTemplate.folder_id) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.folders.contents(updatedTemplate.folder_id),
+        });
+      }
+      // Invalidate old folder contents when template is moved
+      if (variables.oldFolderId && variables.oldFolderId !== updatedTemplate.folder_id) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.folders.contents(variables.oldFolderId),
+        });
+      }
     },
   });
 }

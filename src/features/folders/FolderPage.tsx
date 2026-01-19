@@ -28,10 +28,13 @@ import {
   CreateFolderModal,
   CreateAssessmentModal,
   CreateAssessmentTemplateModal,
+  RenameModal,
+  MoveModal,
+  DeleteConfirmationDialog,
 } from "./components";
-import { useCreateFolder } from "./hooks/useFolders";
-import { useCreateAssessment } from "@/features/assessments/hooks/useAssessments";
-import { useCreateAssessmentTemplate } from "@/features/assessment-templates/hooks/useAssessmentTemplates";
+import { useCreateFolder, useUpdateFolder, useMoveFolder, useDeleteFolder } from "./hooks/useFolders";
+import { useCreateAssessment, useUpdateAssessment, useDeleteAssessment } from "@/features/assessments/hooks/useAssessments";
+import { useCreateAssessmentTemplate, useUpdateAssessmentTemplate, useDeleteAssessmentTemplate } from "@/features/assessment-templates/hooks/useAssessmentTemplates";
 
 function FolderPage() {
   const { folderId } = useParams<{ folderId: string }>();
@@ -43,10 +46,44 @@ function FolderPage() {
   const [showCreateAssessment, setShowCreateAssessment] = useState(false);
   const [showCreateTemplate, setShowCreateTemplate] = useState(false);
 
+  // Action modal state
+  const [renameModal, setRenameModal] = useState<{
+    open: boolean;
+    resourceType: "folder" | "assessment" | "assessment_template";
+    resourceId: string;
+    currentName: string;
+    currentDescription?: string | null;
+  }>({ open: false, resourceType: "folder", resourceId: "", currentName: "" });
+
+  const [moveModal, setMoveModal] = useState<{
+    open: boolean;
+    resourceType: "folder" | "assessment" | "assessment_template";
+    resourceId: string;
+    resourceName: string;
+    currentFolderId?: string;
+  }>({ open: false, resourceType: "folder", resourceId: "", resourceName: "" });
+
+  const [deleteModal, setDeleteModal] = useState<{
+    open: boolean;
+    resourceType: "folder" | "assessment" | "assessment_template";
+    resourceId: string;
+    resourceName: string;
+    parentId?: string | null;
+  }>({ open: false, resourceType: "folder", resourceId: "", resourceName: "" });
+
   // Mutations
   const createFolder = useCreateFolder();
   const createAssessment = useCreateAssessment();
   const createAssessmentTemplate = useCreateAssessmentTemplate();
+
+  // Update/Delete/Move mutations
+  const updateFolder = useUpdateFolder();
+  const moveFolder = useMoveFolder();
+  const deleteFolder = useDeleteFolder();
+  const updateAssessment = useUpdateAssessment();
+  const deleteAssessment = useDeleteAssessment();
+  const updateAssessmentTemplate = useUpdateAssessmentTemplate();
+  const deleteAssessmentTemplate = useDeleteAssessmentTemplate();
 
   // Redirect to root if folderId is "root"
   const actualFolderId = folderId === "root" ? rootFolderId : folderId;
@@ -142,6 +179,188 @@ function FolderPage() {
         },
       }
     );
+  };
+
+  // Rename handlers
+  const handleRename = (name: string, description?: string) => {
+    if (!user) return;
+
+    const { resourceType, resourceId } = renameModal;
+
+    if (resourceType === "folder") {
+      updateFolder.mutate(
+        {
+          folderId: resourceId,
+          data: { name, description },
+          ownerId: user.id,
+          parentId: actualFolderId || null,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Folder renamed successfully");
+            setRenameModal({ ...renameModal, open: false });
+          },
+          onError: (error) => {
+            toast.error(`Failed to rename folder: ${error.message}`);
+          },
+        }
+      );
+    } else if (resourceType === "assessment") {
+      updateAssessment.mutate(
+        {
+          assessmentId: resourceId,
+          data: { title: name, description },
+          oldFolderId: actualFolderId,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Assessment renamed successfully");
+            setRenameModal({ ...renameModal, open: false });
+          },
+          onError: (error) => {
+            toast.error(`Failed to rename assessment: ${error.message}`);
+          },
+        }
+      );
+    } else if (resourceType === "assessment_template") {
+      updateAssessmentTemplate.mutate(
+        {
+          templateId: resourceId,
+          data: { title: name, description },
+          oldFolderId: actualFolderId,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Assessment template renamed successfully");
+            setRenameModal({ ...renameModal, open: false });
+          },
+          onError: (error) => {
+            toast.error(`Failed to rename template: ${error.message}`);
+          },
+        }
+      );
+    }
+  };
+
+  // Move handlers
+  const handleMove = (targetFolderId: string) => {
+    if (!user) return;
+
+    const { resourceType, resourceId } = moveModal;
+
+    if (resourceType === "folder") {
+      moveFolder.mutate(
+        {
+          folderId: resourceId,
+          data: { parent_id: targetFolderId },
+          ownerId: user.id,
+          oldParentId: actualFolderId || null,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Folder moved successfully");
+            setMoveModal({ ...moveModal, open: false });
+          },
+          onError: (error) => {
+            toast.error(`Failed to move folder: ${error.message}`);
+          },
+        }
+      );
+    } else if (resourceType === "assessment") {
+      updateAssessment.mutate(
+        {
+          assessmentId: resourceId,
+          data: { folder_id: targetFolderId },
+          oldFolderId: actualFolderId,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Assessment moved successfully");
+            setMoveModal({ ...moveModal, open: false });
+          },
+          onError: (error) => {
+            toast.error(`Failed to move assessment: ${error.message}`);
+          },
+        }
+      );
+    } else if (resourceType === "assessment_template") {
+      updateAssessmentTemplate.mutate(
+        {
+          templateId: resourceId,
+          data: { folder_id: targetFolderId },
+          oldFolderId: actualFolderId,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Assessment template moved successfully");
+            setMoveModal({ ...moveModal, open: false });
+          },
+          onError: (error) => {
+            toast.error(`Failed to move template: ${error.message}`);
+          },
+        }
+      );
+    }
+  };
+
+  // Delete handlers
+  const handleDelete = () => {
+    if (!user) return;
+
+    const { resourceType, resourceId, parentId } = deleteModal;
+
+    if (resourceType === "folder") {
+      deleteFolder.mutate(
+        {
+          folderId: resourceId,
+          ownerId: user.id,
+          parentId: parentId,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Folder deleted successfully");
+            setDeleteModal({ ...deleteModal, open: false });
+          },
+          onError: (error) => {
+            toast.error(`Failed to delete folder: ${error.message}`);
+          },
+        }
+      );
+    } else if (resourceType === "assessment") {
+      deleteAssessment.mutate(
+        {
+          assessmentId: resourceId,
+          ownerId: user.id,
+          folderId: actualFolderId,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Assessment deleted successfully");
+            setDeleteModal({ ...deleteModal, open: false });
+          },
+          onError: (error) => {
+            toast.error(`Failed to delete assessment: ${error.message}`);
+          },
+        }
+      );
+    } else if (resourceType === "assessment_template") {
+      deleteAssessmentTemplate.mutate(
+        {
+          templateId: resourceId,
+          ownerId: user.id,
+          folderId: actualFolderId,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Assessment template deleted successfully");
+            setDeleteModal({ ...deleteModal, open: false });
+          },
+          onError: (error) => {
+            toast.error(`Failed to delete template: ${error.message}`);
+          },
+        }
+      );
+    }
   };
 
   // Show loading while Zustand is hydrating from localStorage
@@ -299,11 +518,51 @@ function FolderPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Rename</DropdownMenuItem>
-                      <DropdownMenuItem>Move</DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRenameModal({
+                            open: true,
+                            resourceType: resource.resourceType,
+                            resourceId: resource.id,
+                            currentName: resource.resourceType === "folder" ? resource.name : resource.title,
+                            currentDescription: resource.description,
+                          });
+                        }}
+                      >
+                        Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMoveModal({
+                            open: true,
+                            resourceType: resource.resourceType,
+                            resourceId: resource.id,
+                            resourceName: resource.resourceType === "folder" ? resource.name : resource.title,
+                            currentFolderId: actualFolderId,
+                          });
+                        }}
+                      >
+                        Move
+                      </DropdownMenuItem>
                       {/* Only show delete for non-root folders */}
                       {!(resource.resourceType === "folder" && resource.id === rootFolderId) && (
-                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteModal({
+                              open: true,
+                              resourceType: resource.resourceType,
+                              resourceId: resource.id,
+                              resourceName: resource.resourceType === "folder" ? resource.name : resource.title,
+                              parentId: resource.resourceType === "folder" ? actualFolderId : undefined,
+                            });
+                          }}
+                        >
+                          Delete
+                        </DropdownMenuItem>
                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -339,6 +598,51 @@ function FolderPage() {
         onOpenChange={setShowCreateTemplate}
         onSubmit={handleCreateAssessmentTemplate}
         isLoading={createAssessmentTemplate.isPending}
+      />
+
+      {/* Action Modals */}
+      <RenameModal
+        open={renameModal.open}
+        onOpenChange={(open) => setRenameModal({ ...renameModal, open })}
+        onSubmit={handleRename}
+        isLoading={
+          updateFolder.isPending ||
+          updateAssessment.isPending ||
+          updateAssessmentTemplate.isPending
+        }
+        resourceType={renameModal.resourceType}
+        currentName={renameModal.currentName}
+        currentDescription={renameModal.currentDescription}
+      />
+
+      <MoveModal
+        open={moveModal.open}
+        onOpenChange={(open) => setMoveModal({ ...moveModal, open })}
+        onSubmit={handleMove}
+        isLoading={
+          moveFolder.isPending ||
+          updateAssessment.isPending ||
+          updateAssessmentTemplate.isPending
+        }
+        resourceType={moveModal.resourceType}
+        resourceName={moveModal.resourceName}
+        rootFolderId={rootFolderId || ""}
+        ownerId={user?.id || ""}
+        currentFolderId={moveModal.currentFolderId}
+        excludeFolderId={moveModal.resourceType === "folder" ? moveModal.resourceId : undefined}
+      />
+
+      <DeleteConfirmationDialog
+        open={deleteModal.open}
+        onOpenChange={(open) => setDeleteModal({ ...deleteModal, open })}
+        onConfirm={handleDelete}
+        isLoading={
+          deleteFolder.isPending ||
+          deleteAssessment.isPending ||
+          deleteAssessmentTemplate.isPending
+        }
+        resourceType={deleteModal.resourceType}
+        resourceName={deleteModal.resourceName}
       />
     </div>
   );

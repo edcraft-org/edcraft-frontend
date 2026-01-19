@@ -69,17 +69,31 @@ export function useUpdateAssessment() {
     mutationFn: ({
       assessmentId,
       data,
+      oldFolderId,
     }: {
       assessmentId: string;
       data: UpdateAssessmentRequest;
+      oldFolderId?: string | null;
     }) => updateAssessment(assessmentId, data),
-    onSuccess: (updatedAssessment) => {
+    onSuccess: (updatedAssessment, variables) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.assessments.detail(updatedAssessment.id),
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.assessments.all(updatedAssessment.owner_id),
       });
+      // Invalidate folder contents when assessment is moved or updated
+      if (updatedAssessment.folder_id) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.folders.contents(updatedAssessment.folder_id),
+        });
+      }
+      // Invalidate old folder contents when assessment is moved
+      if (variables.oldFolderId && variables.oldFolderId !== updatedAssessment.folder_id) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.folders.contents(variables.oldFolderId),
+        });
+      }
     },
   });
 }
