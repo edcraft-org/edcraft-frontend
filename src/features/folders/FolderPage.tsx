@@ -66,11 +66,14 @@ function FolderPage() {
   });
 
   // Fetch folder path for breadcrumbs
-  const { data: path = [] } = useQuery({
+  const { data: pathData } = useQuery({
     queryKey: queryKeys.folders.path(actualFolderId || ""),
-    queryFn: () => apiClient.get<FolderPath[]>(`/folders/${actualFolderId}/path`),
+    queryFn: () => apiClient.get<FolderPath[] | { path: FolderPath[] }>(`/folders/${actualFolderId}/path`),
     enabled: !!actualFolderId && !!user,
   });
+
+  // Handle both array and object response formats from the backend
+  const path = Array.isArray(pathData) ? pathData : (pathData?.path || []);
 
   // Handlers
   const handleCreateFolder = (name: string, description?: string) => {
