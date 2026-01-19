@@ -21,8 +21,7 @@ export interface FolderResource {
   updated_at: string;
 }
 
-export interface FolderContents {
-  folder: Folder;
+export interface FolderContents extends Folder {
   folders: Folder[];
   assessments: FolderResource[];
   assessment_templates: FolderResource[];

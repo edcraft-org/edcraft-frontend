@@ -175,8 +175,8 @@ function FolderPage() {
   }
 
   // Get folder display name - use "My Projects" for root folder
-  const folderDisplayName = isRootFolder ? "My Projects" : contents?.folder.name ?? "Folder";
-  const folderDescription = contents?.folder.description;
+  const folderDisplayName = isRootFolder ? "My Projects" : contents?.name ?? "Folder";
+  const folderDescription = contents?.description;
 
   const allResources = [
     ...(contents?.folders ?? []).map((f) => ({ ...f, resourceType: "folder" as const })),
