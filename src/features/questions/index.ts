@@ -1,5 +1,5 @@
 // Questions feature exports
-export { QuestionEditor, AddQuestionModal, LinkOrDuplicateModal } from "./components";
+export { QuestionEditor, AddQuestionModal, LinkOrDuplicateModal, QuestionCard } from "./components";
 export {
   useQuestions,
   useQuestion,

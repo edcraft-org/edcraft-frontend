@@ -54,7 +54,6 @@ function TemplateBuilderPage() {
   const [outputType, setOutputType] = useState<"first" | "last" | "list" | "count">("first");
   const [questionType, setQuestionType] = useState<QuestionType>("mcq");
   const [numDistractors, setNumDistractors] = useState(4);
-  const [templateName, setTemplateName] = useState("");
   const [templateDescription, setTemplateDescription] = useState("");
 
   // Preview and save state
@@ -153,7 +152,7 @@ function TemplateBuilderPage() {
                 question_template: {
                   owner_id: user.id,
                   question_type: questionType,
-                  question_text: templateName || preview.question_text,
+                  question_text: preview.question_text,
                   description: templateDescription || undefined,
                   template_config: preview.template_config,
                 },
@@ -189,7 +188,7 @@ function TemplateBuilderPage() {
           question_template: {
             owner_id: user.id,
             question_type: questionType,
-            question_text: templateName || preview.question_text,
+            question_text: preview.question_text,
             description: templateDescription || undefined,
             template_config: preview.template_config,
           },
@@ -228,21 +227,12 @@ function TemplateBuilderPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Left Column - Configuration */}
         <div className="space-y-6">
-          {/* Template Name & Description */}
+          {/* Template Description */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Template Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="template-name">Template Name</Label>
-                <Input
-                  id="template-name"
-                  placeholder="e.g., Fibonacci Return Value"
-                  value={templateName}
-                  onChange={(e) => setTemplateName(e.target.value)}
-                />
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="template-description">Description (optional)</Label>
                 <Textarea
