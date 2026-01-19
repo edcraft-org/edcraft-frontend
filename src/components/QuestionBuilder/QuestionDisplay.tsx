@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { GenerateQuestionResponse, QuestionType } from "../../types/api.types";
 import { QuestionType as QuestionTypeEnum } from "../../constants";
 
@@ -41,90 +43,93 @@ export function QuestionDisplay({ response, questionType }: QuestionDisplayProps
     };
 
     return (
-        <section className="w-full max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
-            <h2 className="text-2xl font-bold mb-6">Generated Question</h2>
+        <Card className="w-full">
+            <CardHeader>
+                <CardTitle>Generated Question</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                {/* Question Text */}
+                <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-2">Question:</h3>
+                    <p className="text-foreground leading-relaxed">{text}</p>
+                </div>
 
-            {/* Question Text */}
-            <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3">Question:</h3>
-                <p className="text-gray-800 leading-relaxed">{text}</p>
-            </div>
-
-            {/* Options for MCQ/MRQ */}
-            {(questionType === QuestionTypeEnum.MCQ || questionType === QuestionTypeEnum.MRQ) &&
-                options &&
-                options.length > 0 && (
-                    <div className="mb-6">
-                        <h3 className="text-lg font-semibold mb-3">Options:</h3>
-                        <div className="space-y-2">
-                            {options.map((option, index) => (
-                                <div
-                                    key={index}
-                                    className={`p-3 rounded-md border ${
-                                        showAnswer && isCorrectOption(index)
-                                            ? "bg-green-50 border-green-500"
-                                            : "bg-gray-50 border-gray-300"
-                                    }`}
-                                >
-                                    <span className="font-semibold mr-2">
-                                        {getOptionLabel(index)}.
-                                    </span>
-                                    <span
-                                        className={
+                {/* Options for MCQ/MRQ */}
+                {(questionType === QuestionTypeEnum.MCQ || questionType === QuestionTypeEnum.MRQ) &&
+                    options &&
+                    options.length > 0 && (
+                        <div>
+                            <h3 className="text-sm font-semibold text-muted-foreground mb-2">Options:</h3>
+                            <div className="space-y-2">
+                                {options.map((option, index) => (
+                                    <div
+                                        key={index}
+                                        className={`p-3 rounded-md border transition-colors ${
                                             showAnswer && isCorrectOption(index)
-                                                ? "text-green-700 font-medium"
-                                                : ""
-                                        }
+                                                ? "bg-green-50 dark:bg-green-950 border-green-500 dark:border-green-700"
+                                                : "bg-muted/50 border-border"
+                                        }`}
                                     >
-                                        {formatOption(option)}
-                                    </span>
-                                    {showAnswer && isCorrectOption(index) && (
-                                        <span className="ml-2 text-green-600">✓</span>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-            {/* Show/Hide Answer Button */}
-            <div className="mb-6">
-                <button
-                    type="button"
-                    onClick={() => setShowAnswer(!showAnswer)}
-                    className="px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                >
-                    {showAnswer ? "Hide Answer" : "Show Answer"}
-                </button>
-            </div>
-
-            {/* Answer Section */}
-            {showAnswer && (
-                <div className="p-4 bg-green-50 border border-green-300 rounded-md">
-                    <h3 className="text-lg font-semibold text-green-800 mb-3">Answer:</h3>
-
-                    {/* For MCQ/MRQ, show correct option labels */}
-                    {(questionType === QuestionTypeEnum.MCQ || questionType === QuestionTypeEnum.MRQ) &&
-                        correct_indices &&
-                        correct_indices.length > 0 && (
-                            <div className="mb-3">
-                                <p className="text-green-700 font-medium">
-                                    Correct option{correct_indices.length > 1 ? "s" : ""}:{" "}
-                                    {correct_indices.map((idx) => getOptionLabel(idx)).join(", ")}
-                                </p>
+                                        <span className="font-semibold mr-2">
+                                            {getOptionLabel(index)}.
+                                        </span>
+                                        <span
+                                            className={
+                                                showAnswer && isCorrectOption(index)
+                                                    ? "text-green-700 dark:text-green-400 font-medium"
+                                                    : "text-foreground"
+                                            }
+                                        >
+                                            {formatOption(option)}
+                                        </span>
+                                        {showAnswer && isCorrectOption(index) && (
+                                            <span className="ml-2 text-green-600 dark:text-green-400">✓</span>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
-                        )}
-
-                    {/* Show the actual answer value */}
-                    {answer !== undefined && (
-                        <div className="bg-white p-3 rounded border border-green-200">
-                            <pre className="whitespace-pre-wrap text-gray-800 font-mono text-sm">
-                                {formatAnswer(answer)}
-                            </pre>
                         </div>
                     )}
+
+                {/* Show/Hide Answer Button */}
+                <div>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => setShowAnswer(!showAnswer)}
+                    >
+                        {showAnswer ? "Hide Answer" : "Show Answer"}
+                    </Button>
                 </div>
-            )}
-        </section>
+
+                {/* Answer Section */}
+                {showAnswer && (
+                    <div className="p-4 bg-green-50 dark:bg-green-950 border border-green-500 dark:border-green-700 rounded-md">
+                        <h3 className="text-sm font-semibold text-green-800 dark:text-green-300 mb-3">Answer:</h3>
+
+                        {/* For MCQ/MRQ, show correct option labels */}
+                        {(questionType === QuestionTypeEnum.MCQ || questionType === QuestionTypeEnum.MRQ) &&
+                            correct_indices &&
+                            correct_indices.length > 0 && (
+                                <div className="mb-3">
+                                    <p className="text-green-700 dark:text-green-400 font-medium">
+                                        Correct option{correct_indices.length > 1 ? "s" : ""}:{" "}
+                                        {correct_indices.map((idx) => getOptionLabel(idx)).join(", ")}
+                                    </p>
+                                </div>
+                            )}
+
+                        {/* Show the actual answer value */}
+                        {answer !== undefined && (
+                            <div className="bg-background p-3 rounded border border-green-200 dark:border-green-800">
+                                <pre className="whitespace-pre-wrap text-foreground font-mono text-sm">
+                                    {formatAnswer(answer)}
+                                </pre>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
 }

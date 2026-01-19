@@ -41,6 +41,7 @@ import {
   QuestionEditor,
   AddQuestionModal,
   LinkOrDuplicateModal,
+  QuestionCard,
 } from "@/features/questions";
 import type { Question, OrderedQuestion } from "@/features/questions/types/question.types";
 
@@ -240,57 +241,53 @@ function AssessmentPage() {
           <p className="text-sm">Add questions using the button above</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-4">
           {sortedQuestions.map((question, index) => (
-            <Card key={question.id} className="group">
-              <CardHeader className="py-3">
-                <div className="flex items-center gap-3">
-                  <div className="cursor-grab opacity-50 group-hover:opacity-100">
-                    <GripVertical className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <span className="text-sm font-medium text-muted-foreground w-8">
-                    Q{index + 1}
-                  </span>
-                  <div className="flex-1">
-                    <CardTitle className="text-base font-normal">
-                      {question.question_text}
-                    </CardTitle>
-                  </div>
-                  <span className="text-xs px-2 py-1 bg-muted rounded">
-                    {question.question_type.toUpperCase()}
-                  </span>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditQuestion(question)}>
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setSelectedQuestion(question);
-                          setShowLinkOrDuplicateModal(true);
-                        }}
-                      >
-                        Duplicate to Another Assessment
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => {
-                          setQuestionToRemove(question);
-                          setShowRemoveDialog(true);
-                        }}
-                      >
-                        Remove
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            <div key={question.id} className="relative group">
+              {/* Drag Handle and Actions Bar */}
+              <div className="absolute -left-12 top-4 flex items-center gap-2">
+                <div className="cursor-grab opacity-50 group-hover:opacity-100">
+                  <GripVertical className="h-5 w-5 text-muted-foreground" />
                 </div>
-              </CardHeader>
-            </Card>
+              </div>
+              <div className="absolute -right-2 top-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleEditQuestion(question)}>
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSelectedQuestion(question);
+                        setShowLinkOrDuplicateModal(true);
+                      }}
+                    >
+                      Duplicate to Another Assessment
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => {
+                        setQuestionToRemove(question);
+                        setShowRemoveDialog(true);
+                      }}
+                    >
+                      Remove
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Question Card */}
+              <QuestionCard
+                question={question}
+                questionNumber={index + 1}
+              />
+            </div>
           ))}
         </div>
       )}
