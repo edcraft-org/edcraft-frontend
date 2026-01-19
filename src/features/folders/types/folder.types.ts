@@ -21,10 +21,30 @@ export interface FolderResource {
   updated_at: string;
 }
 
+export interface AssessmentSummary {
+  id: string;
+  owner_id: string;
+  folder_id: string | null;
+  title: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AssessmentTemplateSummary {
+  id: string;
+  owner_id: string;
+  folder_id: string | null;
+  title: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface FolderContents extends Folder {
   folders: Folder[];
-  assessments: FolderResource[];
-  assessment_templates: FolderResource[];
+  assessments: AssessmentSummary[];
+  assessment_templates: AssessmentTemplateSummary[];
 }
 
 export interface FolderPath {

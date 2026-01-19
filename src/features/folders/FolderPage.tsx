@@ -196,8 +196,7 @@ function FolderPage() {
       <Breadcrumb>
         <BreadcrumbList>
           {path.map((folder, index) => {
-            // Use "My Projects" for root folder in breadcrumbs
-            const displayName = folder.id === rootFolderId ? "My Projects" : folder.name;
+            const displayName = folder.name;
             return (
               <BreadcrumbItem key={folder.id}>
                 {index < path.length - 1 ? (
@@ -289,7 +288,9 @@ function FolderPage() {
                     {resource.resourceType === "assessment_template" && (
                       <LayoutTemplate className="h-5 w-5 text-purple-500" />
                     )}
-                    <CardTitle className="text-base">{resource.name}</CardTitle>
+                    <CardTitle className="text-base">
+                      {resource.resourceType === "folder" ? resource.name : resource.title}
+                    </CardTitle>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
