@@ -152,22 +152,22 @@ export function CreateFromTemplateModal({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-sm">{generatedQuestion.question_text}</p>
+                <p className="text-sm">{generatedQuestion.text}</p>
 
-                {generatedQuestion.additional_data.options && (
+                {generatedQuestion.options && (
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">Options:</p>
                     <ul className="space-y-1">
-                      {generatedQuestion.additional_data.options.map((option, index) => (
+                      {generatedQuestion.options.map((option, index) => (
                         <li
                           key={index}
                           className={`text-sm p-2 rounded border ${
-                            generatedQuestion.additional_data.correct_indices?.includes(index)
+                            generatedQuestion.correct_indices?.includes(index)
                               ? "border-green-500 bg-white dark:bg-green-900/30"
                               : "border-border bg-white dark:bg-background"
                           }`}
                         >
-                          {generatedQuestion.additional_data.correct_indices?.includes(index) && (
+                          {generatedQuestion.correct_indices?.includes(index) && (
                             <CheckCircle2 className="h-3 w-3 inline mr-2 text-green-500" />
                           )}
                           {option}
@@ -177,11 +177,11 @@ export function CreateFromTemplateModal({
                   </div>
                 )}
 
-                {generatedQuestion.additional_data.answer && !generatedQuestion.additional_data.options && (
+                {generatedQuestion.answer && !generatedQuestion.options && (
                   <div>
                     <p className="text-xs text-muted-foreground">Answer:</p>
                     <p className="text-sm font-mono bg-white dark:bg-background p-2 rounded mt-1">
-                      {generatedQuestion.additional_data.answer}
+                      {generatedQuestion.answer}
                     </p>
                   </div>
                 )}

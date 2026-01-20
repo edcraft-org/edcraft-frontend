@@ -115,13 +115,11 @@ export interface GenerateFromTemplateRequest {
 }
 
 export interface GeneratedQuestion {
-  question_text: string;
+  text: string;
+  answer: string;
+  options?: string[];
+  correct_indices?: number[];
   question_type: string;
-  additional_data: {
-    options?: string[];
-    correct_indices?: number[];
-    answer: string;
-  };
 }
 
 export async function generateFromTemplate(
