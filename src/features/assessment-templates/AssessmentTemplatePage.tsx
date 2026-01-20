@@ -96,8 +96,8 @@ function AssessmentTemplatePage() {
             owner_id: user.id,
             question_type: template.question_type,
             question_text: template.question_text,
-            description: template.description,
-            template_config: template.template_config,
+            description: template.description ?? undefined,
+            template_config: template.template_config as Record<string, unknown>,
           },
         },
       },
@@ -236,9 +236,31 @@ function AssessmentTemplatePage() {
                 {template.description && (
                   <CardDescription className="mb-3">{template.description}</CardDescription>
                 )}
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Code className="h-3 w-3" />
-                  <span>Entry: {template.template_config.entry_function}()</span>
+
+                {/* Template Configuration */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <Code className="h-3 w-3" />
+                    <span>Template Configuration</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs pl-5">
+                    <div>
+                      <span className="text-muted-foreground">Entry Function:</span>
+                      <span className="ml-1 font-mono">{template.template_config.entry_function}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Output Type:</span>
+                      <span className="ml-1">{template.template_config.question_spec.output_type}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Question Type:</span>
+                      <span className="ml-1">{template.template_config.question_spec.question_type}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Distractors:</span>
+                      <span className="ml-1">{template.template_config.generation_options.num_distractors}</span>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
