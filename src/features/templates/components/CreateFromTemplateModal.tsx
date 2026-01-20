@@ -14,10 +14,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Wand2, CheckCircle2, Code2 } from "lucide-react";
+import { Loader2, Wand2, Code2 } from "lucide-react";
 import { useGenerateFromTemplate } from "../hooks/useQuestionTemplates";
 import type { QuestionTemplate } from "../types/template.types";
 import type { GeneratedQuestion } from "../services/template.service";
+import { QuestionDisplay } from "@/components/QuestionBuilder/QuestionDisplay";
 
 interface CreateFromTemplateModalProps {
   open: boolean;
@@ -144,49 +145,10 @@ export function CreateFromTemplateModal({
 
           {/* Generated Question Preview */}
           {generatedQuestion && (
-            <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2 text-green-700 dark:text-green-300">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Generated Question
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm">{generatedQuestion.text}</p>
-
-                {generatedQuestion.options && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Options:</p>
-                    <ul className="space-y-1">
-                      {generatedQuestion.options.map((option, index) => (
-                        <li
-                          key={index}
-                          className={`text-sm p-2 rounded border ${
-                            generatedQuestion.correct_indices?.includes(index)
-                              ? "border-green-500 bg-white dark:bg-green-900/30"
-                              : "border-border bg-white dark:bg-background"
-                          }`}
-                        >
-                          {generatedQuestion.correct_indices?.includes(index) && (
-                            <CheckCircle2 className="h-3 w-3 inline mr-2 text-green-500" />
-                          )}
-                          {option}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {generatedQuestion.answer && !generatedQuestion.options && (
-                  <div>
-                    <p className="text-xs text-muted-foreground">Answer:</p>
-                    <p className="text-sm font-mono bg-white dark:bg-background p-2 rounded mt-1">
-                      {generatedQuestion.answer}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <QuestionDisplay
+              response={generatedQuestion}
+              questionType={generatedQuestion.question_type}
+            />
           )}
         </div>
 

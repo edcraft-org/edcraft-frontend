@@ -8,6 +8,7 @@ import type {
 } from "../types/template.types";
 import type { AssessmentTemplate } from "@/features/assessment-templates/types/assessment-template.types";
 import type { QuestionSpec, GenerationOptions } from "../types/template.types";
+import type { QuestionType } from "@/types/api.types";
 
 // Get all question templates for a user
 export async function getQuestionTemplates(
@@ -116,10 +117,10 @@ export interface GenerateFromTemplateRequest {
 
 export interface GeneratedQuestion {
   text: string;
-  answer: string;
-  options?: string[];
+  answer: unknown;
+  options?: unknown[];
   correct_indices?: number[];
-  question_type: string;
+  question_type: QuestionType;
 }
 
 export async function generateFromTemplate(
