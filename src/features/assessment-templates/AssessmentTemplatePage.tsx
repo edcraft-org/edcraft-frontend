@@ -35,7 +35,6 @@ import {
 } from "./hooks/useAssessmentTemplates";
 import type { AssessmentTemplateWithTemplates } from "./types/assessment-template.types";
 import type { QuestionTemplate } from "@/features/templates/types/template.types";
-import type { GeneratedQuestion } from "@/features/templates/services/template.service";
 
 function AssessmentTemplatePage() {
   const { templateId } = useParams<{ templateId: string }>();
@@ -65,18 +64,6 @@ function AssessmentTemplatePage() {
     setShowCreateFromTemplate(true);
   };
 
-  const handleQuestionGenerated = (_question: GeneratedQuestion, template: QuestionTemplate) => {
-    // For now, just show the generated question info
-    // In a full implementation, we'd prompt the user to select an assessment to save to
-    toast.success(
-      `Question generated from template "${template.question_text}"`,
-      {
-        description: "You can now save this question to an assessment.",
-      }
-    );
-    // TODO: Open a modal to let user select which assessment to add the question to
-  };
-
   const handleInstantiate = () => {
     // TODO: Implement assessment instantiation wizard
     toast.info("Assessment instantiation will be available soon");
@@ -97,7 +84,7 @@ function AssessmentTemplatePage() {
             question_type: template.question_type,
             question_text: template.question_text,
             description: template.description ?? undefined,
-            template_config: template.template_config as Record<string, unknown>,
+            template_config: template.template_config as unknown as Record<string, unknown>,
           },
         },
       },
@@ -273,7 +260,6 @@ function AssessmentTemplatePage() {
         open={showCreateFromTemplate}
         onOpenChange={setShowCreateFromTemplate}
         template={selectedTemplate}
-        onQuestionGenerated={handleQuestionGenerated}
       />
 
       {/* Instantiate Assessment Dialog */}
