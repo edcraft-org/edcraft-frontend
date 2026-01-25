@@ -1,4 +1,4 @@
-import type { Modifier } from "../../../types/api.types";
+import type { Modifier } from '@/types/frontend.types';
 import { getModifierLabel } from "../../../constants";
 
 interface ModifierSelectorProps {

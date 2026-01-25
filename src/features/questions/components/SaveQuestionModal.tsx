@@ -26,8 +26,8 @@ import {
 } from "@/components/ui/select";
 import { queryKeys } from "@/shared/services/query-client";
 import { apiClient } from "@/shared/services/api-client";
-import type { Assessment } from "@/features/assessments/types/assessment.types";
-import type { Folder as FolderType } from "@/features/folders/types/folder.types";
+import type { Assessment } from '@/types/frontend.types';
+import type { Folder as FolderType } from '@/types/frontend.types';
 
 type SaveMode = "select" | "create";
 

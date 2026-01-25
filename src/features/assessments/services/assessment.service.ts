@@ -2,16 +2,14 @@
 
 import { apiClient } from "@/shared/services/api-client";
 import type {
-  Assessment,
+  AssessmentResponse as Assessment,
   AssessmentWithQuestions,
-  CreateAssessmentRequest,
-  UpdateAssessmentRequest,
-} from "../types/assessment.types";
-import type {
-  AddQuestionToAssessmentRequest,
-  LinkQuestionRequest,
-  ReorderQuestionsRequest,
-} from "@/features/questions/types/question.types";
+  AssessmentCreate as CreateAssessmentRequest,
+  AssessmentUpdate as UpdateAssessmentRequest,
+  AssessmentInsertQuestion as AddQuestionToAssessmentRequest,
+  AssessmentLinkQuestion as LinkQuestionRequest,
+  AssessmentReorderQuestions as ReorderQuestionsRequest,
+} from "@/generated";
 
 // Get all assessments for a user
 export async function getAssessments(

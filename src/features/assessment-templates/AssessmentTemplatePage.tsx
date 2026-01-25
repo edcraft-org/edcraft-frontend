@@ -33,8 +33,7 @@ import {
   useAddQuestionTemplateToAssessmentTemplate,
   useRemoveQuestionTemplateFromAssessmentTemplate,
 } from "./hooks/useAssessmentTemplates";
-import type { AssessmentTemplateWithTemplates } from "./types/assessment-template.types";
-import type { QuestionTemplate } from "@/features/templates/types/template.types";
+import type { AssessmentTemplateWithTemplates, QuestionTemplate } from '@/types/frontend.types';
 
 function AssessmentTemplatePage() {
   const { templateId } = useParams<{ templateId: string }>();

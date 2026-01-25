@@ -6,7 +6,7 @@ import { TreeSkeleton } from "@/shared/components/LoadingSkeleton";
 import { ROUTES } from "@/router/paths";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Folder, FolderOpen } from "lucide-react";
-import type { Folder as FolderType } from "../types/folder.types";
+import type { Folder as FolderType } from '@/types/frontend.types';
 
 interface FolderTreeProps {
   rootFolderId: string;

@@ -4,7 +4,7 @@ import type {
     GenerateQuestionRequest,
     GenerateQuestionResponse,
     QuestionType,
-} from "../types/api.types";
+} from "@/types/frontend.types";
 import { apiService } from "../services/api.service";
 
 interface UseCodeAnalysisReturn {

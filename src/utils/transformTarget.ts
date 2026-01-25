@@ -1,4 +1,5 @@
-import type { TargetSelection, TargetPathItem } from '../types/api.types';
+import type { TargetSelection } from '@/types/frontend.types';
+import type { TargetElement } from '@/generated';
 
 /**
  * Transforms the internal TargetSelection format to the API request format.
@@ -22,8 +23,8 @@ import type { TargetSelection, TargetPathItem } from '../types/api.types';
  *   { type: "variable", id: [0], name: "arr" }
  * ]
  */
-export function flattenTarget(selection: TargetSelection): TargetPathItem[] {
-  const result: TargetPathItem[] = [];
+export function flattenTarget(selection: TargetSelection): TargetElement[] {
+  const result: TargetElement[] = [];
 
   // Add all scope path items first (parents in the hierarchy)
   for (const scopeItem of selection.scope_path) {
@@ -37,7 +38,7 @@ export function flattenTarget(selection: TargetSelection): TargetPathItem[] {
   }
 
   // Add the final target element (the actual selected element)
-  const finalElement: TargetPathItem = {
+  const finalElement: TargetElement = {
     type: selection.type,
     id: Array.isArray(selection.element_id)
       ? selection.element_id

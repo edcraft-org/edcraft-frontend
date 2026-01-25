@@ -9,7 +9,7 @@ import {
   deleteQuestion,
   getQuestionAssessments,
 } from "../services/question.service";
-import type { UpdateQuestionRequest } from "../types/question.types";
+import type { QuestionUpdate as UpdateQuestionRequest } from "@/generated";
 
 // Hook to fetch all questions for a user
 export function useQuestions(ownerId: string | null) {

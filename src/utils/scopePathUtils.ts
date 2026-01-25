@@ -2,7 +2,7 @@ import type {
     ScopePathItem,
     TargetElementType,
     Modifier,
-} from "../types/api.types";
+} from "@/types/frontend.types";
 import { ElementType, Modifier as ModifierEnum, isNavigationModifier } from "../constants";
 
 /**

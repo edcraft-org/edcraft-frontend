@@ -2,12 +2,12 @@
 
 import { apiClient } from "@/shared/services/api-client";
 import type {
-  AssessmentTemplate,
-  AssessmentTemplateWithTemplates,
-  CreateAssessmentTemplateRequest,
-  UpdateAssessmentTemplateRequest,
-  AddQuestionTemplateRequest,
-} from "../types/assessment-template.types";
+  AssessmentTemplateResponse as AssessmentTemplate,
+  AssessmentTemplateWithQuestionTemplates as AssessmentTemplateWithTemplates,
+  AssessmentTemplateCreate as CreateAssessmentTemplateRequest,
+  AssessmentTemplateUpdate as UpdateAssessmentTemplateRequest,
+  AssessmentTemplateInsertQuestionTemplate as AddQuestionTemplateRequest,
+} from "@/generated";
 
 // Get all assessment templates for a user
 export async function getAssessmentTemplates(

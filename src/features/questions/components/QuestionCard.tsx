@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Question } from "../types/question.types";
+import type { Question, MCQAdditionalData, ShortAnswerAdditionalData } from '@/types/frontend.types';
 
 interface QuestionCardProps {
   question: Question;
@@ -36,7 +36,7 @@ export function QuestionCard({
   // Check if an option is correct
   const isCorrectOption = (index: number): boolean => {
     if (!hasOptions || !("correct_indices" in additional_data)) return false;
-    return additional_data.correct_indices?.includes(index) ?? false;
+    return (additional_data as unknown as MCQAdditionalData).correct_indices?.includes(index) ?? false;
   };
 
   return (
@@ -62,7 +62,7 @@ export function QuestionCard({
         {/* Options for MCQ/MRQ */}
         {hasOptions && (
           <div className="space-y-2">
-            {(additional_data as { options: string[] }).options.map((option, index) => (
+            {(additional_data as unknown as MCQAdditionalData).options.map((option, index) => (
               <div
                 key={index}
                 className={`p-3 rounded-md border transition-colors ${
@@ -114,17 +114,17 @@ export function QuestionCard({
             {hasOptions && "correct_indices" in additional_data && (
               <div className="mb-2">
                 <p className="text-green-700 dark:text-green-400 text-sm">
-                  Correct option{additional_data.correct_indices.length > 1 ? "s" : ""}:{" "}
-                  {additional_data.correct_indices.map((idx) => getOptionLabel(idx)).join(", ")}
+                  Correct option{(additional_data as unknown as MCQAdditionalData).correct_indices.length > 1 ? "s" : ""}:{" "}
+                  {(additional_data as unknown as MCQAdditionalData).correct_indices.map((idx: number) => getOptionLabel(idx)).join(", ")}
                 </p>
               </div>
             )}
 
             {/* Show the actual answer text */}
-            {"answer" in additional_data && additional_data.answer && (
+            {"answer" in additional_data && (additional_data as unknown as MCQAdditionalData | ShortAnswerAdditionalData).answer && (
               <div className="bg-background p-2 rounded border border-green-200 dark:border-green-800">
                 <p className="text-foreground text-sm whitespace-pre-wrap">
-                  {additional_data.answer}
+                  {(additional_data as unknown as MCQAdditionalData | ShortAnswerAdditionalData).answer}
                 </p>
               </div>
             )}

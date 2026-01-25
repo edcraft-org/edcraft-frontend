@@ -23,7 +23,7 @@ import { SaveQuestionModal } from "@/features/questions/components";
 import { useUserStore } from "@/shared/stores/user.store";
 import { useAddQuestionToAssessment, useCreateAssessment } from "@/features/assessments/hooks/useAssessments";
 import { flattenTarget } from "../../utils/transformTarget";
-import type { TargetSelection, OutputType, QuestionType } from "../../types/api.types";
+import type { TargetSelection, OutputType, QuestionType } from '@/types/frontend.types';
 
 interface QuestionGeneratorPageProps {
   destinationAssessmentId?: string;

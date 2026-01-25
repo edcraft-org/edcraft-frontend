@@ -27,8 +27,8 @@ import { TemplatePreview, SaveTemplateModal } from "./components";
 import { TargetSelector } from "@/components/QuestionBuilder/TargetSelector";
 import { flattenTarget } from "@/utils/transformTarget";
 import type { GenerateTemplatePreviewResponse } from "./services/template.service";
-import type { QuestionType } from "@/features/questions/types/question.types";
-import type { TargetSelection } from "@/types/api.types";
+import type { QuestionType } from '@/types/frontend.types';
+import type { TargetSelection } from '@/types/frontend.types';
 
 function TemplateBuilderPage() {
   const { templateId } = useParams<{ templateId?: string }>();

@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Wand2, Code2 } from "lucide-react";
 import { useGenerateFromTemplate } from "../hooks/useQuestionTemplates";
-import type { QuestionTemplate } from "../types/template.types";
+import type { QuestionTemplate } from '@/types/frontend.types';
 import type { GeneratedQuestion } from "../services/template.service";
 import { QuestionDisplay } from "@/components/QuestionBuilder/QuestionDisplay";
 import { SaveQuestionModal } from "@/features/questions/components";
@@ -42,12 +42,10 @@ export function CreateFromTemplateModal({
   const [showSaveModal, setShowSaveModal] = useState(false);
 
   const user = useUserStore((state) => state.user);
+  const rootFolderId = useUserStore((state) => state.rootFolderId);
   const generateQuestion = useGenerateFromTemplate();
   const createAssessment = useCreateAssessment();
   const addQuestion = useAddQuestionToAssessment();
-
-  // Get user's root folder ID for default folder selection
-  const rootFolderId = user?.root_folder_id;
 
   const handleClose = () => {
     onOpenChange(false);

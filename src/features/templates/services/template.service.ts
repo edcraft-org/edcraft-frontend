@@ -2,13 +2,14 @@
 
 import { apiClient } from "@/shared/services/api-client";
 import type {
-  QuestionTemplate,
-  CreateQuestionTemplateRequest,
-  UpdateQuestionTemplateRequest,
-} from "../types/template.types";
-import type { AssessmentTemplate } from "@/features/assessment-templates/types/assessment-template.types";
-import type { QuestionSpec, GenerationOptions } from "../types/template.types";
-import type { QuestionType } from "@/types/api.types";
+  QuestionTemplateResponse as QuestionTemplate,
+  QuestionTemplateCreate as CreateQuestionTemplateRequest,
+  QuestionTemplateUpdate as UpdateQuestionTemplateRequest,
+  AssessmentTemplateResponse as AssessmentTemplate,
+  QuestionSpec,
+  GenerationOptions,
+  QuestionSpecQuestionType as QuestionType,
+} from "@/generated";
 
 // Get all question templates for a user
 export async function getQuestionTemplates(

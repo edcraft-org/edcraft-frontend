@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { GenerateQuestionResponse, QuestionType } from "../../types/api.types";
+import type { GenerateQuestionResponse, QuestionType } from '@/types/frontend.types';
 import { QuestionType as QuestionTypeEnum } from "../../constants";
 
 interface QuestionDisplayProps {

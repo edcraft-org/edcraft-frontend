@@ -12,10 +12,10 @@ import {
   removeQuestionTemplateFromAssessmentTemplate,
 } from "../services/assessment-template.service";
 import type {
-  CreateAssessmentTemplateRequest,
-  UpdateAssessmentTemplateRequest,
-  AddQuestionTemplateRequest,
-} from "../types/assessment-template.types";
+  AssessmentTemplateCreate as CreateAssessmentTemplateRequest,
+  AssessmentTemplateUpdate as UpdateAssessmentTemplateRequest,
+  AssessmentTemplateInsertQuestionTemplate as AddQuestionTemplateRequest,
+} from "@/generated";
 
 // Hook to fetch all assessment templates for a user
 export function useAssessmentTemplates(ownerId: string | null, folderId?: string) {
@@ -64,11 +64,10 @@ export function useUpdateAssessmentTemplate() {
     mutationFn: ({
       templateId,
       data,
-      oldFolderId,
     }: {
       templateId: string;
       data: UpdateAssessmentTemplateRequest;
-      oldFolderId?: string | null;
+      _oldFolderId?: string | null;
     }) => updateAssessmentTemplate(templateId, data),
     onSuccess: (updatedTemplate, variables) => {
       queryClient.invalidateQueries({
@@ -84,9 +83,9 @@ export function useUpdateAssessmentTemplate() {
         });
       }
       // Invalidate old folder contents when template is moved
-      if (variables.oldFolderId && variables.oldFolderId !== updatedTemplate.folder_id) {
+      if (variables._oldFolderId && variables._oldFolderId !== updatedTemplate.folder_id) {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.folders.contents(variables.oldFolderId),
+          queryKey: queryKeys.folders.contents(variables._oldFolderId),
         });
       }
     },

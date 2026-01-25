@@ -22,8 +22,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Folder, FileText, LayoutTemplate, Plus, MoreVertical } from "lucide-react";
-import type { FolderContents, FolderPath } from "./types/folder.types";
+import { Folder as FolderIcon, FileText, LayoutTemplate, Plus, MoreVertical } from "lucide-react";
+import type { FolderContents, FolderPath } from '@/types/frontend.types';
 import {
   CreateFolderModal,
   CreateAssessmentModal,
@@ -105,12 +105,12 @@ function FolderPage() {
   // Fetch folder path for breadcrumbs
   const { data: pathData } = useQuery({
     queryKey: queryKeys.folders.path(actualFolderId || ""),
-    queryFn: () => apiClient.get<FolderPath[] | { path: FolderPath[] }>(`/folders/${actualFolderId}/path`),
+    queryFn: () => apiClient.get<FolderPath>(`/folders/${actualFolderId}/path`),
     enabled: !!actualFolderId && !!user,
   });
 
-  // Handle both array and object response formats from the backend
-  const path = Array.isArray(pathData) ? pathData : (pathData?.path || []);
+  // Extract path array from response
+  const path = pathData?.path || [];
 
   // Handlers
   const handleCreateFolder = (name: string, description?: string) => {
@@ -210,7 +210,7 @@ function FolderPage() {
         {
           assessmentId: resourceId,
           data: { title: name, description },
-          oldFolderId: actualFolderId,
+          _oldFolderId: actualFolderId,
         },
         {
           onSuccess: () => {
@@ -227,7 +227,7 @@ function FolderPage() {
         {
           templateId: resourceId,
           data: { title: name, description },
-          oldFolderId: actualFolderId,
+          _oldFolderId: actualFolderId,
         },
         {
           onSuccess: () => {
@@ -271,7 +271,7 @@ function FolderPage() {
         {
           assessmentId: resourceId,
           data: { folder_id: targetFolderId },
-          oldFolderId: actualFolderId,
+          _oldFolderId: actualFolderId,
         },
         {
           onSuccess: () => {
@@ -288,7 +288,7 @@ function FolderPage() {
         {
           templateId: resourceId,
           data: { folder_id: targetFolderId },
-          oldFolderId: actualFolderId,
+          _oldFolderId: actualFolderId,
         },
         {
           onSuccess: () => {
@@ -314,7 +314,7 @@ function FolderPage() {
         {
           folderId: resourceId,
           ownerId: user.id,
-          parentId: parentId,
+          parentId: parentId ?? null,
         },
         {
           onSuccess: () => {
@@ -331,7 +331,7 @@ function FolderPage() {
         {
           assessmentId: resourceId,
           ownerId: user.id,
-          folderId: actualFolderId,
+          folderId: actualFolderId ?? undefined,
         },
         {
           onSuccess: () => {
@@ -348,7 +348,7 @@ function FolderPage() {
         {
           templateId: resourceId,
           ownerId: user.id,
-          folderId: actualFolderId,
+          folderId: actualFolderId ?? undefined,
         },
         {
           onSuccess: () => {
@@ -457,7 +457,7 @@ function FolderPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => setShowCreateFolder(true)}>
-              <Folder className="h-4 w-4 mr-2" />
+              <FolderIcon className="h-4 w-4 mr-2" />
               New Folder
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setShowCreateAssessment(true)}>
@@ -475,7 +475,7 @@ function FolderPage() {
       {/* Resource Grid */}
       {allResources.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          <Folder className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <FolderIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p>This folder is empty</p>
           <p className="text-sm">Create a new folder, assessment, or template to get started</p>
         </div>
@@ -499,7 +499,7 @@ function FolderPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
                     {resource.resourceType === "folder" && (
-                      <Folder className="h-5 w-5 text-blue-500" />
+                      <FolderIcon className="h-5 w-5 text-blue-500" />
                     )}
                     {resource.resourceType === "assessment" && (
                       <FileText className="h-5 w-5 text-green-500" />
@@ -540,7 +540,7 @@ function FolderPage() {
                             resourceType: resource.resourceType,
                             resourceId: resource.id,
                             resourceName: resource.resourceType === "folder" ? resource.name : resource.title,
-                            currentFolderId: actualFolderId,
+                            currentFolderId: actualFolderId ?? undefined,
                           });
                         }}
                       >

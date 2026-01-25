@@ -10,4 +10,3 @@ export {
   useGenerateTemplatePreview,
   useGenerateFromTemplate,
 } from "./hooks/useQuestionTemplates";
-export type * from "./types";

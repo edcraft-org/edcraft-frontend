@@ -7,4 +7,3 @@ export {
   useUpdateQuestion,
   useDeleteQuestion,
 } from "./hooks/useQuestions";
-export type * from "./types";

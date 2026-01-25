@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Link2, Copy, AlertTriangle, Loader2 } from "lucide-react";
 import { useQuestionAssessments } from "../hooks/useQuestions";
-import type { Question } from "../types/question.types";
+import type { Question } from '@/types/frontend.types';
 
 interface LinkOrDuplicateModalProps {
   open: boolean;

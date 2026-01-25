@@ -28,7 +28,7 @@ import type {
   Question,
   MCQAdditionalData,
   ShortAnswerAdditionalData,
-} from "../types/question.types";
+} from '@/types/frontend.types';
 
 // Schema for the question form
 const questionFormSchema = z.object({
@@ -63,23 +63,23 @@ export function QuestionEditor({
   // Parse existing question data
   const existingOptions =
     question?.additional_data && "options" in question.additional_data
-      ? question.additional_data.options.map((v) => ({ value: v }))
+      ? (question.additional_data as unknown as MCQAdditionalData).options.map((v: string) => ({ value: v }))
       : [{ value: "" }, { value: "" }];
 
   const existingCorrectIndices =
     question?.additional_data && "correct_indices" in question.additional_data
-      ? question.additional_data.correct_indices
+      ? (question.additional_data as unknown as MCQAdditionalData).correct_indices
       : [];
 
   const existingAnswer =
     question?.additional_data && "answer" in question.additional_data
-      ? question.additional_data.answer
+      ? (question.additional_data as unknown as ShortAnswerAdditionalData).answer
       : "";
 
   const form = useForm<QuestionFormValues>({
     resolver: zodResolver(questionFormSchema),
     defaultValues: {
-      question_type: question?.question_type || "mcq",
+      question_type: (question?.question_type as "mcq" | "mrq" | "short_answer") || "mcq",
       question_text: question?.question_text || "",
       options: existingOptions,
       correct_indices: existingCorrectIndices,

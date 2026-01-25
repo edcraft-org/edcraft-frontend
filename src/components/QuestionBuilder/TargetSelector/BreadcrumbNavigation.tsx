@@ -1,4 +1,4 @@
-import type { ScopePathItem } from "../../../types/api.types";
+import type { ScopePathItem } from '@/types/frontend.types';
 import { getBreadcrumbDisplayName } from "../../../utils/scopePathUtils";
 
 interface BreadcrumbNavigationProps {

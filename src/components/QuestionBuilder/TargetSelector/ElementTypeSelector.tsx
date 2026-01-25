@@ -1,4 +1,4 @@
-import type { TargetElementType } from "../../../types/api.types";
+import type { TargetElementType } from '@/types/frontend.types';
 
 interface ElementTypeSelectorProps {
     availableTypes: TargetElementType[];

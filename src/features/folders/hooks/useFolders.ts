@@ -10,10 +10,10 @@ import {
   moveFolder,
 } from "../services/folder.service";
 import type {
-  CreateFolderRequest,
-  UpdateFolderRequest,
-  MoveFolderRequest,
-} from "../types/folder.types";
+  FolderCreate as CreateFolderRequest,
+  FolderUpdate as UpdateFolderRequest,
+  FolderMove as MoveFolderRequest,
+} from "@/generated";
 
 // Hook to create a folder
 export function useCreateFolder() {

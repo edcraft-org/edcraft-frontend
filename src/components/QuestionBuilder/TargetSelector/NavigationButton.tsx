@@ -1,4 +1,4 @@
-import type { TargetElementType, Modifier } from "../../../types/api.types";
+import type { TargetElementType, Modifier } from '@/types/frontend.types';
 import { ElementType, Modifier as ModifierEnum, isNavigationModifier } from "../../../constants";
 
 interface NavigationButtonProps {

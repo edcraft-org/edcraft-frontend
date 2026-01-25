@@ -15,9 +15,9 @@ import {
   type GenerateFromTemplateRequest,
 } from "../services/template.service";
 import type {
-  CreateQuestionTemplateRequest,
-  UpdateQuestionTemplateRequest,
-} from "../types/template.types";
+  QuestionTemplateCreate as CreateQuestionTemplateRequest,
+  QuestionTemplateUpdate as UpdateQuestionTemplateRequest,
+} from "@/generated";
 
 // Hook to fetch all question templates for a user
 export function useQuestionTemplates(ownerId: string | null) {

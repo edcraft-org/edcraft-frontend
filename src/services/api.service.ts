@@ -2,7 +2,7 @@ import type {
     FormSchema,
     GenerateQuestionRequest,
     GenerateQuestionResponse,
-} from "../types/api.types";
+} from "@/types/frontend.types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 

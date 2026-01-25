@@ -1,4 +1,5 @@
-import type { CodeTree, TargetElementType, ScopePathItem } from "../types/api.types";
+import type { CodeTree } from "@/generated";
+import type { TargetElementType, ScopePathItem } from "@/types/frontend.types";
 import { Modifier } from "../constants";
 
 /**

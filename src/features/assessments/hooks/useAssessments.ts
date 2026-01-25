@@ -14,14 +14,12 @@ import {
   reorderQuestions,
 } from "../services/assessment.service";
 import type {
-  CreateAssessmentRequest,
-  UpdateAssessmentRequest,
-} from "../types/assessment.types";
-import type {
-  AddQuestionToAssessmentRequest,
-  LinkQuestionRequest,
-  ReorderQuestionsRequest,
-} from "@/features/questions/types/question.types";
+  AssessmentCreate as CreateAssessmentRequest,
+  AssessmentUpdate as UpdateAssessmentRequest,
+  AssessmentInsertQuestion as AddQuestionToAssessmentRequest,
+  AssessmentLinkQuestion as LinkQuestionRequest,
+  AssessmentReorderQuestions as ReorderQuestionsRequest,
+} from "@/generated";
 
 // Hook to fetch all assessments for a user
 export function useAssessments(ownerId: string | null, folderId?: string) {
@@ -69,11 +67,10 @@ export function useUpdateAssessment() {
     mutationFn: ({
       assessmentId,
       data,
-      oldFolderId,
     }: {
       assessmentId: string;
       data: UpdateAssessmentRequest;
-      oldFolderId?: string | null;
+      _oldFolderId?: string | null;
     }) => updateAssessment(assessmentId, data),
     onSuccess: (updatedAssessment, variables) => {
       queryClient.invalidateQueries({
@@ -89,9 +86,9 @@ export function useUpdateAssessment() {
         });
       }
       // Invalidate old folder contents when assessment is moved
-      if (variables.oldFolderId && variables.oldFolderId !== updatedAssessment.folder_id) {
+      if (variables._oldFolderId && variables._oldFolderId !== updatedAssessment.folder_id) {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.folders.contents(variables.oldFolderId),
+          queryKey: queryKeys.folders.contents(variables._oldFolderId),
         });
       }
     },

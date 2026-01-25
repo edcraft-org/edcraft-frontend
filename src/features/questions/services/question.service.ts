@@ -2,10 +2,10 @@
 
 import { apiClient } from "@/shared/services/api-client";
 import type {
-  Question,
-  UpdateQuestionRequest,
-} from "../types/question.types";
-import type { Assessment } from "@/features/assessments/types/assessment.types";
+  QuestionResponse as Question,
+  QuestionUpdate as UpdateQuestionRequest,
+  AssessmentResponse as Assessment,
+} from "@/generated";
 
 // Get all questions for a user
 export async function getQuestions(

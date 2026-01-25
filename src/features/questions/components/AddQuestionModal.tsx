@@ -16,7 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Wand2, PenLine, Search, Loader2 } from "lucide-react";
 import { ROUTES } from "@/router/paths";
 import { useQuestions } from "../hooks/useQuestions";
-import type { Question } from "../types/question.types";
+import type { Question } from '@/types/frontend.types';
 
 type ModalView = "options" | "create" | "browse";
 

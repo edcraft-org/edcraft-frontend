@@ -5,7 +5,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +42,8 @@ import {
   LinkOrDuplicateModal,
   QuestionCard,
 } from "@/features/questions";
-import type { Question, OrderedQuestion } from "@/features/questions/types/question.types";
+import type { OrderedQuestion } from '@/types/frontend.types';
+import type { Question } from '@/types/frontend.types';
 
 function AssessmentPage() {
   const { assessmentId } = useParams<{ assessmentId: string }>();
@@ -213,7 +213,7 @@ function AssessmentPage() {
     );
   }
 
-  const sortedQuestions = [...assessment.questions].sort((a, b) => a.order - b.order);
+  const sortedQuestions = [...(assessment.questions ?? [])].sort((a, b) => a.order - b.order);
 
   return (
     <div className="p-6 space-y-6">

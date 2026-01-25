@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, ChevronRight, ChevronLeft, Check, Code2 } from "lucide-react";
-import type { OrderedQuestionTemplate } from "@/features/templates/types/template.types";
+import type { OrderedQuestionTemplate } from '@/types/frontend.types';
 
 interface InputDataEntry {
   templateId: string;

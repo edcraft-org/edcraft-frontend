@@ -2,7 +2,7 @@
 // Does not include question generation, only code analysis for target selection
 
 import { useState } from "react";
-import type { FormSchema } from "@/types/api.types";
+import type { CodeAnalysisResponse as FormSchema } from "@/generated";
 import { apiService } from "@/services/api.service";
 
 interface UseTemplateCodeAnalysisReturn {

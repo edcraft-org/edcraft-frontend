@@ -2,11 +2,11 @@
 
 import { apiClient } from "@/shared/services/api-client";
 import type {
-  Folder,
-  CreateFolderRequest,
-  UpdateFolderRequest,
-  MoveFolderRequest,
-} from "../types/folder.types";
+  FolderResponse as Folder,
+  FolderCreate as CreateFolderRequest,
+  FolderUpdate as UpdateFolderRequest,
+  FolderMove as MoveFolderRequest,
+} from "@/generated";
 
 // Create a new folder
 export async function createFolder(

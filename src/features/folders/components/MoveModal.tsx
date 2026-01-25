@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Folder, FolderOpen, ChevronRight } from "lucide-react";
 import { apiClient, queryKeys } from "@/shared/services";
 import { cn } from "@/lib/utils";
-import type { Folder as FolderType } from "../types/folder.types";
+import type { Folder as FolderType } from '@/types/frontend.types';
 
 interface MoveModalProps {
   open: boolean;
@@ -121,7 +121,7 @@ export function MoveModal({
   resourceType,
   resourceName,
   rootFolderId,
-  ownerId,
+  ownerId: _ownerId,
   currentFolderId,
   excludeFolderId,
 }: MoveModalProps) {

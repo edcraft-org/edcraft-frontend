@@ -6,7 +6,7 @@ import type {
     FormElement,
     OutputType,
     QuestionType,
-} from "../../types/api.types";
+} from '@/types/frontend.types';
 import { OutputType as OutputTypeEnum, QuestionType as QuestionTypeEnum, FormElementType } from "../../constants";
 import { TargetSelector } from "./TargetSelector";
 import { flattenTarget } from "../../utils/transformTarget";
@@ -106,7 +106,7 @@ export function QuestionForm({
                     required={element.is_required}
                 >
                     {element.options.map((option) => (
-                        <option key={option.id} value={option.value}>
+                        <option key={option.id} value={String(option.value)}>
                             {option.label}
                         </option>
                     ))}

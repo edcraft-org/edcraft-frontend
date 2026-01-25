@@ -6,7 +6,7 @@ import type {
     TargetSelection,
     ScopePathItem,
     Modifier,
-} from "../../../types/api.types";
+} from '@/types/frontend.types';
 import { ElementType, Modifier as ModifierEnum, isSelectionModifier } from "../../../constants";
 import {
     findSubtreeInCodeTree,

@@ -8,7 +8,7 @@ import type {
     CodeTree,
     CodeInfo,
     TargetSelection,
-} from "../../../types/api.types";
+} from '@/types/frontend.types';
 import { ElementType } from "../../../constants";
 
 /**

@@ -2,7 +2,7 @@ import type {
     TargetElementType,
     LoopElement,
     BranchElement,
-} from "../../../types/api.types";
+} from '@/types/frontend.types';
 import { ElementType, getElementTypeLabel } from "../../../constants";
 
 type ElementItem = LoopElement | BranchElement | { name: string };
