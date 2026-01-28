@@ -15,6 +15,10 @@ dist-ssr
 # Environment files
 .env
 
+# Orval generated files
+src/api/edcraftClient.ts
+src/api/models/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

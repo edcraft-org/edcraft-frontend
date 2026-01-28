@@ -19,5 +19,19 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Allow exports alongside components in specific files
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowExportNames: ['ROUTES', 'router', 'queryClient', 'queryKeys'] },
+      ],
+    },
+  },
+  // Ignore react-refresh warnings in shadcn/ui components
+  {
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
   },
 ])

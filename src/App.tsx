@@ -1,7 +1,14 @@
-import { QuestionGeneratorPage } from "./components/QuestionGenerator/QuestionGeneratorPage";
+import { RouterProvider } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { router } from "@/router";
+import { queryClient } from "@/api";
 
 function App() {
-    return <QuestionGeneratorPage />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  );
 }
 
 export default App;
