@@ -25,7 +25,6 @@ import {
 import { Plus, Trash2, Check } from "lucide-react";
 import type {
     MultipleChoiceAdditionalData,
-    QuestionType,
     ShortAnswerAdditionalData,
 } from "@/types/frontend.types";
 import type { QuestionResponse } from "@/api/models";
@@ -93,9 +92,9 @@ type QuestionFormValues = z.infer<typeof questionFormSchema>;
 interface QuestionEditorProps {
     question?: QuestionResponse;
     onSave: (data: {
-        question_type: QuestionType;
-        question_text: string;
-        additional_data: MultipleChoiceAdditionalData | ShortAnswerAdditionalData;
+        question_type: QuestionResponse["question_type"];
+        question_text: QuestionResponse["question_text"];
+        additional_data: QuestionResponse["additional_data"];
     }) => void;
     onCancel?: () => void;
     isLoading?: boolean;
@@ -163,7 +162,7 @@ export function QuestionEditor({ question, onSave, onCancel, isLoading }: Questi
         onSave({
             question_type: values.question_type,
             question_text: values.question_text,
-            additional_data,
+            additional_data: additional_data as unknown as QuestionResponse["additional_data"],
         });
     };
 

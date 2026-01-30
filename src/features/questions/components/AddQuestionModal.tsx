@@ -12,14 +12,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Wand2, PenLine, Search } from "lucide-react";
 import { ROUTES } from "@/router/paths";
-import type { CreateQuestionRequest } from "@/api/models";
+import type { QuestionResponse } from "@/api/models";
 import { QuestionBrowser } from "./QuestionBrowser";
 import { QuestionEditor } from "./QuestionEditor";
-import type {
-    MultipleChoiceAdditionalData,
-    ShortAnswerAdditionalData,
-    QuestionType,
-} from "@/types/frontend.types";
 
 type ModalView = "options" | "browse" | "create";
 
@@ -29,11 +24,11 @@ interface AddQuestionModalProps {
     assessmentId: string;
     ownerId: string;
     onSaveQuestion: (data: {
-        question_type: QuestionType;
-        question_text: string;
-        additional_data: MultipleChoiceAdditionalData | ShortAnswerAdditionalData;
+        question_type: QuestionResponse["question_type"];
+        question_text: QuestionResponse["question_text"];
+        additional_data: QuestionResponse["additional_data"];
     }) => void;
-    onSelectExisting: (question: CreateQuestionRequest) => void;
+    onSelectExisting: (question: QuestionResponse) => void;
     isSaving?: boolean;
 }
 
@@ -61,20 +56,6 @@ export function AddQuestionModal({
 
     const handleCreateManually = () => {
         setView("create");
-    };
-
-    const handleSelectQuestion = (question: CreateQuestionRequest) => {
-        onSelectExisting(question);
-        handleClose();
-    };
-
-    const handleSaveQuestion = (data: {
-        question_type: QuestionType;
-        question_text: string;
-        additional_data: MultipleChoiceAdditionalData | ShortAnswerAdditionalData;
-    }) => {
-        onSaveQuestion(data);
-        handleClose();
     };
 
     return (
@@ -150,14 +131,14 @@ export function AddQuestionModal({
                 {view === "browse" && (
                     <QuestionBrowser
                         ownerId={ownerId}
-                        onSelectQuestion={handleSelectQuestion}
+                        onSelectQuestion={onSelectExisting}
                         onBack={() => setView("options")}
                     />
                 )}
 
                 {view === "create" && (
                     <QuestionEditor
-                        onSave={handleSaveQuestion}
+                        onSave={onSaveQuestion}
                         onCancel={() => setView("options")}
                         isLoading={isSaving}
                     />

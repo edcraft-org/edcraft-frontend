@@ -7,11 +7,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { useQuestions } from "../useQuestions";
-import type { CreateQuestionRequest } from "@/api/models";
+import type { QuestionResponse } from "@/api/models";
 
 interface QuestionBrowserProps {
     ownerId: string;
-    onSelectQuestion: (question: CreateQuestionRequest) => void;
+    onSelectQuestion: (question: QuestionResponse) => void;
     onBack: () => void;
 }
 

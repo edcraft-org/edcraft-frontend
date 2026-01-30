@@ -17,7 +17,7 @@ export const queryKeys = {
   // Assessment queries
   assessments: {
     all: (ownerId: string) => ["assessments", ownerId] as const,
-    byFolder: (ownerId: string, folderId: string | null) =>
+    byFolder: (ownerId: string, folderId: string) =>
       ["assessments", ownerId, folderId] as const,
     detail: (id: string) => ["assessments", "detail", id] as const,
   },
