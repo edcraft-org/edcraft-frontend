@@ -1,6 +1,5 @@
 import type { QuestionResponse } from "@/api/models";
 import { QuestionCard } from "@/features/questions";
-import { QuestionActionsMenu } from "./QuestionActionsMenu";
 
 interface QuestionsListProps {
     questions: QuestionResponse[];
@@ -27,15 +26,14 @@ export function QuestionsList({
     return (
         <div className="space-y-4">
             {questions.map((question, index) => (
-                <div key={question.id} className="relative group">
-                    <QuestionActionsMenu
-                        question={question}
-                        onEdit={onEdit}
-                        onDuplicate={onDuplicate}
-                        onRemove={onRemove}
-                    />
-                    <QuestionCard question={question} questionNumber={index + 1} />
-                </div>
+                <QuestionCard
+                    key={question.id}
+                    question={question}
+                    questionNumber={index + 1}
+                    onEdit={onEdit}
+                    onDuplicate={onDuplicate}
+                    onRemove={onRemove}
+                />
             ))}
         </div>
     );

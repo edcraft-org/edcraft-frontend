@@ -6,13 +6,23 @@ import type {
     MultipleChoiceAdditionalData,
     ShortAnswerAdditionalData,
 } from "@/types/frontend.types";
+import { QuestionActionsMenu } from "./QuestionActionsMenu";
 
 interface QuestionCardProps {
     question: QuestionResponse;
     questionNumber?: number;
+    onEdit: (question: QuestionResponse) => void;
+    onDuplicate: (question: QuestionResponse) => void;
+    onRemove: (question: QuestionResponse) => void;
 }
 
-export function QuestionCard({ question, questionNumber }: QuestionCardProps) {
+export function QuestionCard({
+    question,
+    questionNumber,
+    onEdit,
+    onDuplicate,
+    onRemove,
+}: QuestionCardProps) {
     const [showAnswer, setShowAnswer] = useState(false);
 
     const { question_text, question_type, additional_data } = question;
@@ -38,14 +48,22 @@ export function QuestionCard({ question, questionNumber }: QuestionCardProps) {
     };
 
     return (
-        <Card className="w-full">
+        <Card className="relative w-full group">
             <CardHeader>
-                {questionNumber !== undefined && (
-                    <div className="text-sm font-medium text-muted-foreground mb-1">
-                        Question {questionNumber}
-                    </div>
-                )}
-                <CardTitle className="text-base font-normal">{question_text}</CardTitle>
+                <div className="flex items-start justify-between">
+                    {questionNumber !== undefined && (
+                        <div className="text-sm font-medium text-muted-foreground mb-1">
+                            Question {questionNumber}
+                        </div>
+                    )}
+                    <CardTitle className="text-base font-normal">{question_text}</CardTitle>
+                </div>
+                <QuestionActionsMenu
+                    question={question}
+                    onEdit={onEdit}
+                    onDuplicate={onDuplicate}
+                    onRemove={onRemove}
+                />
             </CardHeader>
             <CardContent className="space-y-4">
                 {/* Question Type Badge */}
