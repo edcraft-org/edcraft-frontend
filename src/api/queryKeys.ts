@@ -32,7 +32,7 @@ export const queryKeys = {
   // Assessment template queries
   assessmentTemplates: {
     all: (ownerId: string) => ["assessment-templates", ownerId] as const,
-    byFolder: (ownerId: string, folderId: string | null) =>
+    byFolder: (ownerId: string, folderId: string) =>
       ["assessment-templates", ownerId, folderId] as const,
     detail: (id: string) => ["assessment-templates", "detail", id] as const,
   },
