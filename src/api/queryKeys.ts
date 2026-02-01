@@ -23,6 +23,7 @@ export const queryKeys = {
     byFolder: (ownerId: string, folderId: string) =>
       ["assessments", ownerId, folderId] as const,
     detail: (id: string) => ["assessments", "detail", id] as const,
+    allDetails: () => ["assessments", "detail"] as const,
   },
 
   // Question queries

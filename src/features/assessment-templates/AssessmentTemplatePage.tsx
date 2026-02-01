@@ -160,7 +160,7 @@ function AssessmentTemplatePage() {
 
     const handleCreateQuestion = (template: QuestionTemplateResponse) => {
         setSelectedTemplate(template);
-        toast.info("Question creation from template will be available soon");
+        setShowCreateFromTemplate(true);
     };
 
     const handleEditTemplate = (template: QuestionTemplateResponse) => {

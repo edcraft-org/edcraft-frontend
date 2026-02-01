@@ -22,28 +22,30 @@ export function QuestionActionsMenu({
     onRemove,
 }: QuestionActionsMenuProps) {
     return (
-        <div className="absolute -right-2 top-2">
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="h-4 w-4" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(question)}>
-                        Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDuplicate(question)}>
-                        Duplicate
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => onRemove(question)}
-                    >
-                        Remove
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-        </div>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 data-[state=open]:bg-accent"
+                >
+                    <MoreVertical className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onEdit(question)}>
+                    Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onDuplicate(question)}>
+                    Duplicate
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={() => onRemove(question)}
+                >
+                    Remove
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }

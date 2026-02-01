@@ -49,13 +49,20 @@ export function QuestionCard({
 
     return (
         <Card className="relative w-full group">
-            <CardHeader>
-                <div className="flex items-start justify-between">
-                    {questionNumber !== undefined && (
-                        <div className="text-sm font-medium text-muted-foreground mb-1">
-                            Question {questionNumber}
-                        </div>
-                    )}
+            <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                <div className="flex flex-col items-start flex-1">
+                    <div className="flex items-center space-x-2 mb-1">
+                        {questionNumber !== undefined && (
+                            <div className="text-sm font-medium text-muted-foreground mb-1">
+                                Question {questionNumber}
+                            </div>
+                        )}
+                        {/* Question Type Badge */}
+                        <span className="text-xs px-2 py-1 bg-muted rounded">
+                            {question_type.toUpperCase()}
+                        </span>
+                    </div>
+
                     <CardTitle className="text-base font-normal">{question_text}</CardTitle>
                 </div>
                 <QuestionActionsMenu
@@ -66,13 +73,6 @@ export function QuestionCard({
                 />
             </CardHeader>
             <CardContent className="space-y-4">
-                {/* Question Type Badge */}
-                <div>
-                    <span className="text-xs px-2 py-1 bg-muted rounded">
-                        {question_type.toUpperCase()}
-                    </span>
-                </div>
-
                 {/* Options for MCQ/MRQ */}
                 {hasOptions && (
                     <div className="space-y-2">

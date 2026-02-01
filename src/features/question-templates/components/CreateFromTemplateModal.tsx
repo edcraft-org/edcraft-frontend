@@ -14,8 +14,8 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Wand2, Code2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Wand2 } from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { useGenerateFromTemplate } from "../useQuestionTemplates";
 import { QuestionDisplay } from "@/features/question-builder/components/QuestionDisplay";
@@ -27,6 +27,7 @@ import {
     useCreateAssessment,
 } from "@/features/assessments/useAssessments";
 import type { Question, QuestionTemplateResponse } from "@/api/models";
+import type { QuestionTemplateConfig } from "../types";
 
 // Schema for the form
 const templateFormSchema = z.object({
@@ -54,6 +55,8 @@ export function CreateFromTemplateModal({
     const generateQuestion = useGenerateFromTemplate();
     const createAssessment = useCreateAssessment();
     const addQuestion = useAddQuestionToAssessment();
+
+    const template_config = template?.template_config as unknown as QuestionTemplateConfig;
 
     // Form setup
     const form = useForm<TemplateFormValues>({
@@ -98,14 +101,14 @@ export function CreateFromTemplateModal({
                 onError: (error) => {
                     toast.error(`Failed to generate question: ${error.message}`);
                 },
-            }
+            },
         );
     };
 
     const handleSaveToNewAssessment = (
         title: string,
         description: string | undefined,
-        folderId: string
+        folderId: string,
     ) => {
         if (!generatedQuestion || !user || !template) return;
 
@@ -123,7 +126,7 @@ export function CreateFromTemplateModal({
                 onError: (error) => {
                     toast.error(`Failed to create assessment: ${error.message}`);
                 },
-            }
+            },
         );
     };
 
@@ -156,7 +159,7 @@ export function CreateFromTemplateModal({
                 onError: (error) => {
                     toast.error(`Failed to add question: ${error.message}`);
                 },
-            }
+            },
         );
     };
 
@@ -175,23 +178,49 @@ export function CreateFromTemplateModal({
 
                     <Form {...form}>
                         <div className="space-y-4">
-                            {/* Template Info */}
+                            {/* Template Config Summary */}
                             <Card>
-                                <CardHeader className="pb-2">
+                                <CardHeader>
                                     <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                        <Code2 className="h-4 w-4" />
-                                        Template: {template.question_text}
+                                        <p className="text-sm">{template.question_text}</p>
                                     </CardTitle>
+                                    <CardDescription>{template.description}</CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm text-muted-foreground">
-                                        Type: {template.question_type.toUpperCase()}
-                                    </p>
-                                    {template.description && (
-                                        <p className="text-sm text-muted-foreground mt-1">
-                                            {template.description}
-                                        </p>
-                                    )}
+                                <CardContent className="space-y-2">
+                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                        <div>
+                                            <span className="text-muted-foreground">
+                                                Entry Function:
+                                            </span>
+                                            <span className="ml-2 font-mono">
+                                                {template_config.entry_function as string}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span className="text-muted-foreground">
+                                                Output Type:
+                                            </span>
+                                            <span className="ml-2">
+                                                {template_config.question_spec.output_type}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span className="text-muted-foreground">
+                                                Question Type:
+                                            </span>
+                                            <span className="ml-2">
+                                                {template_config.question_spec.question_type}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span className="text-muted-foreground">
+                                                Distractors:
+                                            </span>
+                                            <span className="ml-2">
+                                                {template_config.generation_options.num_distractors}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </CardContent>
                             </Card>
 
@@ -221,10 +250,7 @@ export function CreateFromTemplateModal({
                             Cancel
                         </Button>
                         {!generatedQuestion ? (
-                            <Button
-                                onClick={handleGenerate}
-                                disabled={generateQuestion.isPending}
-                            >
+                            <Button onClick={handleGenerate} disabled={generateQuestion.isPending}>
                                 {generateQuestion.isPending ? (
                                     <>
                                         <Loader2 className="h-4 w-4 animate-spin mr-2" />

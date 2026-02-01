@@ -2,7 +2,6 @@
 
 import {
     AlertDialog,
-    AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
     AlertDialogDescription,
@@ -72,7 +71,11 @@ export function LinkOrDuplicateModal({
                             ) : null}
 
                             <div className="space-y-3 pt-2">
-                                <div className="flex items-start gap-3 p-3 rounded-md border">
+                                <button
+                                    onClick={onLink}
+                                    disabled={isLoading}
+                                    className="w-full flex items-start gap-3 p-3 rounded-md border text-left hover:bg-accent hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
                                     <Link2 className="h-5 w-5 mt-0.5 text-blue-500" />
                                     <div>
                                         <div className="font-medium text-sm">Link</div>
@@ -83,9 +86,13 @@ export function LinkOrDuplicateModal({
                                                 " Best for keeping questions synchronized."}
                                         </p>
                                     </div>
-                                </div>
+                                </button>
 
-                                <div className="flex items-start gap-3 p-3 rounded-md border">
+                                <button
+                                    onClick={onDuplicate}
+                                    disabled={isLoading}
+                                    className="w-full flex items-start gap-3 p-3 rounded-md border text-left hover:bg-accent hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
                                     <Copy className="h-5 w-5 mt-0.5 text-green-500" />
                                     <div>
                                         <div className="font-medium text-sm">Duplicate</div>
@@ -95,42 +102,13 @@ export function LinkOrDuplicateModal({
                                             {usageCount > 0 && " Best for making variations."}
                                         </p>
                                     </div>
-                                </div>
+                                </button>
                             </div>
                         </div>
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                        onClick={(e) => {
-                            e.preventDefault();
-                            onDuplicate();
-                        }}
-                        disabled={isLoading}
-                        className="bg-green-600 hover:bg-green-700"
-                    >
-                        {isLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        ) : (
-                            <Copy className="h-4 w-4 mr-2" />
-                        )}
-                        Duplicate
-                    </AlertDialogAction>
-                    <AlertDialogAction
-                        onClick={(e) => {
-                            e.preventDefault();
-                            onLink();
-                        }}
-                        disabled={isLoading}
-                    >
-                        {isLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        ) : (
-                            <Link2 className="h-4 w-4 mr-2" />
-                        )}
-                        Link
-                    </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

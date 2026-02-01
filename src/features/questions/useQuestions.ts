@@ -55,9 +55,12 @@ export function useUpdateQuestion() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.questions.all(updatedQuestion.owner_id),
             });
-            // Invalidate assessments owned by the same owner as these assessments may include the updated question
+            // Invalidate all assessment lists and details as they may include the updated question
             queryClient.invalidateQueries({
                 queryKey: queryKeys.assessments.all(updatedQuestion.owner_id),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.assessments.allDetails(),
             });
         },
     });
@@ -74,9 +77,12 @@ export function useDeleteQuestion() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.questions.all(variables.ownerId),
             });
-            // Invalidate assessments owned by the same owner as these assessments may include the updated question
+            // Invalidate all assessment lists and details as they may include the deleted question
             queryClient.invalidateQueries({
                 queryKey: queryKeys.assessments.all(variables.ownerId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.assessments.allDetails(),
             });
         },
     });

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFolderStore } from "@/shared/stores/folder.store";
+import { useUserStore } from "@/shared/stores/user.store";
 import { useFolderPath, useFolders } from "../useFolders";
 import { TreeSkeleton } from "@/shared/components/LoadingSkeleton";
 import { ROUTES } from "@/router/paths";
@@ -111,8 +112,12 @@ function FolderNode({ folder, level, currentFolderId, onNavigate }: FolderNodePr
 
 export function FolderTree() {
     const navigate = useNavigate();
-    const { folderId } = useParams();
+    const { folderId: rawFolderId } = useParams();
     const { setCurrentFolderId, addExpandedFolders } = useFolderStore();
+    const { rootFolderId } = useUserStore();
+
+    const isRootPath = rawFolderId === "root";
+    const folderId = isRootPath ? (rootFolderId ?? undefined) : rawFolderId;
 
     const { data: pathResponse, isLoading, isError } = useFolderPath(folderId);
     const path = pathResponse?.path;

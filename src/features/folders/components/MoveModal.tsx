@@ -101,7 +101,7 @@ export function MoveModal({
 
     // Get current folder (last item in path)
     const currentFolder = path[path.length - 1];
-    const isAtRoot = currentFolder.parent_id === null;
+    const isAtRoot = currentFolder?.parent_id === null;
 
     // Check if current path includes the folder being moved (prevents circular references)
     const isCircularReference =

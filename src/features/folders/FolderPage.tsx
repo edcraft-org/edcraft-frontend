@@ -40,9 +40,13 @@ import {
 } from "@/features/assessment-templates/useAssessmentTemplates";
 
 function FolderPage() {
-    const { folderId } = useParams<{ folderId: string }>();
+    const { folderId: rawFolderId } = useParams<{ folderId: string }>();
     const navigate = useNavigate();
-    const { user, hasHydrated } = useUserStore();
+    const { user, hasHydrated, rootFolderId } = useUserStore();
+
+    const isRootPath = rawFolderId === "root";
+    const folderId = isRootPath ? (rootFolderId ?? undefined) : rawFolderId;
+    const isWaitingForRootFolder = isRootPath && !rootFolderId;
 
     // Modal state
     const [showCreateFolder, setShowCreateFolder] = useState(false);
@@ -353,7 +357,7 @@ function FolderPage() {
         );
     }
 
-    if (contentsLoading) {
+    if (isWaitingForRootFolder || contentsLoading) {
         return <PageSkeleton />;
     }
 
