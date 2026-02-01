@@ -1,9 +1,5 @@
-import type {
-    TargetElementType,
-    LoopElement,
-    BranchElement,
-} from "../../../types/api.types";
-import { ElementType, getElementTypeLabel } from "../../../constants";
+import type { BranchElement, LoopElement, TargetElementType } from "@/api/models";
+import { ElementType, getElementTypeLabel } from "@/constants";
 
 type ElementItem = LoopElement | BranchElement | { name: string };
 

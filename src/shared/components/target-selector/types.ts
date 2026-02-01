@@ -8,8 +8,8 @@ import type {
     CodeTree,
     CodeInfo,
     TargetSelection,
-} from "../../../types/api.types";
-import { ElementType } from "../../../constants";
+} from '@/types/frontend.types';
+import { ElementType } from "../../../../constants";
 
 /**
  * Discriminated union for available elements in the selection list

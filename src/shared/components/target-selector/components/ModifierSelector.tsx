@@ -1,5 +1,5 @@
-import type { Modifier } from "../../../types/api.types";
-import { getModifierLabel } from "../../../constants";
+import { getModifierLabel } from '@/constants';
+import type { Modifier } from '@/types/frontend.types';
 
 interface ModifierSelectorProps {
     availableModifiers: string[];

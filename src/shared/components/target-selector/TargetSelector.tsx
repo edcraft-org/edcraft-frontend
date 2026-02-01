@@ -1,25 +1,23 @@
 import { useState, useMemo, useCallback } from "react";
 import type {
-    CodeInfo,
-    CodeTree,
-    TargetElementType,
     TargetSelection,
     ScopePathItem,
     Modifier,
-} from "../../../types/api.types";
-import { ElementType, Modifier as ModifierEnum, isSelectionModifier } from "../../../constants";
+} from '@/types/frontend.types';
+import { ElementType, Modifier as ModifierEnum, isSelectionModifier } from "@/constants";
 import {
     findSubtreeInCodeTree,
     reconstructTreeFromPath,
     getLoopInIterationScope,
-} from "../../../utils/codeTreeUtils";
-import { createScopePathItem } from "../../../utils/scopePathUtils";
-import { BreadcrumbNavigation } from "./BreadcrumbNavigation";
-import { ElementTypeSelector } from "./ElementTypeSelector";
-import { FunctionSelector } from "./FunctionSelector";
-import { ElementList } from "./ElementList";
-import { ModifierSelector } from "./ModifierSelector";
-import { NavigationButton } from "./NavigationButton";
+} from "./utils/codeTreeUtils";
+import { createScopePathItem } from "./utils/scopePathUtils";
+import { BreadcrumbNavigation } from "./components/BreadcrumbNavigation";
+import { ElementTypeSelector } from "./components/ElementTypeSelector";
+import { FunctionSelector } from "./components/FunctionSelector";
+import { ElementList } from "./components/ElementList";
+import { ModifierSelector } from "./components/ModifierSelector";
+import { NavigationButton } from "./components/NavigationButton";
+import type { CodeInfo, CodeTree, TargetElementType } from "@/api/models";
 
 interface TargetSelectorProps {
     codeInfo: CodeInfo;
@@ -53,7 +51,7 @@ interface SelectionState {
     } | null;
 }
 
-export function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps) {
+export default function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps) {
     const [selectionState, setSelectionState] = useState<SelectionState>({
         type: null,
         elementId: null,

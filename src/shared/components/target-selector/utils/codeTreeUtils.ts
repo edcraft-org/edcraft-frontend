@@ -1,5 +1,6 @@
-import type { CodeTree, TargetElementType, ScopePathItem } from "../types/api.types";
-import { Modifier } from "../constants";
+import type { CodeTree, TargetElementType } from "@/api/models";
+import { Modifier } from "@/constants";
+import type { ScopePathItem } from "@/types/frontend.types";
 
 /**
  * Performs breadth-first search to find a subtree with the specified element

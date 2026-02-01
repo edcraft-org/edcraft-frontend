@@ -1,4 +1,4 @@
-import type { CodeInfo } from "../../../types/api.types";
+import type { CodeInfo } from "@/api/models";
 import { useMemo } from "react";
 
 interface FunctionSelectorProps {

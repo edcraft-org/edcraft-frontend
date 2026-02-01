@@ -1,9 +1,6 @@
-import type {
-    ScopePathItem,
-    TargetElementType,
-    Modifier,
-} from "../types/api.types";
-import { ElementType, Modifier as ModifierEnum, isNavigationModifier } from "../constants";
+import type { TargetElementType } from "@/api/models";
+import { ElementType, Modifier as ModifierEnum, isNavigationModifier } from "@/constants";
+import type { ScopePathItem, Modifier } from "@/types/frontend.types";
 
 /**
  * Metadata for a selected element
@@ -27,12 +24,11 @@ export function createScopePathItem(
     type: TargetElementType,
     elementData: SelectedElementData,
     elementId: number,
-    modifier: Modifier | null
+    modifier: Modifier | null,
 ): ScopePathItem {
     // Determine if the modifier should be included in the scope path
     // Only navigation modifiers (loop_iterations, branch_true, branch_false) are included
-    const navigationModifier =
-        modifier && isNavigationModifier(modifier) ? modifier : undefined;
+    const navigationModifier = modifier && isNavigationModifier(modifier) ? modifier : undefined;
 
     // For branches, use condition as the name
     if (type === ElementType.Branch) {
