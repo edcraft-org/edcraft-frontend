@@ -1,1 +1,1 @@
-export { default as TargetSelector } from "./TargetSelector";
+export { default as TargetSelectorCard } from "./TargetSelector";
