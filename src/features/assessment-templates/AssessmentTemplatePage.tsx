@@ -39,16 +39,21 @@ function AssessmentTemplatePage() {
     const [showCreateFromTemplate, setShowCreateFromTemplate] = useState(false);
     const [showInstantiateDialog, setShowInstantiateDialog] = useState(false);
 
-    if (!templateId) {
-        return <div className="p-6 text-center text-muted-foreground">Template ID is missing</div>;
-    }
-
-    const { data: assessmentTemplate, isLoading } = useAssessmentTemplate(templateId);
+    const { data: assessmentTemplate, isLoading } = useAssessmentTemplate(templateId || "");
 
     const addQuestionTemplate = useAddQuestionTemplateToAssessmentTemplate();
     const linkQuestionTemplate = useLinkQuestionTemplateToAssessmentTemplate();
     const removeQuestionTemplate = useRemoveQuestionTemplateFromAssessmentTemplate();
     const generateAssessment = useGenerateAssessmentFromTemplate();
+
+    const sortedTemplates = useMemo(
+        () => [...(assessmentTemplate?.question_templates ?? [])].sort((a, b) => a.order - b.order),
+        [assessmentTemplate?.question_templates],
+    );
+
+    if (!templateId) {
+        return <div className="p-6 text-center text-muted-foreground">Template ID is missing</div>;
+    }
 
     // Validation Helpers
     const validateSession = (): { templateId: string; userId: string } | null => {
@@ -268,11 +273,6 @@ function AssessmentTemplatePage() {
             </div>
         );
     }
-
-    const sortedTemplates = useMemo(
-        () => [...(assessmentTemplate.question_templates ?? [])].sort((a, b) => a.order - b.order),
-        [assessmentTemplate.question_templates],
-    );
 
     return (
         <div className="p-6 space-y-6">

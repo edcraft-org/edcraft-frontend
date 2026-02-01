@@ -1,15 +1,6 @@
-import type {
-    TargetElementType,
-    ScopePathItem,
-    FunctionElement,
-    LoopElement,
-    BranchElement,
-    Modifier,
-    CodeTree,
-    CodeInfo,
-    TargetSelection,
-} from '@/types/frontend.types';
-import { ElementType } from "../../../../constants";
+import type { BranchElement, CodeInfo, CodeTree, FunctionElement, LoopElement, TargetElementType } from "@/api/models";
+import type { ElementType, Modifier } from "@/constants";
+import type { ScopePathItem, TargetSelection } from "@/types/frontend.types";
 
 /**
  * Discriminated union for available elements in the selection list

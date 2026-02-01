@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TargetSelector } from "@/shared/components/target-selector";
 import type { CodeInfo } from "@/api/models";
 import type { TargetSelection } from "@/types/frontend.types";
+import TargetSelector from "./TargetSelector";
 
 interface TargetSelectionCardProps {
     codeInfo: CodeInfo;

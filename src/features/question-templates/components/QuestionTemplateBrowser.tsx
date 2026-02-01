@@ -7,11 +7,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { useQuestionTemplates } from "../useQuestionTemplates";
-import type { QuestionTemplateSummaryResponse } from "@/api/models";
+import { getQuestionTemplate } from "../question-template.service";
+import type { QuestionTemplateResponse } from "@/api/models";
+import { toast } from "sonner";
 
 interface QuestionTemplateBrowserProps {
     ownerId: string;
-    onSelectTemplate: (template: QuestionTemplateSummaryResponse) => void;
+    onSelectTemplate: (template: QuestionTemplateResponse) => void;
     onBack: () => void;
 }
 
@@ -21,6 +23,7 @@ export function QuestionTemplateBrowser({
     onBack,
 }: QuestionTemplateBrowserProps) {
     const [searchQuery, setSearchQuery] = useState("");
+    const [loadingTemplateId, setLoadingTemplateId] = useState<string | null>(null);
     const { data: templates, isLoading } = useQuestionTemplates(ownerId);
 
     const filteredTemplates =
@@ -29,6 +32,19 @@ export function QuestionTemplateBrowser({
                 t.question_text.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 t.description?.toLowerCase().includes(searchQuery.toLowerCase()),
         ) || [];
+
+    const handleSelectTemplate = async (templateId: string) => {
+        setLoadingTemplateId(templateId);
+        try {
+            const fullTemplate = await getQuestionTemplate(templateId);
+            onSelectTemplate(fullTemplate);
+        } catch (error) {
+            toast.error("Failed to load template details");
+            console.error("Error fetching template:", error);
+        } finally {
+            setLoadingTemplateId(null);
+        }
+    };
 
     return (
         <div className="space-y-4">
@@ -61,7 +77,7 @@ export function QuestionTemplateBrowser({
                             <Card
                                 key={template.id}
                                 className="cursor-pointer hover:bg-muted/50 transition-colors"
-                                onClick={() => onSelectTemplate(template)}
+                                onClick={() => handleSelectTemplate(template.id)}
                             >
                                 <CardContent className="p-3">
                                     <div className="flex items-start justify-between gap-2">
@@ -75,9 +91,14 @@ export function QuestionTemplateBrowser({
                                                 </p>
                                             )}
                                         </div>
-                                        <span className="text-xs px-2 py-1 bg-muted rounded shrink-0">
-                                            {template.question_type.toUpperCase()}
-                                        </span>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            {loadingTemplateId === template.id && (
+                                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                            )}
+                                            <span className="text-xs px-2 py-1 bg-muted rounded">
+                                                {template.question_type.toUpperCase()}
+                                            </span>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>

@@ -33,18 +33,23 @@ function AssessmentPage() {
     const [showRemoveDialog, setShowRemoveDialog] = useState(false);
     const [selectedQuestion, setSelectedQuestion] = useState<QuestionResponse | null>(null);
 
-    if (!assessmentId) {
-        return (
-            <div className="p-6 text-center text-muted-foreground">Assessment ID is missing</div>
-        );
-    }
-
-    const { data: assessment, isLoading } = useAssessment(assessmentId);
+    const { data: assessment, isLoading } = useAssessment(assessmentId || "");
 
     const addQuestion = useAddQuestionToAssessment();
     const linkQuestion = useLinkQuestionToAssessment();
     const removeQuestion = useRemoveQuestionFromAssessment();
     const updateQuestion = useUpdateQuestion();
+
+    const sortedQuestions = useMemo(
+        () => [...(assessment?.questions ?? [])].sort((a, b) => a.order - b.order),
+        [assessment?.questions],
+    );
+
+    if (!assessmentId) {
+        return (
+            <div className="p-6 text-center text-muted-foreground">Assessment ID is missing</div>
+        );
+    }
 
     // Validation Helpers
     const validateSession = (): { assessmentId: string; userId: string } | null => {
@@ -269,11 +274,6 @@ function AssessmentPage() {
     if (!assessment) {
         return <div className="p-6 text-center text-muted-foreground">Assessment not found</div>;
     }
-
-    const sortedQuestions = useMemo(
-        () => [...(assessment.questions ?? [])].sort((a, b) => a.order - b.order),
-        [assessment.questions],
-    );
 
     return (
         <div className="p-6 space-y-6">

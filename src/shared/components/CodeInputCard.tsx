@@ -8,10 +8,10 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Loader2, Code2, Search } from "lucide-react";
-import type { Control } from "react-hook-form";
+import type { Control, FieldValues, Path } from "react-hook-form";
 
-interface CodeInputCardProps {
-    control: Control<any>;
+interface CodeInputCardProps<T extends FieldValues = FieldValues> {
+    control: Control<T>;
     code: string;
     onCodeChange: (code: string) => void;
     onAnalyseCode: () => void;
@@ -19,14 +19,14 @@ interface CodeInputCardProps {
     analysisError?: string | null;
 }
 
-export function CodeInputCard({
+export function CodeInputCard<T extends FieldValues = FieldValues>({
     control,
     code,
     onCodeChange,
     onAnalyseCode,
     isAnalysing,
     analysisError,
-}: CodeInputCardProps) {
+}: CodeInputCardProps<T>) {
     return (
         <Card>
             <CardHeader>
@@ -38,7 +38,7 @@ export function CodeInputCard({
             <CardContent className="space-y-4">
                 <FormField
                     control={control}
-                    name="code"
+                    name={"code" as Path<T>}
                     render={({ field }) => (
                         <FormItem>
                             <FormControl>

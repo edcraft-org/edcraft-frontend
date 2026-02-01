@@ -85,7 +85,6 @@ function QuestionBuilderPage() {
     const code = form.watch("code");
     const entryFunction = form.watch("entryFunction");
     const questionType = form.watch("questionType");
-    const inputDataJson = form.watch("inputDataJson");
 
     const handleAnalyseCode = () => {
         if (analyseCode.isPending) return;

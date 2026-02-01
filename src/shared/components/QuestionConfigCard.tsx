@@ -8,17 +8,17 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import type { Control } from "react-hook-form";
+import type { Control, FieldValues, Path } from "react-hook-form";
 import type { CodeInfo } from "@/api/models";
 import type { QuestionType } from "@/constants";
 
-interface QuestionConfigCardProps {
-    control: Control<any>;
+interface QuestionConfigCardProps<T extends FieldValues = FieldValues> {
+    control: Control<T>;
     codeInfo: CodeInfo;
     questionType: QuestionType;
 }
 
-export function QuestionConfigCard({ control, codeInfo, questionType }: QuestionConfigCardProps) {
+export function QuestionConfigCard<T extends FieldValues = FieldValues>({ control, codeInfo, questionType }: QuestionConfigCardProps<T>) {
     const entryFunctionOptions = codeInfo?.functions.filter((f) => f.is_definition) || [];
 
     return (
@@ -29,7 +29,7 @@ export function QuestionConfigCard({ control, codeInfo, questionType }: Question
             <CardContent className="space-y-4">
                 <FormField
                     control={control}
-                    name="entryFunction"
+                    name={"entryFunction" as Path<T>}
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Entry Function</FormLabel>
@@ -64,7 +64,7 @@ export function QuestionConfigCard({ control, codeInfo, questionType }: Question
                 <div className="grid grid-cols-2 gap-4">
                     <FormField
                         control={control}
-                        name="outputType"
+                        name={"outputType" as Path<T>}
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Output Type</FormLabel>
@@ -88,7 +88,7 @@ export function QuestionConfigCard({ control, codeInfo, questionType }: Question
 
                     <FormField
                         control={control}
-                        name="questionType"
+                        name={"questionType" as Path<T>}
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Question Type</FormLabel>
@@ -113,7 +113,7 @@ export function QuestionConfigCard({ control, codeInfo, questionType }: Question
                 {(questionType === "mcq" || questionType === "mrq") && (
                     <FormField
                         control={control}
-                        name="numDistractors"
+                        name={"numDistractors" as Path<T>}
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Number of Distractors</FormLabel>

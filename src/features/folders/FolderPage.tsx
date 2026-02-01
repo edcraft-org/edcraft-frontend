@@ -207,35 +207,30 @@ function FolderPage() {
 
         const { resourceType, id } = selectedResource;
         const config = resourceConfig[resourceType];
-        const mutation = config.mutations.update;
 
-        if (mutation.isPending) return;
+        const onSuccess = () => {
+            toast.success(`${config.label} renamed successfully`);
+            closeActionModal();
+        };
+        const onError = (error: Error) =>
+            handleMutationError(error, `rename ${config.label.toLowerCase()}`);
 
-        const mutationArgs = {
-            folder: {
-                folderId: id,
-                data: { name, description },
-            },
-            assessment: {
-                assessmentId: id,
-                data: { title: name, description },
-                oldFolderId: session.folderId,
-            },
-            assessment_template: {
-                templateId: id,
-                data: { title: name, description },
-                oldFolderId: session.folderId,
-            },
-        }[resourceType];
-
-        mutation.mutate(mutationArgs as any, {
-            onSuccess: () => {
-                toast.success(`${config.label} renamed successfully`);
-                closeActionModal();
-            },
-            onError: (error: Error) =>
-                handleMutationError(error, `rename ${config.label.toLowerCase()}`),
-        });
+        if (resourceType === "folder") {
+            if (updateFolder.isPending) return;
+            updateFolder.mutate({ folderId: id, data: { name, description } }, { onSuccess, onError });
+        } else if (resourceType === "assessment") {
+            if (updateAssessment.isPending) return;
+            updateAssessment.mutate(
+                { assessmentId: id, data: { title: name, description }, oldFolderId: session.folderId },
+                { onSuccess, onError },
+            );
+        } else {
+            if (updateAssessmentTemplate.isPending) return;
+            updateAssessmentTemplate.mutate(
+                { templateId: id, data: { title: name, description }, oldFolderId: session.folderId },
+                { onSuccess, onError },
+            );
+        }
     };
 
     // Move Handlers
@@ -247,36 +242,33 @@ function FolderPage() {
 
         const { resourceType, id } = selectedResource;
         const config = resourceConfig[resourceType];
-        const mutation = config.mutations.move;
 
-        if (mutation.isPending) return;
+        const onSuccess = () => {
+            toast.success(`${config.label} moved successfully`);
+            closeActionModal();
+        };
+        const onError = (error: Error) =>
+            handleMutationError(error, `move ${config.label.toLowerCase()}`);
 
-        const mutationArgs = {
-            folder: {
-                folderId: id,
-                data: { parent_id: targetFolderId },
-                oldParentId: session.folderId,
-            },
-            assessment: {
-                assessmentId: id,
-                data: { folder_id: targetFolderId },
-                oldFolderId: session.folderId,
-            },
-            assessment_template: {
-                templateId: id,
-                data: { folder_id: targetFolderId },
-                oldFolderId: session.folderId,
-            },
-        }[resourceType];
-
-        mutation.mutate(mutationArgs as any, {
-            onSuccess: () => {
-                toast.success(`${config.label} moved successfully`);
-                closeActionModal();
-            },
-            onError: (error: Error) =>
-                handleMutationError(error, `move ${config.label.toLowerCase()}`),
-        });
+        if (resourceType === "folder") {
+            if (moveFolder.isPending) return;
+            moveFolder.mutate(
+                { folderId: id, data: { parent_id: targetFolderId }, oldParentId: session.folderId },
+                { onSuccess, onError },
+            );
+        } else if (resourceType === "assessment") {
+            if (updateAssessment.isPending) return;
+            updateAssessment.mutate(
+                { assessmentId: id, data: { folder_id: targetFolderId }, oldFolderId: session.folderId },
+                { onSuccess, onError },
+            );
+        } else {
+            if (updateAssessmentTemplate.isPending) return;
+            updateAssessmentTemplate.mutate(
+                { templateId: id, data: { folder_id: targetFolderId }, oldFolderId: session.folderId },
+                { onSuccess, onError },
+            );
+        }
     };
 
     // UI Event Handlers
@@ -319,36 +311,33 @@ function FolderPage() {
 
         const { resourceType, id } = selectedResource;
         const config = resourceConfig[resourceType];
-        const mutation = config.mutations.delete;
 
-        if (mutation.isPending) return;
+        const onSuccess = () => {
+            toast.success(`${config.label} deleted successfully`);
+            closeActionModal();
+        };
+        const onError = (error: Error) =>
+            handleMutationError(error, `delete ${config.label.toLowerCase()}`);
 
-        const mutationArgs = {
-            folder: {
-                folderId: id,
-                ownerId: session.userId,
-                parentId: folderId ?? undefined,
-            },
-            assessment: {
-                assessmentId: id,
-                ownerId: session.userId,
-                folderId: session.folderId,
-            },
-            assessment_template: {
-                templateId: id,
-                ownerId: session.userId,
-                folderId: session.folderId,
-            },
-        }[resourceType];
-
-        mutation.mutate(mutationArgs as any, {
-            onSuccess: () => {
-                toast.success(`${config.label} deleted successfully`);
-                closeActionModal();
-            },
-            onError: (error: Error) =>
-                handleMutationError(error, `delete ${config.label.toLowerCase()}`),
-        });
+        if (resourceType === "folder") {
+            if (deleteFolder.isPending) return;
+            deleteFolder.mutate(
+                { folderId: id, ownerId: session.userId, parentId: folderId ?? undefined },
+                { onSuccess, onError },
+            );
+        } else if (resourceType === "assessment") {
+            if (deleteAssessment.isPending) return;
+            deleteAssessment.mutate(
+                { assessmentId: id, ownerId: session.userId, folderId: session.folderId },
+                { onSuccess, onError },
+            );
+        } else {
+            if (deleteAssessmentTemplate.isPending) return;
+            deleteAssessmentTemplate.mutate(
+                { templateId: id, ownerId: session.userId, folderId: session.folderId },
+                { onSuccess, onError },
+            );
+        }
     };
 
     // Early returns for loading and error states

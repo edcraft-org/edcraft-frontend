@@ -9,19 +9,19 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Database } from "lucide-react";
-import type { Control } from "react-hook-form";
+import type { Control, FieldValues, Path } from "react-hook-form";
 
-interface InputDataCardProps {
-    control: Control<any>;
+interface InputDataCardProps<T extends FieldValues = FieldValues> {
+    control: Control<T>;
     onInputDataChange: (data: string) => void;
     title: string;
 }
 
-export function InputDataCard({
+export function InputDataCard<T extends FieldValues = FieldValues>({
     control,
     onInputDataChange,
     title,
-}: InputDataCardProps) {
+}: InputDataCardProps<T>) {
     const [jsonError, setJsonError] = useState<string | null>(null);
 
     const handleChange = (value: string) => {
@@ -50,7 +50,7 @@ export function InputDataCard({
             <CardContent className="space-y-2">
                 <FormField
                     control={control}
-                    name="inputDataJson"
+                    name={"inputDataJson" as Path<T>}
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel htmlFor="input-data">Input Data (JSON)</FormLabel>

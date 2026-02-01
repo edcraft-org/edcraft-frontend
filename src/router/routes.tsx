@@ -1,8 +1,8 @@
 import { lazy, Suspense } from "react";
 import type { ComponentType } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import { Skeleton } from "@/components/ui/skeleton";
 import { MainLayout } from "@/components/layout";
+import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { ROUTES } from "./paths";
 
 // Re-export ROUTES for convenience
@@ -19,26 +19,10 @@ const TemplateBuilderPage = lazy(
     () => import("@/features/question-template-builder/TemplateBuilderPage"),
 );
 
-// Loading fallback component
-function PageLoader() {
-    return (
-        <div className="p-6 space-y-4">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-            <div className="grid grid-cols-3 gap-4 mt-6">
-                <Skeleton className="h-32" />
-                <Skeleton className="h-32" />
-                <Skeleton className="h-32" />
-            </div>
-        </div>
-    );
-}
-
 // Helper to wrap lazy loaded components with Suspense
 function lazyRoute(Component: ComponentType) {
     return (
-        <Suspense fallback={<PageLoader />}>
+        <Suspense fallback={<PageSkeleton />}>
             <Component />
         </Suspense>
     );
