@@ -14,11 +14,13 @@ import type { Control } from "react-hook-form";
 interface InputDataCardProps {
     control: Control<any>;
     onInputDataChange: (data: string) => void;
+    title: string;
 }
 
 export function InputDataCard({
     control,
     onInputDataChange,
+    title,
 }: InputDataCardProps) {
     const [jsonError, setJsonError] = useState<string | null>(null);
 
@@ -42,7 +44,7 @@ export function InputDataCard({
             <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                     <Database className="h-4 w-4" />
-                    Step 4: Input Data
+                    {title}
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">

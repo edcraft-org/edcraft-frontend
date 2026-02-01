@@ -291,6 +291,7 @@ function QuestionBuilderPage() {
                             <InputDataCard
                                 control={form.control}
                                 onInputDataChange={(value) => form.setValue("inputDataJson", value)}
+                                title="Step 4: Input Data"
                             />
                         )}
 

@@ -8,8 +8,12 @@ import {
     updateQuestionTemplate,
     deleteQuestionTemplate,
     getQuestionTemplateAssessmentTemplates,
+    generateFromTemplate,
 } from "./question-template.service";
-import type { UpdateQuestionTemplateRequest } from "@/api/models";
+import type {
+    GenerateQuestionFromTemplateRequest,
+    UpdateQuestionTemplateRequest,
+} from "@/api/models";
 
 // Hook to fetch all question templates for a user
 export function useQuestionTemplates(ownerId: string | undefined) {
@@ -84,5 +88,18 @@ export function useDeleteQuestionTemplate() {
                 queryKey: queryKeys.assessmentTemplates.all(variables.ownerId),
             });
         },
+    });
+}
+
+// Hook to generate a question from a template
+export function useGenerateFromTemplate() {
+    return useMutation({
+        mutationFn: ({
+            templateId,
+            data,
+        }: {
+            templateId: string;
+            data: GenerateQuestionFromTemplateRequest;
+        }) => generateFromTemplate(templateId, data),
     });
 }

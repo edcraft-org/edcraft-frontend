@@ -3,6 +3,8 @@
 import { api } from "@/api/client";
 import type {
     AssessmentTemplateResponse,
+    GenerateQuestionFromTemplateRequest,
+    Question,
     QuestionTemplateResponse,
     QuestionTemplateSummaryResponse,
     UpdateQuestionTemplateRequest,
@@ -50,6 +52,19 @@ export async function getQuestionTemplateAssessmentTemplates(
         await api.getAssessmentTemplatesForQuestionTemplateQuestionTemplatesQuestionTemplateIdAssessmentTemplatesGet(
             templateId,
             { owner_id: ownerId },
+        );
+    return response.data;
+}
+
+// Generate a question from a question template
+export async function generateFromTemplate(
+    templateId: string,
+    data: GenerateQuestionFromTemplateRequest,
+): Promise<Question> {
+    const response =
+        await api.generateQuestionFromTemplateQuestionGenerationFromTemplateTemplateIdPost(
+            templateId,
+            data,
         );
     return response.data;
 }
