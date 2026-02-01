@@ -8,10 +8,13 @@ export const queryKeys = {
   // Folder queries
   folders: {
     all: (ownerId: string) => ["folders", ownerId] as const,
-    detail: (id: string) => ["folders", "detail", id] as const,
-    contents: (id: string) => ["folders", "contents", id] as const,
-    tree: (id: string) => ["folders", "tree", id] as const,
-    path: (id: string) => ["folders", "path", id] as const,
+    byFolder: (ownerId: string, parentId: string) =>
+      ["folders", ownerId, parentId] as const,
+    root: (ownerId: string) => ["folders", ownerId, "root"] as const,
+    detail: (id: string) => ["folder", id] as const,
+    contents: (id: string) => ["folder", id, "contents"] as const,
+    tree: (id: string) => ["folder", id, "tree"] as const,
+    path: (id: string) => ["folder", id, "path"] as const,
   },
 
   // Assessment queries
