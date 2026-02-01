@@ -12,6 +12,7 @@ import {
     linkQuestionTemplateToAssessmentTemplate,
     removeQuestionTemplateFromAssessmentTemplate,
     reorderQuestionTemplatesInAssessmentTemplate,
+    generateAssessmentFromTemplate,
 } from "./assessment-template.service";
 import type {
     CreateAssessmentTemplateRequest,
@@ -19,6 +20,7 @@ import type {
     InsertQuestionTemplateIntoAssessmentTemplateRequest,
     LinkQuestionTemplateToAssessmentTemplateRequest,
     ReorderQuestionTemplatesInAssessmentTemplateRequest,
+    GenerateAssessmentFromTemplateRequest,
 } from "@/api/models";
 
 // Hook to fetch all assessment templates for a user
@@ -186,6 +188,29 @@ export function useReorderQuestionTemplatesInAssessmentTemplate() {
                 queryKeys.assessmentTemplates.detail(updatedTemplate.id),
                 updatedTemplate,
             );
+        },
+    });
+}
+
+// Hook to generate an assessment from a template
+export function useGenerateAssessmentFromTemplate() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            templateId,
+            data,
+        }: {
+            templateId: string;
+            data: GenerateAssessmentFromTemplateRequest;
+        }) => generateAssessmentFromTemplate(templateId, data),
+        onSuccess: (newAssessment) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.assessments.all(newAssessment.owner_id),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.folders.contents(newAssessment.folder_id),
+            });
         },
     });
 }

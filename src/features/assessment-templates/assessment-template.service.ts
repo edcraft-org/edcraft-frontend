@@ -4,7 +4,9 @@ import { api } from "@/api/client";
 import type {
     AssessmentTemplateResponse,
     AssessmentTemplateWithQuestionTemplatesResponse,
+    AssessmentWithQuestionsResponse,
     CreateAssessmentTemplateRequest,
+    GenerateAssessmentFromTemplateRequest,
     InsertQuestionTemplateIntoAssessmentTemplateRequest,
     LinkQuestionTemplateToAssessmentTemplateRequest,
     ReorderQuestionTemplatesInAssessmentTemplateRequest,
@@ -104,6 +106,19 @@ export async function reorderQuestionTemplatesInAssessmentTemplate(
 ): Promise<AssessmentTemplateWithQuestionTemplatesResponse> {
     const response =
         await api.reorderQuestionTemplatesAssessmentTemplatesTemplateIdQuestionTemplatesReorderPatch(
+            templateId,
+            data,
+        );
+    return response.data;
+}
+
+// Generate an assessment from a template
+export async function generateAssessmentFromTemplate(
+    templateId: string,
+    data: GenerateAssessmentFromTemplateRequest,
+): Promise<AssessmentWithQuestionsResponse> {
+    const response =
+        await api.generateAssessmentFromTemplateQuestionGenerationAssessmentFromTemplateTemplateIdPost(
             templateId,
             data,
         );

@@ -5,21 +5,27 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Play, Plus } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
 import {
     AddQuestionTemplateModal,
     LinkOrDuplicateTemplateModal,
     type QuestionTemplateConfig,
 } from "@/features/question-templates";
-import { QuestionTemplatesList, RemoveTemplateDialog } from "./components";
+import {
+    InstantiateAssessmentModal,
+    QuestionTemplatesList,
+    RemoveTemplateDialog,
+} from "./components";
 import {
     useAddQuestionTemplateToAssessmentTemplate,
     useLinkQuestionTemplateToAssessmentTemplate,
     useRemoveQuestionTemplateFromAssessmentTemplate,
     useAssessmentTemplate,
+    useGenerateAssessmentFromTemplate,
 } from "./useAssessmentTemplates";
 import type { QuestionTemplateResponse } from "@/api/models";
+import { CreateFromTemplateModal } from "../question-templates/components";
 
 function AssessmentTemplatePage() {
     const { templateId } = useParams<{ templateId: string }>();
@@ -30,6 +36,8 @@ function AssessmentTemplatePage() {
     const [showLinkOrDuplicateModal, setShowLinkOrDuplicateModal] = useState(false);
     const [showRemoveDialog, setShowRemoveDialog] = useState(false);
     const [selectedTemplate, setSelectedTemplate] = useState<QuestionTemplateResponse | null>(null);
+    const [showCreateFromTemplate, setShowCreateFromTemplate] = useState(false);
+    const [showInstantiateDialog, setShowInstantiateDialog] = useState(false);
 
     if (!templateId) {
         return <div className="p-6 text-center text-muted-foreground">Template ID is missing</div>;
@@ -40,6 +48,7 @@ function AssessmentTemplatePage() {
     const addQuestionTemplate = useAddQuestionTemplateToAssessmentTemplate();
     const linkQuestionTemplate = useLinkQuestionTemplateToAssessmentTemplate();
     const removeQuestionTemplate = useRemoveQuestionTemplateFromAssessmentTemplate();
+    const generateAssessment = useGenerateAssessmentFromTemplate();
 
     // Validation Helpers
     const validateSession = (): { templateId: string; userId: string } | null => {
@@ -215,6 +224,39 @@ function AssessmentTemplatePage() {
         });
     };
 
+    const handleInstantiate = async (
+        title: string,
+        description: string | undefined,
+        questionInputs: Array<Record<string, unknown>>,
+    ) => {
+        if (!user || !assessmentTemplate) return;
+
+        generateAssessment.mutate(
+            {
+                templateId: assessmentTemplate.id,
+                data: {
+                    assessment_metadata: {
+                        owner_id: user.id,
+                        folder_id: assessmentTemplate.folder_id,
+                        title,
+                        description,
+                    },
+                    question_inputs: questionInputs,
+                },
+            },
+            {
+                onSuccess: (newAssessment) => {
+                    toast.success("Assessment created successfully");
+                    setShowInstantiateDialog(false);
+                    navigate(`/assessments/${newAssessment.id}`);
+                },
+                onError: (error) => {
+                    toast.error(`Failed to create assessment: ${error.message}`);
+                },
+            },
+        );
+    };
+
     if (isLoading) {
         return <PageSkeleton />;
     }
@@ -247,7 +289,10 @@ function AssessmentTemplatePage() {
                         </p>
                     )}
                 </div>
-
+                <Button variant="outline" onClick={() => setShowInstantiateDialog(true)}>
+                    <Play className="h-4 w-4 mr-2" />
+                    Instantiate Assessment
+                </Button>
                 <Button onClick={() => setShowAddTemplateModal(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Template
@@ -280,6 +325,13 @@ function AssessmentTemplatePage() {
                 />
             )}
 
+            {/* Create From Template Modal */}
+            <CreateFromTemplateModal
+                open={showCreateFromTemplate}
+                onOpenChange={setShowCreateFromTemplate}
+                template={selectedTemplate}
+            />
+
             {/* Link or Duplicate Template Modal */}
             {user && (
                 <LinkOrDuplicateTemplateModal
@@ -292,6 +344,16 @@ function AssessmentTemplatePage() {
                     isLoading={linkQuestionTemplate.isPending || addQuestionTemplate.isPending}
                 />
             )}
+
+            {/* Instantiate Assessment Modal */}
+            <InstantiateAssessmentModal
+                open={showInstantiateDialog}
+                onOpenChange={setShowInstantiateDialog}
+                assessmentTemplateTitle={assessmentTemplate.title}
+                questionTemplates={assessmentTemplate.question_templates ?? []}
+                onInstantiate={handleInstantiate}
+                isLoading={generateAssessment.isPending}
+            />
 
             {/* Remove Template Confirmation */}
             <RemoveTemplateDialog
