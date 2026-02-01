@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import type { ComponentType } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MainLayout } from "@/components/layout";
 import { ROUTES } from "./paths";
 
 // Re-export ROUTES for convenience
@@ -47,6 +48,7 @@ function lazyRoute(Component: ComponentType) {
 export const router = createBrowserRouter([
     {
         path: "/",
+        element: <MainLayout />,
         children: [
             {
                 index: true,

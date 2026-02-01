@@ -112,7 +112,7 @@ function FolderNode({ folder, level, currentFolderId, onNavigate }: FolderNodePr
 export function FolderTree() {
     const navigate = useNavigate();
     const { folderId } = useParams();
-    const { setCurrentFolderId, expandToFolder } = useFolderStore();
+    const { setCurrentFolderId, addExpandedFolders } = useFolderStore();
 
     const { data: pathResponse, isLoading, isError } = useFolderPath(folderId);
     const path = pathResponse?.path;
@@ -121,9 +121,9 @@ export function FolderTree() {
         if (path && folderId) {
             setCurrentFolderId(folderId);
             const folderIdsToExpand = path.map((f) => f.id);
-            expandToFolder(folderIdsToExpand);
+            addExpandedFolders(folderIdsToExpand);
         }
-    }, [folderId, path, setCurrentFolderId, expandToFolder]);
+    }, [folderId, path, setCurrentFolderId, addExpandedFolders]);
 
     const handleNavigate = (targetFolderId: string) => {
         navigate(ROUTES.FOLDER(targetFolderId));
