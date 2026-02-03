@@ -1,6 +1,6 @@
 // QuestionBuilderPage - Generate questions from code
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,7 +36,7 @@ const questionBuilderSchema = z.object({
     outputType: z.enum(["first", "last", "list", "count"]),
     questionType: z.enum(["mcq", "mrq", "short_answer"]),
     numDistractors: z.number().min(1).max(10),
-    inputDataJson: z.string(),
+    inputData: z.record(z.string(), z.unknown()).optional(),
 });
 
 type QuestionBuilderFormValues = z.infer<typeof questionBuilderSchema>;
@@ -52,6 +52,7 @@ function QuestionBuilderPage() {
     const analyseCode = useAnalyseCode();
     const [codeInfo, setCodeInfo] = useState<CodeInfo | undefined>(undefined);
     const [targetSelection, setTargetSelection] = useState<TargetSelection | null>(null);
+    const [isInputDataValid, setIsInputDataValid] = useState(true);
 
     // Question generation mutation
     const generateQuestionMutation = useMutation({
@@ -80,7 +81,7 @@ function QuestionBuilderPage() {
             outputType: "first",
             questionType: "mcq",
             numDistractors: 4,
-            inputDataJson: "",
+            inputData: {},
         },
     });
 
@@ -88,6 +89,25 @@ function QuestionBuilderPage() {
     const code = form.watch("code");
     const entryFunction = form.watch("entryFunction");
     const questionType = form.watch("questionType");
+
+    // Derive entry function params from CodeInfo
+    const selectedFunction = codeInfo?.functions.find(
+        (f) => f.name === entryFunction && f.is_definition,
+    );
+    const entryFunctionParams = selectedFunction
+        ? {
+              parameters: selectedFunction.parameters,
+              has_var_args: false,
+              has_var_kwargs: false,
+          }
+        : undefined;
+
+    // Reset input data when entry function changes
+    useEffect(() => {
+        if (entryFunction) {
+            form.setValue("inputData", {});
+        }
+    }, [entryFunction, form]);
 
     const handleAnalyseCode = () => {
         if (analyseCode.isPending) return;
@@ -143,16 +163,7 @@ function QuestionBuilderPage() {
             return;
         }
 
-        // Parse input data JSON
-        let inputData: Record<string, unknown> = {};
-        if (values.inputDataJson.trim()) {
-            try {
-                inputData = JSON.parse(values.inputDataJson);
-            } catch {
-                toast.error("Invalid JSON format in input data");
-                return;
-            }
-        }
+        const inputData = values.inputData || {};
 
         const request = {
             code: values.code,
@@ -289,11 +300,14 @@ function QuestionBuilderPage() {
                             />
                         )}
 
-                        {/* Input Data - Only show after configuration */}
-                        {codeInfo && (
+                        {/* Input Data - Only show after entry function is selected */}
+                        {entryFunctionParams && (
                             <InputDataCard
-                                control={form.control}
-                                onInputDataChange={(value) => form.setValue("inputDataJson", value)}
+                                entryFunctionParams={entryFunctionParams}
+                                onInputDataChange={(data) => {
+                                    form.setValue("inputData", data);
+                                }}
+                                onValidationChange={setIsInputDataValid}
                                 title="Step 4: Input Data"
                             />
                         )}
@@ -306,7 +320,8 @@ function QuestionBuilderPage() {
                                 disabled={
                                     generateQuestionMutation.isPending ||
                                     !targetSelection ||
-                                    !entryFunction
+                                    !entryFunction ||
+                                    !isInputDataValid
                                 }
                             >
                                 {generateQuestionMutation.isPending ? (
@@ -361,7 +376,7 @@ function QuestionBuilderPage() {
                                 </Button>
                             </>
                         ) : (
-                            <Card className="h-full min-h-[400px] flex items-center justify-center">
+                            <Card className="h-full min-h-[400px] flex items-center">
                                 <CardContent className="text-center text-muted-foreground">
                                     <Wand2 className="h-12 w-12 mx-auto mb-4 opacity-20" />
                                     <p className="font-medium mb-2">Question Preview</p>

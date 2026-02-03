@@ -350,7 +350,7 @@ function TemplateBuilderPage() {
                                 </Button>
                             </>
                         ) : (
-                            <Card className="h-full min-h-[400px] flex items-center justify-center">
+                            <Card className="h-full min-h-[400px] flex items-center">
                                 <CardContent className="text-center text-muted-foreground">
                                     <Wand2 className="h-12 w-12 mx-auto mb-4 opacity-20" />
                                     <p className="font-medium mb-2">Template Preview</p>

@@ -30,46 +30,13 @@ import { InputDataCard } from "@/shared/components";
 import type { AssessmentTemplateQuestionTemplateResponse } from "@/api/models";
 import { QuestionTemplateContent } from "@/components/QuestionTemplateContent";
 
-// Validates a JSON string input
-const validateJsonInput = (inputData: string): boolean => {
-    const trimmed = inputData.trim();
-    if (!trimmed) return true; // Empty is allowed
-
-    try {
-        JSON.parse(trimmed);
-        return true;
-    } catch {
-        toast.error("Invalid JSON format");
-        return false;
-    }
-};
-
-// Safely parses JSON input, returning empty object for empty strings
-const parseJsonInput = (inputData: string): Record<string, unknown> => {
-    const trimmed = inputData.trim();
-    if (!trimmed) return {};
-
-    try {
-        const parsed = JSON.parse(trimmed);
-        return typeof parsed === "object" && parsed !== null ? parsed : {};
-    } catch {
-        return {};
-    }
-};
-
 // Schema for metadata step
 const metadataFormSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().optional(),
 });
 
-// Schema for template input data step
-const templateInputFormSchema = z.object({
-    inputDataJson: z.string(),
-});
-
 type MetadataFormValues = z.infer<typeof metadataFormSchema>;
-type TemplateInputFormValues = z.infer<typeof templateInputFormSchema>;
 
 interface InstantiateAssessmentModalProps {
     open: boolean;
@@ -94,12 +61,18 @@ export function InstantiateAssessmentModal({
 }: InstantiateAssessmentModalProps) {
     const totalSteps = questionTemplates.length + 1;
     const [currentStep, setCurrentStep] = useState(0);
-    const [templateInputs, setTemplateInputs] = useState<Record<number, string>>({});
+    const [templateInputs, setTemplateInputs] = useState<Record<number, Record<string, unknown>>>(
+        {},
+    );
+    const [inputValidationStates, setInputValidationStates] = useState<Record<number, boolean>>(
+        {},
+    );
 
     // Initialize template inputs when modal opens or questionTemplates change
     useEffect(() => {
         if (open) {
-            setTemplateInputs(Object.fromEntries(questionTemplates.map((_, i) => [i, ""])));
+            setTemplateInputs(Object.fromEntries(questionTemplates.map((_, i) => [i, {}])));
+            setInputValidationStates(Object.fromEntries(questionTemplates.map((_, i) => [i, true])));
         }
     }, [open, questionTemplates]);
 
@@ -112,91 +85,41 @@ export function InstantiateAssessmentModal({
         },
     });
 
-    // Form for template input step
-    const templateInputForm = useForm<TemplateInputFormValues>({
-        resolver: zodResolver(templateInputFormSchema),
-        defaultValues: {
-            inputDataJson: "",
-        },
-    });
-
     // Closes the modal and resets all form state
     const handleClose = useCallback(() => {
         onOpenChange(false);
         setCurrentStep(0);
         metadataForm.reset();
-        templateInputForm.reset();
-    }, [onOpenChange, metadataForm, templateInputForm]);
-
-    // Saves current template input to state
-    const saveCurrentTemplateInput = useCallback(() => {
-        if (currentStep > 0) {
-            const inputData = templateInputForm.getValues("inputDataJson");
-            setTemplateInputs((prev) => ({
-                ...prev,
-                [currentStep - 1]: inputData,
-            }));
-        }
-    }, [currentStep, templateInputForm]);
+        setTemplateInputs({});
+    }, [onOpenChange, metadataForm]);
 
     // Handles navigation to the next step with validation
     const handleNext = async () => {
-        let isValid = false;
-
         if (currentStep === 0) {
-            isValid = await metadataForm.trigger();
+            const isValid = await metadataForm.trigger();
+            if (isValid) {
+                setCurrentStep((prev) => Math.min(prev + 1, totalSteps - 1));
+            }
         } else {
-            const inputData = templateInputForm.getValues("inputDataJson");
-            isValid = validateJsonInput(inputData);
-
-            if (!isValid) return;
-
-            saveCurrentTemplateInput();
-        }
-
-        if (isValid) {
-            setCurrentStep((prev) => {
-                const next = Math.min(prev + 1, totalSteps - 1);
-                if (next > 0) {
-                    templateInputForm.setValue("inputDataJson", templateInputs[next - 1] || "");
-                }
-                return next;
-            });
+            const templateIndex = currentStep - 1;
+            const isCurrentStepValid = inputValidationStates[templateIndex] ?? true;
+            if (isCurrentStepValid) {
+                setCurrentStep((prev) => Math.min(prev + 1, totalSteps - 1));
+            }
         }
     };
 
     // Handles navigation to the previous step
     const handleBack = () => {
-        saveCurrentTemplateInput();
-
-        setCurrentStep((prev) => {
-            const next = Math.max(prev - 1, 0);
-            if (next > 0) {
-                templateInputForm.setValue("inputDataJson", templateInputs[next - 1] || "");
-            }
-            return next;
-        });
+        setCurrentStep((prev) => Math.max(prev - 1, 0));
     };
 
     // Completes the wizard and creates the assessment
     // Validates all inputs and calls the onInstantiate callback
     const handleComplete = async () => {
-        // Validate final step JSON
-        const inputData = templateInputForm.getValues("inputDataJson");
-        if (!validateJsonInput(inputData)) {
-            return;
-        }
-
-        // Save final template input
-        const templateIndex = currentStep - 1;
-        const finalInputs = {
-            ...templateInputs,
-            [templateIndex]: inputData,
-        };
-
-        // Build question inputs array by parsing all template inputs
-        const questionInputs: Array<Record<string, unknown>> = questionTemplates.map((_, index) =>
-            parseJsonInput(finalInputs[index] || ""),
+        // Build question inputs array from templateInputs
+        const questionInputs: Array<Record<string, unknown>> = questionTemplates.map(
+            (_, index) => templateInputs[index] || {},
         );
 
         // Get metadata values
@@ -209,7 +132,6 @@ export function InstantiateAssessmentModal({
                 questionInputs,
             );
             handleClose();
-            toast.success("Assessment created successfully");
         } catch (error) {
             if (error instanceof Error) {
                 toast.error(error.message || "Failed to create assessment");
@@ -219,19 +141,11 @@ export function InstantiateAssessmentModal({
         }
     };
 
-    // Auto-save current input when user types to prevent data loss
-    useEffect(() => {
-        if (currentStep > 0) {
-            const subscription = templateInputForm.watch(() => {
-                saveCurrentTemplateInput();
-            });
-            return () => subscription.unsubscribe();
-        }
-    }, [currentStep, templateInputForm, saveCurrentTemplateInput]);
-
     const progress = ((currentStep + 1) / totalSteps) * 100;
     const isLastStep = currentStep === totalSteps - 1;
     const templateIndex = currentStep - 1;
+    const isCurrentStepValid =
+        currentStep === 0 || (inputValidationStates[templateIndex] ?? true);
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
@@ -299,15 +213,22 @@ export function InstantiateAssessmentModal({
                                 index={templateIndex}
                             />
 
-                            <Form {...templateInputForm}>
-                                <InputDataCard
-                                    control={templateInputForm.control}
-                                    onInputDataChange={(value) =>
-                                        templateInputForm.setValue("inputDataJson", value)
-                                    }
-                                    title="Input Data"
-                                />
-                            </Form>
+                            <InputDataCard
+                                key={templateIndex}
+                                entryFunctionParams={questionTemplates[templateIndex].entry_function_params}
+                                onInputDataChange={(data) => {
+                                    setTemplateInputs((prev) => ({
+                                        ...prev,
+                                        [templateIndex]: data,
+                                    }));
+                                }}
+                                onValidationChange={(isValid) => {
+                                    setInputValidationStates((prev) => ({
+                                        ...prev,
+                                        [templateIndex]: isValid,
+                                    }));
+                                }}
+                            />
                         </div>
                     )}
                 </div>
@@ -352,7 +273,7 @@ export function InstantiateAssessmentModal({
                         ) : (
                             <Button
                                 onClick={handleNext}
-                                disabled={isLoading}
+                                disabled={isLoading || !isCurrentStepValid}
                                 aria-label="Go to next step"
                             >
                                 Next

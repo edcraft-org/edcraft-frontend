@@ -31,7 +31,7 @@ import type { QuestionTemplateConfig } from "../types";
 
 // Schema for the form
 const templateFormSchema = z.object({
-    inputDataJson: z.string(),
+    inputData: z.record(z.string(), z.unknown()).optional(),
 });
 
 type TemplateFormValues = z.infer<typeof templateFormSchema>;
@@ -49,6 +49,7 @@ export function CreateFromTemplateModal({
 }: CreateFromTemplateModalProps) {
     const [generatedQuestion, setGeneratedQuestion] = useState<Question | null>(null);
     const [showSaveModal, setShowSaveModal] = useState(false);
+    const [isInputDataValid, setIsInputDataValid] = useState(true);
 
     const user = useUserStore((state) => state.user);
     const rootFolderId = useUserStore((state) => state.rootFolderId);
@@ -62,7 +63,7 @@ export function CreateFromTemplateModal({
     const form = useForm<TemplateFormValues>({
         resolver: zodResolver(templateFormSchema),
         defaultValues: {
-            inputDataJson: "",
+            inputData: {},
         },
     });
 
@@ -77,16 +78,7 @@ export function CreateFromTemplateModal({
         if (!template) return;
 
         const values = form.getValues();
-
-        let inputData: Record<string, unknown> = {};
-        if (values.inputDataJson.trim()) {
-            try {
-                inputData = JSON.parse(values.inputDataJson);
-            } catch {
-                toast.error("Invalid JSON format");
-                return;
-            }
-        }
+        const inputData = values.inputData || {};
 
         generateQuestion.mutate(
             {
@@ -227,11 +219,11 @@ export function CreateFromTemplateModal({
                             {/* Input Data */}
                             {!generatedQuestion && (
                                 <InputDataCard
-                                    control={form.control}
-                                    onInputDataChange={(value) =>
-                                        form.setValue("inputDataJson", value)
-                                    }
-                                    title="Input Data"
+                                    entryFunctionParams={template.entry_function_params}
+                                    onInputDataChange={(data) => {
+                                        form.setValue("inputData", data);
+                                    }}
+                                    onValidationChange={setIsInputDataValid}
                                 />
                             )}
 
@@ -250,7 +242,10 @@ export function CreateFromTemplateModal({
                             Cancel
                         </Button>
                         {!generatedQuestion ? (
-                            <Button onClick={handleGenerate} disabled={generateQuestion.isPending}>
+                            <Button
+                                onClick={handleGenerate}
+                                disabled={generateQuestion.isPending || !isInputDataValid}
+                            >
                                 {generateQuestion.isPending ? (
                                     <>
                                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
