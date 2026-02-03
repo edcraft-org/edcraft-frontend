@@ -10,7 +10,6 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Loader2, AlertCircle, ArrowUp, Folder, ChevronRight } from "lucide-react";
 import { useFolders, useFolderPath } from "../useFolders";
 import { FolderBreadcrumbs } from "./FolderBreadcrumbs";
@@ -176,33 +175,6 @@ export function MoveModal({
                                         </div>
                                     )}
 
-                                {/* Current folder */}
-                                {currentFolder && (
-                                    <FolderListItem
-                                        folder={currentFolder}
-                                        isSelected={selectedFolderId === currentViewFolderId}
-                                        onClick={() => setSelectedFolderId(currentViewFolderId)}
-                                    />
-                                )}
-
-                                {/* Separator */}
-                                {!isAtRoot && <Separator className="my-2" />}
-
-                                {/* Parent folder navigation */}
-                                {!isAtRoot && (
-                                    <FolderListItem
-                                        folder={{
-                                            ...path[path.length - 2],
-                                            name: ".. (Parent folder)",
-                                        }}
-                                        isParent
-                                        isSelected={false}
-                                        onClick={() =>
-                                            handleNavigateToFolder(path[path.length - 2].id)
-                                        }
-                                    />
-                                )}
-
                                 {/* Child folders */}
                                 {childFolders && childFolders.length > 0
                                     ? childFolders.map((folder) => (
@@ -224,11 +196,7 @@ export function MoveModal({
                 </div>
 
                 <DialogFooter>
-                    <Button
-                        variant="outline"
-                        onClick={handleClose}
-                        disabled={isLoading}
-                    >
+                    <Button variant="outline" onClick={handleClose} disabled={isLoading}>
                         Cancel
                     </Button>
                     <Button
