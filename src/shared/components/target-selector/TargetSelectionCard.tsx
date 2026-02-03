@@ -6,9 +6,14 @@ import TargetSelector from "./TargetSelector";
 interface TargetSelectionCardProps {
     codeInfo: CodeInfo;
     onTargetChange: (target: TargetSelection | null) => void;
+    initialSelection?: TargetSelection | null;
 }
 
-export function TargetSelectionCard({ codeInfo, onTargetChange }: TargetSelectionCardProps) {
+export function TargetSelectionCard({
+    codeInfo,
+    onTargetChange,
+    initialSelection,
+}: TargetSelectionCardProps) {
     return (
         <Card>
             <CardHeader>
@@ -16,7 +21,11 @@ export function TargetSelectionCard({ codeInfo, onTargetChange }: TargetSelectio
             </CardHeader>
             <CardContent>
                 <div className="p-4 bg-muted/50 rounded-lg">
-                    <TargetSelector codeInfo={codeInfo} onTargetChange={onTargetChange} />
+                    <TargetSelector
+                        codeInfo={codeInfo}
+                        onTargetChange={onTargetChange}
+                        initialSelection={initialSelection}
+                    />
                 </div>
             </CardContent>
         </Card>

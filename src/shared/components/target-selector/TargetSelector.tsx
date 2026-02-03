@@ -1,9 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
-import type {
-    TargetSelection,
-    ScopePathItem,
-    Modifier,
-} from '@/types/frontend.types';
+import { useState, useMemo, useCallback, useEffect } from "react";
+import type { TargetSelection, ScopePathItem, Modifier } from "@/types/frontend.types";
 import { ElementType, Modifier as ModifierEnum, isSelectionModifier } from "@/constants";
 import {
     findSubtreeInCodeTree,
@@ -22,6 +18,7 @@ import type { CodeInfo, CodeTree, TargetElementType } from "@/api/models";
 interface TargetSelectorProps {
     codeInfo: CodeInfo;
     onTargetChange: (target: TargetSelection | null) => void;
+    initialSelection?: TargetSelection | null;
 }
 
 interface SelectionState {
@@ -51,7 +48,11 @@ interface SelectionState {
     } | null;
 }
 
-export default function TargetSelector({ codeInfo, onTargetChange }: TargetSelectorProps) {
+export default function TargetSelector({
+    codeInfo,
+    onTargetChange,
+    initialSelection,
+}: TargetSelectorProps) {
     const [selectionState, setSelectionState] = useState<SelectionState>({
         type: null,
         elementId: null,
@@ -65,6 +66,102 @@ export default function TargetSelector({ codeInfo, onTargetChange }: TargetSelec
         selectedVariableNames: [],
         selectedElementData: null,
     });
+
+    // Initialize state from initialSelection prop
+    useEffect(() => {
+        if (!initialSelection) return;
+
+        // Reconstruct the tree at the current scope level
+        const currentTree = reconstructTreeFromPath(
+            codeInfo.code_tree,
+            initialSelection.scope_path,
+        );
+        const currentLoopInIterationScope = getLoopInIterationScope(initialSelection.scope_path);
+
+        // For branches, if initialSelection has a name, use it as the condition too
+        let condition: string | undefined;
+        if (initialSelection.type === ElementType.Branch && initialSelection.name) {
+            condition = initialSelection.name;
+        }
+
+        // Initialize selectedElementData
+        const selectedElementData: SelectionState["selectedElementData"] = {
+            globalId: Array.isArray(initialSelection.element_id)
+                ? undefined
+                : initialSelection.element_id,
+            name: initialSelection.name,
+            line_number: initialSelection.line_number,
+            condition,
+        };
+
+        // For functions, need to determine if it's a multi-line selection or specific line
+        let functionNameSelected: string | null = null;
+        let functionLineStage = false;
+        let selectedLineNumbers: number[] = [];
+        let elementId: number | null = null;
+
+        if (initialSelection.type === ElementType.Function) {
+            functionNameSelected = initialSelection.name || null;
+            functionLineStage = true;
+
+            if (Array.isArray(initialSelection.element_id)) {
+                // Multiple functions selected (All)
+                selectedLineNumbers = initialSelection.element_id;
+                elementId = -1;
+            } else {
+                // Single function selected - find its index in the current tree
+                const funcIndex = currentTree.function_indices.indexOf(initialSelection.element_id);
+                elementId = funcIndex >= 0 ? funcIndex + 1 : 0; // +1 because UI uses 1-based indexing
+            }
+        } else if (initialSelection.type === ElementType.Variable) {
+            // Variables can be multi-selected (comma-separated names)
+            const selectedVariableNames = initialSelection.name
+                ? initialSelection.name.split(",")
+                : [];
+            elementId = selectedVariableNames.length > 0 ? 0 : null;
+
+            setSelectionState({
+                type: initialSelection.type,
+                elementId,
+                scopePath: initialSelection.scope_path,
+                modifier: initialSelection.modifier || null,
+                currentTree,
+                functionNameSelected: null,
+                functionLineStage: false,
+                selectedLineNumbers: [],
+                currentLoopInIterationScope,
+                selectedVariableNames,
+                selectedElementData,
+            });
+            return;
+        } else {
+            // For loop/branch, find the local index in the current tree
+            const globalId = initialSelection.element_id as number;
+
+            if (initialSelection.type === ElementType.Loop) {
+                elementId = currentTree.loop_indices.indexOf(globalId);
+            } else if (initialSelection.type === ElementType.Branch) {
+                elementId = currentTree.branch_indices.indexOf(globalId);
+            }
+        }
+
+        setSelectionState({
+            type: initialSelection.type,
+            elementId,
+            scopePath: initialSelection.scope_path,
+            modifier: initialSelection.modifier || null,
+            currentTree,
+            functionNameSelected,
+            functionLineStage,
+            selectedLineNumbers,
+            currentLoopInIterationScope,
+            selectedVariableNames: [],
+            selectedElementData,
+        });
+
+        // Notify parent of the initialized selection
+        onTargetChange(initialSelection);
+    }, [initialSelection, codeInfo]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Get available element types at current scope
     const availableTypes = useMemo(() => {
@@ -134,7 +231,7 @@ export default function TargetSelector({ codeInfo, onTargetChange }: TargetSelec
             });
             onTargetChange(null);
         },
-        [selectionState, onTargetChange]
+        [selectionState, onTargetChange],
     );
 
     // Handle function name selection
@@ -150,7 +247,7 @@ export default function TargetSelector({ codeInfo, onTargetChange }: TargetSelec
             });
             onTargetChange(null);
         },
-        [selectionState, onTargetChange]
+        [selectionState, onTargetChange],
     );
 
     // Handle function line selection
@@ -161,7 +258,7 @@ export default function TargetSelector({ codeInfo, onTargetChange }: TargetSelec
             if (index === -1) {
                 // "All" selected
                 const allIds = functionIds.filter(
-                    (id) => codeInfo.functions[id].name === selectionState.functionNameSelected
+                    (id) => codeInfo.functions[id].name === selectionState.functionNameSelected,
                 );
 
                 if (allIds.length === 0) {
@@ -220,15 +317,13 @@ export default function TargetSelector({ codeInfo, onTargetChange }: TargetSelec
                 onTargetChange(target);
             }
         },
-        [selectionState, codeInfo, onTargetChange]
+        [selectionState, codeInfo, onTargetChange],
     );
 
     // Handle variable toggle (multi-select)
     const handleVariableToggle = useCallback(
         (variableName: string) => {
-            const newSelectedVariables = selectionState.selectedVariableNames.includes(
-                variableName
-            )
+            const newSelectedVariables = selectionState.selectedVariableNames.includes(variableName)
                 ? selectionState.selectedVariableNames.filter((v) => v !== variableName)
                 : [...selectionState.selectedVariableNames, variableName];
 
@@ -250,7 +345,7 @@ export default function TargetSelector({ codeInfo, onTargetChange }: TargetSelec
                 onTargetChange(null);
             }
         },
-        [selectionState, onTargetChange]
+        [selectionState, onTargetChange],
     );
 
     // Handle element selection for loop/branch
@@ -273,6 +368,7 @@ export default function TargetSelector({ codeInfo, onTargetChange }: TargetSelec
                 const branch = element as { line_number: number; condition: string };
                 lineNumber = branch.line_number;
                 condition = branch.condition;
+                name = condition;
             } else if (selectionState.type === ElementType.Variable) {
                 const variable = element as { name: string };
                 name = variable.name;
@@ -302,7 +398,7 @@ export default function TargetSelector({ codeInfo, onTargetChange }: TargetSelec
 
             onTargetChange(target);
         },
-        [selectionState, availableElements, onTargetChange]
+        [selectionState, availableElements, onTargetChange],
     );
 
     // Handle modifier selection
@@ -334,7 +430,7 @@ export default function TargetSelector({ codeInfo, onTargetChange }: TargetSelec
                 onTargetChange(target);
             }
         },
-        [selectionState, onTargetChange]
+        [selectionState, onTargetChange],
     );
 
     // Navigate into nested scope
@@ -352,7 +448,7 @@ export default function TargetSelector({ codeInfo, onTargetChange }: TargetSelec
         const subtree = findSubtreeInCodeTree(
             selectionState.currentTree,
             selectionState.type,
-            globalElementId
+            globalElementId,
         );
 
         if (!subtree) {
@@ -364,11 +460,12 @@ export default function TargetSelector({ codeInfo, onTargetChange }: TargetSelec
             selectionState.type,
             selectionState.selectedElementData,
             globalElementId,
-            selectionState.modifier
+            selectionState.modifier,
         );
 
         const newLoopInIterationScope =
-            selectionState.type === ElementType.Loop && selectionState.modifier === ModifierEnum.LoopIterations
+            selectionState.type === ElementType.Loop &&
+            selectionState.modifier === ModifierEnum.LoopIterations
                 ? globalElementId
                 : null;
 
@@ -412,14 +509,15 @@ export default function TargetSelector({ codeInfo, onTargetChange }: TargetSelec
 
             onTargetChange(null);
         },
-        [selectionState, codeInfo, onTargetChange]
+        [selectionState, codeInfo, onTargetChange],
     );
 
     // Determine if navigation into scope is possible
     const canNavigateInto = useMemo(() => {
         if (!selectionState.type || selectionState.elementId === null) return false;
         if (selectionState.type === ElementType.Variable) return false;
-        if (selectionState.type === ElementType.Function && selectionState.elementId === -1) return false;
+        if (selectionState.type === ElementType.Function && selectionState.elementId === -1)
+            return false;
 
         if (
             selectionState.type === ElementType.Function &&

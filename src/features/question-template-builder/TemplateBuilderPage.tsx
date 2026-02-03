@@ -1,7 +1,7 @@
 // TemplateBuilderPage - Create question templates (similar to QuestionBuilder but without input data)
 
-import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,12 +25,20 @@ import {
     useCreateAssessmentTemplate,
     useAddQuestionTemplateToAssessmentTemplate,
 } from "@/features/assessment-templates/useAssessmentTemplates";
+import {
+    useQuestionTemplate,
+    useUpdateQuestionTemplate,
+} from "@/features/question-templates/useQuestionTemplates";
 import { useAnalyseCode } from "@/shared/hooks/useCodeAnalysis";
 import type { TargetSelection } from "@/types/frontend.types";
 import { CodeInputCard, TargetSelectionCard, QuestionConfigCard } from "@/shared/components";
+import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { SaveTemplateModal } from "./components";
 import { TemplatePreview } from "./TemplatePreview";
-import { flattenTarget } from "@/shared/components/target-selector/utils/transformTarget";
+import {
+    flattenTarget,
+    unflattenTarget,
+} from "@/shared/components/target-selector/utils/transformTarget";
 import type { CodeInfo, TemplatePreviewResponse } from "@/api/models";
 import type { QuestionTemplateConfig } from "../question-templates";
 
@@ -51,6 +59,17 @@ function TemplateBuilderPage() {
     const user = useUserStore((state) => state.user);
     const currentFolderId = useFolderStore((state) => state.currentFolderId);
 
+    // Edit mode detection
+    const [searchParams] = useSearchParams();
+    const templateId = searchParams.get("templateId");
+    const assessmentTemplateId = searchParams.get("assessmentTemplateId");
+    const isEditMode = Boolean(templateId);
+
+    // Fetch template data if in edit mode
+    const { data: existingTemplate, isLoading: loadingTemplate } = useQuestionTemplate(
+        templateId || undefined,
+    );
+
     // Code analysis state
     const analyseCode = useAnalyseCode();
     const [codeInfo, setCodeInfo] = useState<CodeInfo | undefined>(undefined);
@@ -67,6 +86,7 @@ function TemplateBuilderPage() {
     const generatePreview = useGenerateTemplatePreview();
     const createAssessmentTemplate = useCreateAssessmentTemplate();
     const addQuestionTemplate = useAddQuestionTemplateToAssessmentTemplate();
+    const updateQuestionTemplate = useUpdateQuestionTemplate();
 
     // Form setup with react-hook-form
     const form = useForm<TemplateBuilderFormValues>({
@@ -85,6 +105,45 @@ function TemplateBuilderPage() {
     const code = form.watch("code");
     const entryFunction = form.watch("entryFunction");
     const questionType = form.watch("questionType");
+
+    // Prepopulate form when editing existing template
+    useEffect(() => {
+        if (isEditMode && existingTemplate) {
+            const config = existingTemplate.template_config as unknown as QuestionTemplateConfig;
+
+            // Prepopulate form fields
+            form.setValue("templateDescription", existingTemplate.description || "");
+            form.setValue("code", config.code);
+            form.setValue("entryFunction", config.entry_function);
+            form.setValue("outputType", config.question_spec.output_type);
+            form.setValue("questionType", config.question_spec.question_type);
+            form.setValue("numDistractors", config.generation_options.num_distractors || 4);
+
+            // Trigger code analysis
+            analyseCode.mutate(
+                { code: config.code },
+                {
+                    onSuccess: (data) => {
+                        setCodeInfo(data.code_info);
+
+                        // Reconstruct target selection
+                        try {
+                            const reconstructedTarget = unflattenTarget(
+                                config.question_spec.target,
+                            );
+                            setTargetSelection(reconstructedTarget);
+                        } catch (error) {
+                            console.error("Failed to reconstruct target:", error);
+                            toast.error("Failed to load target selection");
+                        }
+                    },
+                    onError: (error) => {
+                        toast.error(`Failed to analyze code: ${error.message}`);
+                    },
+                },
+            );
+        }
+    }, [isEditMode, existingTemplate]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleAnalyseCode = () => {
         if (analyseCode.isPending) return;
@@ -166,6 +225,16 @@ function TemplateBuilderPage() {
         );
     };
 
+    const handleSaveButtonClick = () => {
+        if (isEditMode) {
+            // Directly update without showing modal
+            handleUpdateTemplate();
+        } else {
+            // Show modal for new template (choose destination)
+            setShowSaveModal(true);
+        }
+    };
+
     const handleSaveToNewBank = (
         title: string,
         description: string | undefined,
@@ -182,7 +251,7 @@ function TemplateBuilderPage() {
             },
             {
                 onSuccess: (newAssessmentTemplate) => {
-                    handleSaveToExisting(newAssessmentTemplate.id);
+                    handleCreateTemplate(newAssessmentTemplate.id);
                 },
                 onError: (error) => {
                     toast.error(`Failed to create template bank: ${error.message}`);
@@ -191,14 +260,48 @@ function TemplateBuilderPage() {
         );
     };
 
-    const handleSaveToExisting = (assessmentTemplateId: string) => {
+    const handleUpdateTemplate = (newAssessmentTemplateId?: string) => {
+        if (!preview || !user || !existingTemplate) return;
+
+        const values = form.getValues();
+
+        updateQuestionTemplate.mutate(
+            {
+                templateId: existingTemplate.id,
+                data: {
+                    question_type: values.questionType,
+                    question_text: preview.question_text,
+                    description: values.templateDescription || undefined,
+                    template_config: preview.template_config as unknown as QuestionTemplateConfig,
+                },
+            },
+            {
+                onSuccess: () => {
+                    toast.success("Template updated successfully");
+                    setShowSaveModal(false);
+
+                    const targetAssessmentId = assessmentTemplateId || newAssessmentTemplateId;
+                    if (targetAssessmentId) {
+                        navigate(`/assessment-templates/${targetAssessmentId}`);
+                    } else {
+                        navigate(-1);
+                    }
+                },
+                onError: (error) => {
+                    toast.error(`Failed to update template: ${error.message}`);
+                },
+            },
+        );
+    };
+
+    const handleCreateTemplate = (newAssessmentTemplateId: string) => {
         if (!preview || !user) return;
 
         const values = form.getValues();
 
         addQuestionTemplate.mutate(
             {
-                templateId: assessmentTemplateId,
+                templateId: newAssessmentTemplateId,
                 data: {
                     question_template: {
                         owner_id: user.id,
@@ -214,7 +317,7 @@ function TemplateBuilderPage() {
                 onSuccess: () => {
                     toast.success("Template added successfully");
                     setShowSaveModal(false);
-                    navigate(`/assessment-templates/${assessmentTemplateId}`);
+                    navigate(`/assessment-templates/${newAssessmentTemplateId}`);
                 },
                 onError: (error) => {
                     toast.error(`Failed to add template: ${error.message}`);
@@ -222,6 +325,31 @@ function TemplateBuilderPage() {
             },
         );
     };
+
+    // Show loading while fetching template data
+    if (isEditMode && loadingTemplate) {
+        return <PageSkeleton />;
+    }
+
+    // Show error if template not found
+    if (isEditMode && !loadingTemplate && !existingTemplate) {
+        return (
+            <div className="p-6 space-y-6">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <div>
+                        <h1 className="text-2xl font-semibold">Template Not Found</h1>
+                        <p className="text-muted-foreground mt-1">
+                            The template you're trying to edit doesn't exist or you don't have
+                            permission to access it.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <Form {...form}>
@@ -232,9 +360,13 @@ function TemplateBuilderPage() {
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div>
-                        <h1 className="text-2xl font-semibold">Template Builder</h1>
+                        <h1 className="text-2xl font-semibold">
+                            {isEditMode ? "Edit Template" : "Template Builder"}
+                        </h1>
                         <p className="text-muted-foreground mt-1">
-                            Create a reusable question template from code
+                            {isEditMode
+                                ? "Update this question template"
+                                : "Create a reusable question template from code"}
                         </p>
                     </div>
                 </div>
@@ -286,6 +418,7 @@ function TemplateBuilderPage() {
                             <TargetSelectionCard
                                 codeInfo={codeInfo}
                                 onTargetChange={setTargetSelection}
+                                initialSelection={targetSelection}
                             />
                         )}
 
@@ -329,22 +462,25 @@ function TemplateBuilderPage() {
                                 <TemplatePreview preview={preview} />
                                 <Button
                                     className="w-full"
-                                    onClick={() => setShowSaveModal(true)}
+                                    onClick={handleSaveButtonClick}
                                     disabled={
-                                        createAssessmentTemplate.isPending ||
-                                        addQuestionTemplate.isPending
+                                        isEditMode
+                                            ? updateQuestionTemplate.isPending
+                                            : createAssessmentTemplate.isPending ||
+                                              addQuestionTemplate.isPending
                                     }
                                 >
-                                    {createAssessmentTemplate.isPending ||
+                                    {(isEditMode && updateQuestionTemplate.isPending) ||
+                                    createAssessmentTemplate.isPending ||
                                     addQuestionTemplate.isPending ? (
                                         <>
                                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                            Saving...
+                                            {isEditMode ? "Updating..." : "Saving..."}
                                         </>
                                     ) : (
                                         <>
                                             <Save className="h-4 w-4 mr-2" />
-                                            Save Template
+                                            {isEditMode ? "Update Template" : "Save Template"}
                                         </>
                                     )}
                                 </Button>
@@ -368,15 +504,19 @@ function TemplateBuilderPage() {
                 </div>
 
                 {/* Save Modal */}
-                <SaveTemplateModal
-                    open={showSaveModal}
-                    onOpenChange={setShowSaveModal}
-                    ownerId={user?.id || ""}
-                    currentFolderId={currentFolderId || ""}
-                    onSaveToNew={handleSaveToNewBank}
-                    onSaveToExisting={handleSaveToExisting}
-                    isLoading={createAssessmentTemplate.isPending || addQuestionTemplate.isPending}
-                />
+                {showSaveModal && !isEditMode && (
+                    <SaveTemplateModal
+                        open={showSaveModal}
+                        onOpenChange={setShowSaveModal}
+                        ownerId={user?.id || ""}
+                        currentFolderId={currentFolderId || ""}
+                        onSaveToNew={handleSaveToNewBank}
+                        onSaveToExisting={handleCreateTemplate}
+                        isLoading={
+                            createAssessmentTemplate.isPending || addQuestionTemplate.isPending
+                        }
+                    />
+                )}
             </div>
         </Form>
     );

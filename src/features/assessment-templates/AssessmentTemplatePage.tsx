@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { ROUTES } from "@/router";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, Plus } from "lucide-react";
@@ -165,7 +166,9 @@ function AssessmentTemplatePage() {
 
     const handleEditTemplate = (template: QuestionTemplateResponse) => {
         setSelectedTemplate(template);
-        toast.info("Question template editor will be available soon");
+        navigate(
+            `${ROUTES.TEMPLATE_BUILDER}?templateId=${template.id}&assessmentTemplateId=${assessmentTemplate?.id}`,
+        );
     };
 
     const handleSelectExisting = (template: QuestionTemplateResponse) => {
@@ -278,7 +281,11 @@ function AssessmentTemplatePage() {
         <div className="p-6 space-y-6">
             {/* Header */}
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate(`/folders/${assessmentTemplate.folder_id}`)}>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate(`/folders/${assessmentTemplate.folder_id}`)}
+                >
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <div className="flex-1">
