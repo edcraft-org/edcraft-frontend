@@ -278,7 +278,7 @@ function AssessmentTemplatePage() {
         <div className="p-6 space-y-6">
             {/* Header */}
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                <Button variant="ghost" size="icon" onClick={() => navigate(`/folders/${assessmentTemplate.folder_id}`)}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <div className="flex-1">

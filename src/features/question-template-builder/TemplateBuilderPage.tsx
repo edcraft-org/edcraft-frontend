@@ -1,6 +1,6 @@
 // TemplateBuilderPage - Create question templates (similar to QuestionBuilder but without input data)
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -59,6 +59,9 @@ function TemplateBuilderPage() {
     // Preview and save state
     const [preview, setPreview] = useState<TemplatePreviewResponse | null>(null);
     const [showSaveModal, setShowSaveModal] = useState(false);
+
+    // Ref for scrolling to preview
+    const previewRef = useRef<HTMLDivElement>(null);
 
     // Mutations
     const generatePreview = useGenerateTemplatePreview();
@@ -154,6 +157,7 @@ function TemplateBuilderPage() {
                 onSuccess: (data) => {
                     setPreview(data);
                     toast.success("Template preview generated");
+                    previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
                 },
                 onError: (error) => {
                     toast.error(`Failed to generate preview: ${error.message}`);
@@ -210,7 +214,7 @@ function TemplateBuilderPage() {
                 onSuccess: () => {
                     toast.success("Template added successfully");
                     setShowSaveModal(false);
-                    navigate(-1);
+                    navigate(`/assessment-templates/${assessmentTemplateId}`);
                 },
                 onError: (error) => {
                     toast.error(`Failed to add template: ${error.message}`);
@@ -319,7 +323,7 @@ function TemplateBuilderPage() {
                     </div>
 
                     {/* Preview */}
-                    <div className="space-y-6">
+                    <div ref={previewRef} className="space-y-6">
                         {preview ? (
                             <>
                                 <TemplatePreview preview={preview} />

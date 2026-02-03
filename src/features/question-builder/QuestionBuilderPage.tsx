@@ -1,6 +1,6 @@
 // QuestionBuilderPage - Generate questions from code
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -63,6 +63,9 @@ function QuestionBuilderPage() {
 
     // Save modal state
     const [showSaveModal, setShowSaveModal] = useState(false);
+
+    // Ref for scrolling to preview
+    const previewRef = useRef<HTMLDivElement>(null);
 
     // Mutations
     const addQuestion = useAddQuestionToAssessment();
@@ -171,6 +174,7 @@ function QuestionBuilderPage() {
             onSuccess: (data) => {
                 setGeneratedQuestion(data.data);
                 toast.success("Question generated successfully");
+                previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
             },
             onError: (error) => {
                 toast.error(`Failed to generate question: ${error.message}`);
@@ -226,7 +230,7 @@ function QuestionBuilderPage() {
                 onSuccess: () => {
                     toast.success("Question added to assessment");
                     setShowSaveModal(false);
-                    navigate(-1);
+                    navigate(`/assessments/${assessmentId}`);
                 },
                 onError: (error) => {
                     toast.error(`Failed to add question: ${error.message}`);
@@ -321,7 +325,7 @@ function QuestionBuilderPage() {
                     </div>
 
                     {/* Preview */}
-                    <div className="space-y-6">
+                    <div ref={previewRef} className="space-y-6">
                         {generatedQuestion ? (
                             <>
                                 <QuestionDisplay

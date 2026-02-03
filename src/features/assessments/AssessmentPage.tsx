@@ -193,13 +193,13 @@ function AssessmentPage() {
         });
     };
 
-    const handleDuplicateQuestion = () => {
+    const handleDuplicateQuestion = (questionParam?: QuestionResponse) => {
         if (addQuestion.isPending) return;
 
         const session = validateSession();
         if (!session) return;
 
-        const question = validateQuestionSelected(selectedQuestion);
+        const question = questionParam || validateQuestionSelected(selectedQuestion);
         if (!question) return;
 
         handleAddQuestionMutation(
@@ -279,7 +279,7 @@ function AssessmentPage() {
         <div className="p-6 space-y-6">
             {/* Header */}
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                <Button variant="ghost" size="icon" onClick={() => navigate(`/folders/${assessment.folder_id}`)}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <div className="flex-1">
@@ -297,10 +297,7 @@ function AssessmentPage() {
             <QuestionsList
                 questions={sortedQuestions}
                 onEdit={handleEditQuestion}
-                onDuplicate={(question) => {
-                    setSelectedQuestion(question);
-                    setShowLinkOrDuplicateModal(true);
-                }}
+                onDuplicate={handleDuplicateQuestion}
                 onRemove={(question) => {
                     setSelectedQuestion(question);
                     setShowRemoveDialog(true);

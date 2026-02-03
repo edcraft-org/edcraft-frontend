@@ -117,18 +117,19 @@ export function FolderTree() {
     const { rootFolderId } = useUserStore();
 
     const isRootPath = rawFolderId === "root";
-    const folderId = isRootPath ? (rootFolderId ?? undefined) : rawFolderId;
+    const folderIdForPath = isRootPath || !rawFolderId ? (rootFolderId ?? undefined) : rawFolderId;
+    const currentFolderId = rawFolderId ? (isRootPath ? (rootFolderId ?? undefined) : rawFolderId) : undefined;
 
-    const { data: pathResponse, isLoading, isError } = useFolderPath(folderId);
+    const { data: pathResponse, isLoading, isError } = useFolderPath(folderIdForPath);
     const path = pathResponse?.path;
 
     useEffect(() => {
-        if (path && folderId) {
-            setCurrentFolderId(folderId);
+        if (path && currentFolderId) {
+            setCurrentFolderId(currentFolderId);
             const folderIdsToExpand = path.map((f) => f.id);
             addExpandedFolders(folderIdsToExpand);
         }
-    }, [folderId, path, setCurrentFolderId, addExpandedFolders]);
+    }, [currentFolderId, path, setCurrentFolderId, addExpandedFolders]);
 
     const handleNavigate = (targetFolderId: string) => {
         navigate(ROUTES.FOLDER(targetFolderId));
@@ -158,7 +159,7 @@ export function FolderTree() {
             <FolderNode
                 folder={rootFolder}
                 level={0}
-                currentFolderId={folderId}
+                currentFolderId={currentFolderId}
                 onNavigate={handleNavigate}
             />
         </div>

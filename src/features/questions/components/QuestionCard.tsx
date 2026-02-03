@@ -1,12 +1,8 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { QuestionResponse } from "@/api/models";
-import type {
-    MultipleChoiceAdditionalData,
-    ShortAnswerAdditionalData,
-} from "@/types/frontend.types";
+import type { MultipleChoiceAdditionalData } from "@/types/frontend.types";
 import { QuestionActionsMenu } from "./QuestionActionsMenu";
+import { QuestionContent } from "@/components/QuestionContent";
 
 interface QuestionCardProps {
     question: QuestionResponse;
@@ -23,8 +19,6 @@ export function QuestionCard({
     onDuplicate,
     onRemove,
 }: QuestionCardProps) {
-    const [showAnswer, setShowAnswer] = useState(false);
-
     const { question_text, question_type, additional_data } = question;
 
     // Type guard for MCQ/MRQ
@@ -32,38 +26,27 @@ export function QuestionCard({
     const hasOptions =
         isMCQOrMRQ && "options" in additional_data && Array.isArray(additional_data.options);
 
-    // Get letter label for option (A, B, C, ...)
-    const getOptionLabel = (index: number): string => {
-        return String.fromCharCode(65 + index);
-    };
-
-    // Check if an option is correct
-    const isCorrectOption = (index: number): boolean => {
-        if (!hasOptions || !("correct_indices" in additional_data)) return false;
-        return (
-            (additional_data as unknown as MultipleChoiceAdditionalData).correct_indices?.includes(
-                index,
-            ) ?? false
-        );
-    };
+    const options = hasOptions
+        ? (additional_data as unknown as MultipleChoiceAdditionalData).options
+        : undefined;
+    const correctIndices =
+        hasOptions && "correct_indices" in additional_data
+            ? (additional_data as unknown as MultipleChoiceAdditionalData).correct_indices
+            : undefined;
+    const answer = "answer" in additional_data ? additional_data.answer : undefined;
 
     return (
         <Card className="relative w-full group">
             <CardHeader className="flex flex-row items-start justify-between space-y-0">
-                <div className="flex flex-col items-start flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                        {questionNumber !== undefined && (
-                            <div className="text-sm font-medium text-muted-foreground mb-1">
-                                Question {questionNumber}
-                            </div>
-                        )}
-                        {/* Question Type Badge */}
-                        <span className="text-xs px-2 py-1 bg-muted rounded">
-                            {question_type.toUpperCase()}
-                        </span>
-                    </div>
-
-                    <CardTitle className="text-base font-normal">{question_text}</CardTitle>
+                <div className="flex items-center space-x-2">
+                    {questionNumber !== undefined && (
+                        <div className="text-sm font-medium text-muted-foreground">
+                            Question {questionNumber}
+                        </div>
+                    )}
+                    <span className="text-xs px-2 py-1 bg-muted rounded">
+                        {question_type.toUpperCase()}
+                    </span>
                 </div>
                 <QuestionActionsMenu
                     question={question}
@@ -72,104 +55,14 @@ export function QuestionCard({
                     onRemove={onRemove}
                 />
             </CardHeader>
-            <CardContent className="space-y-4">
-                {/* Options for MCQ/MRQ */}
-                {hasOptions && (
-                    <div className="space-y-2">
-                        {(additional_data as unknown as MultipleChoiceAdditionalData).options.map(
-                            (option, index) => (
-                                <div
-                                    key={index}
-                                    className={`p-3 rounded-md border transition-colors ${
-                                        showAnswer && isCorrectOption(index)
-                                            ? "bg-green-50 dark:bg-green-950 border-green-500 dark:border-green-700"
-                                            : "bg-muted/50 border-border"
-                                    }`}
-                                >
-                                    <span className="font-semibold mr-2">
-                                        {getOptionLabel(index)}.
-                                    </span>
-                                    <span
-                                        className={
-                                            showAnswer && isCorrectOption(index)
-                                                ? "text-green-700 dark:text-green-400 font-medium"
-                                                : "text-foreground"
-                                        }
-                                    >
-                                        {option}
-                                    </span>
-                                    {showAnswer && isCorrectOption(index) && (
-                                        <span className="ml-2 text-green-600 dark:text-green-400">
-                                            ✓
-                                        </span>
-                                    )}
-                                </div>
-                            ),
-                        )}
-                    </div>
-                )}
-
-                {/* Show/Hide Answer Button */}
-                {setShowAnswer && (
-                    <div>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowAnswer(!showAnswer)}
-                        >
-                            {showAnswer ? "Hide Answer" : "Show Answer"}
-                        </Button>
-                    </div>
-                )}
-
-                {/* Answer Section */}
-                {showAnswer && (
-                    <div className="p-3 bg-green-50 dark:bg-green-950 border border-green-500 dark:border-green-700 rounded-md">
-                        <h4 className="text-sm font-semibold text-green-800 dark:text-green-300 mb-2">
-                            Answer:
-                        </h4>
-
-                        {/* For MCQ/MRQ, show correct option labels */}
-                        {hasOptions && "correct_indices" in additional_data && (
-                            <div className="mb-2">
-                                <p className="text-green-700 dark:text-green-400 text-sm">
-                                    Correct option
-                                    {(additional_data as unknown as MultipleChoiceAdditionalData)
-                                        .correct_indices.length > 1
-                                        ? "s"
-                                        : ""}
-                                    :{" "}
-                                    {(
-                                        additional_data as unknown as MultipleChoiceAdditionalData
-                                    ).correct_indices
-                                        .map((idx: number) => getOptionLabel(idx))
-                                        .join(", ")}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Show the actual answer text */}
-                        {"answer" in additional_data &&
-                            (
-                                additional_data as unknown as
-                                    | MultipleChoiceAdditionalData
-                                    | ShortAnswerAdditionalData
-                            ).answer && (
-                                <div className="bg-background p-2 rounded border border-green-200 dark:border-green-800">
-                                    <p className="text-foreground text-sm whitespace-pre-wrap">
-                                        {
-                                            (
-                                                additional_data as unknown as
-                                                    | MultipleChoiceAdditionalData
-                                                    | ShortAnswerAdditionalData
-                                            ).answer
-                                        }
-                                    </p>
-                                </div>
-                            )}
-                    </div>
-                )}
+            <CardContent>
+                <QuestionContent
+                    questionText={question_text}
+                    questionType={question_type}
+                    options={options}
+                    correctIndices={correctIndices}
+                    answer={answer}
+                />
             </CardContent>
         </Card>
     );

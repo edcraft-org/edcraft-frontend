@@ -16,9 +16,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, ChevronRight, ChevronLeft, Check, Code2 } from "lucide-react";
+import { Loader2, ChevronRight, ChevronLeft, Check } from "lucide-react";
 import {
     Form,
     FormControl,
@@ -29,6 +28,7 @@ import {
 } from "@/components/ui/form";
 import { InputDataCard } from "@/shared/components";
 import type { AssessmentTemplateQuestionTemplateResponse } from "@/api/models";
+import { QuestionTemplateContent } from "@/components/QuestionTemplateContent";
 
 // Validates a JSON string input
 const validateJsonInput = (inputData: string): boolean => {
@@ -294,28 +294,10 @@ export function InstantiateAssessmentModal({
                     {/* Steps 1+: Input data for each template */}
                     {currentStep > 0 && questionTemplates[templateIndex] && (
                         <div className="space-y-4">
-                            <Card>
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                        <Code2 className="h-4 w-4" />
-                                        Template {currentStep}:{" "}
-                                        {questionTemplates[templateIndex].question_text}
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm text-muted-foreground mb-2">
-                                        Type:{" "}
-                                        {questionTemplates[
-                                            templateIndex
-                                        ].question_type.toUpperCase()}
-                                    </p>
-                                    {questionTemplates[templateIndex].description && (
-                                        <p className="text-sm text-muted-foreground">
-                                            {questionTemplates[templateIndex].description}
-                                        </p>
-                                    )}
-                                </CardContent>
-                            </Card>
+                            <QuestionTemplateContent
+                                template={questionTemplates[templateIndex]}
+                                index={templateIndex}
+                            />
 
                             <Form {...templateInputForm}>
                                 <InputDataCard
