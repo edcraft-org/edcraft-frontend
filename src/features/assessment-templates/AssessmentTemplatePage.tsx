@@ -85,7 +85,6 @@ function AssessmentTemplatePage() {
     // Adds a new question template to the assessment template
     const handleAddQuestionTemplateMutation = (
         templateId: string,
-        userId: string,
         templateData: {
             question_type: QuestionTemplateResponse["question_type"];
             question_text: QuestionTemplateResponse["question_text"];
@@ -100,7 +99,6 @@ function AssessmentTemplatePage() {
                 templateId,
                 data: {
                     question_template: {
-                        owner_id: userId,
                         ...templateData,
                     },
                 },
@@ -202,7 +200,6 @@ function AssessmentTemplatePage() {
 
         handleAddQuestionTemplateMutation(
             session.templateId,
-            session.userId,
             {
                 question_type: template.question_type,
                 question_text: template.question_text,

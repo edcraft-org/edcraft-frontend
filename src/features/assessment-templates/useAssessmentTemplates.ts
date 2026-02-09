@@ -27,7 +27,7 @@ import type {
 export function useAssessmentTemplates(ownerId: string | undefined, folderId?: string) {
     return useQuery({
         queryKey: queryKeys.assessmentTemplates.byFolder(ownerId || "", folderId || ""),
-        queryFn: () => getAssessmentTemplates(ownerId!, folderId),
+        queryFn: () => getAssessmentTemplates(folderId),
         enabled: !!ownerId,
     });
 }

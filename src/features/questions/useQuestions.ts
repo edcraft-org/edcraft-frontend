@@ -15,7 +15,7 @@ import type { UpdateQuestionRequest } from "@/api/models/updateQuestionRequest";
 export function useQuestions(ownerId: string | undefined) {
     return useQuery({
         queryKey: queryKeys.questions.all(ownerId ?? ""),
-        queryFn: () => getQuestions(ownerId!),
+        queryFn: () => getQuestions(),
         enabled: !!ownerId,
     });
 }
@@ -36,7 +36,7 @@ export function useQuestionAssessments(
 ) {
     return useQuery({
         queryKey: queryKeys.questions.assessments(questionId ?? ""),
-        queryFn: () => getAssessmentsContainingQuestion(questionId!, ownerId!),
+        queryFn: () => getAssessmentsContainingQuestion(questionId!),
         enabled: !!questionId && !!ownerId,
     });
 }

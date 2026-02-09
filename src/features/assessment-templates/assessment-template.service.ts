@@ -15,11 +15,9 @@ import type {
 
 // Get all assessment templates for a user
 export async function getAssessmentTemplates(
-    ownerId: string,
     folderId?: string,
 ): Promise<AssessmentTemplateResponse[]> {
     const response = await api.listAssessmentTemplatesAssessmentTemplatesGet({
-        owner_id: ownerId,
         folder_id: folderId,
     });
     return response.data;

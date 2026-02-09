@@ -13,11 +13,9 @@ import type {
 
 // Get all assessments for a user
 export async function getAssessments(
-    ownerId: string,
     folderId?: string,
 ): Promise<AssessmentResponse[]> {
     const response = await api.listAssessmentsAssessmentsGet({
-        owner_id: ownerId,
         folder_id: folderId,
     });
     return response.data;

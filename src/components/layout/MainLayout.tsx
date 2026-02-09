@@ -1,10 +1,16 @@
+import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/sonner";
+import { initAuth } from "@/features/auth/auth.service";
 
 export function MainLayout() {
+    useEffect(() => {
+        initAuth();
+    }, []);
+
     return (
         <div className="min-h-screen flex flex-col">
             <Header />

@@ -46,7 +46,7 @@ export function SaveTemplateModal({
     );
 
     const { data: folders } = useFolders(
-        open && mode === "create" ? { owner_id: ownerId } : undefined
+        open && mode === "create" ? {} : undefined
     );
 
     const handleClose = () => {

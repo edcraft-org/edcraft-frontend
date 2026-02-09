@@ -12,9 +12,9 @@ import type {
     UpdateFolderRequest,
 } from "@/api/models";
 
-// Get the root folder for a user
-export async function getUserRootFolder(userId: string): Promise<FolderResponse> {
-    const response = await api.getUserRootFolderUsersUserIdRootFolderGet(userId);
+// Get the root folder for the authenticated user
+export async function getUserRootFolder(): Promise<FolderResponse> {
+    const response = await api.getUserRootFolderUsersMeRootFolderGet();
     return response.data;
 }
 

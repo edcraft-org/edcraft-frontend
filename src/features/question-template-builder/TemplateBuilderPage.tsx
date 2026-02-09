@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Loader2, Wand2, Save, ArrowLeft } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
+import { useAuthDialogStore } from "@/shared/stores/auth-dialog.store";
 import { useFolderStore } from "@/shared/stores/folder.store";
 import { useGenerateTemplatePreview } from "./useTemplateBuilders";
 import {
@@ -57,6 +58,7 @@ type TemplateBuilderFormValues = z.infer<typeof templateBuilderSchema>;
 function TemplateBuilderPage() {
     const navigate = useNavigate();
     const user = useUserStore((state) => state.user);
+    const openAuthDialog = useAuthDialogStore((state) => state.setOpen);
     const currentFolderId = useFolderStore((state) => state.currentFolderId);
 
     // Edit mode detection
@@ -226,6 +228,10 @@ function TemplateBuilderPage() {
     };
 
     const handleSaveButtonClick = () => {
+        if (!user) {
+            openAuthDialog(true);
+            return;
+        }
         if (isEditMode) {
             // Directly update without showing modal
             handleUpdateTemplate();
@@ -244,7 +250,6 @@ function TemplateBuilderPage() {
 
         createAssessmentTemplate.mutate(
             {
-                owner_id: user.id,
                 folder_id: folderId,
                 title,
                 description,
@@ -304,7 +309,6 @@ function TemplateBuilderPage() {
                 templateId: newAssessmentTemplateId,
                 data: {
                     question_template: {
-                        owner_id: user.id,
                         question_type: values.questionType,
                         question_text: preview.question_text,
                         description: values.templateDescription || undefined,

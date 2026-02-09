@@ -26,7 +26,7 @@ function FolderNode({ folder, level, currentFolderId, onNavigate }: FolderNodePr
         data: children,
         isLoading: isLoadingChildren,
         isError: isChildrenError,
-    } = useFolders({ owner_id: folder.owner_id, parent_id: folder.id }, { enabled: isExpanded });
+    } = useFolders({ parent_id: folder.id }, { enabled: isExpanded });
 
     const handleClick = () => {
         onNavigate(folder.id);
@@ -112,13 +112,18 @@ function FolderNode({ folder, level, currentFolderId, onNavigate }: FolderNodePr
 
 export function FolderTree() {
     const navigate = useNavigate();
+    const { user } = useUserStore();
     const { folderId: rawFolderId } = useParams();
     const { setCurrentFolderId, addExpandedFolders } = useFolderStore();
     const { rootFolderId } = useUserStore();
 
     const isRootPath = rawFolderId === "root";
     const folderIdForPath = isRootPath || !rawFolderId ? (rootFolderId ?? undefined) : rawFolderId;
-    const currentFolderId = rawFolderId ? (isRootPath ? (rootFolderId ?? undefined) : rawFolderId) : undefined;
+    const currentFolderId = rawFolderId
+        ? isRootPath
+            ? (rootFolderId ?? undefined)
+            : rawFolderId
+        : undefined;
 
     const { data: pathResponse, isLoading, isError } = useFolderPath(folderIdForPath);
     const path = pathResponse?.path;
@@ -138,6 +143,16 @@ export function FolderTree() {
     const rootFolder = path ? path[0] : undefined;
 
     if (isLoading) {
+        return <TreeSkeleton />;
+    }
+
+    if (!user) {
+        return (
+            <div className="text-sm text-muted-foreground p-2">Please sign in to view folders</div>
+        );
+    }
+
+    if (user && !rootFolderId) {
         return <TreeSkeleton />;
     }
 

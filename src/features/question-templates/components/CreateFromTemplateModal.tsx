@@ -106,7 +106,6 @@ export function CreateFromTemplateModal({
 
         createAssessment.mutate(
             {
-                owner_id: user.id,
                 folder_id: folderId,
                 title,
                 description,
@@ -130,7 +129,6 @@ export function CreateFromTemplateModal({
                 assessmentId,
                 data: {
                     question: {
-                        owner_id: user.id,
                         template_id: template.id,
                         question_type: generatedQuestion.question_type,
                         question_text: generatedQuestion.text,

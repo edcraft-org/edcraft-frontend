@@ -80,7 +80,6 @@ function AssessmentPage() {
     // Adds a new question to the assessment
     const handleAddQuestionMutation = (
         assessmentId: string,
-        userId: string,
         questionData: {
             template_id?: string | null;
             question_type: QuestionResponse["question_type"];
@@ -95,7 +94,6 @@ function AssessmentPage() {
                 assessmentId,
                 data: {
                     question: {
-                        owner_id: userId,
                         ...questionData,
                     },
                 },
@@ -171,7 +169,6 @@ function AssessmentPage() {
 
         handleAddQuestionMutation(
             session.assessmentId,
-            session.userId,
             data,
             "Question added successfully",
             () => setShowAddModal(false),
@@ -204,7 +201,6 @@ function AssessmentPage() {
 
         handleAddQuestionMutation(
             session.assessmentId,
-            session.userId,
             {
                 template_id: question.template_id,
                 question_type: question.question_type,

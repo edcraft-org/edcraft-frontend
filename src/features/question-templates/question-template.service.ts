@@ -11,10 +11,8 @@ import type {
 } from "@/api/models";
 
 // Get all question templates for a user
-export async function getQuestionTemplates(
-    ownerId: string,
-): Promise<QuestionTemplateSummaryResponse[]> {
-    const response = await api.listQuestionTemplatesQuestionTemplatesGet({ owner_id: ownerId });
+export async function getQuestionTemplates(): Promise<QuestionTemplateSummaryResponse[]> {
+    const response = await api.listQuestionTemplatesQuestionTemplatesGet();
     return response.data;
 }
 
@@ -46,12 +44,10 @@ export async function deleteQuestionTemplate(templateId: string): Promise<void> 
 // Get assessment templates that contain a specific question template
 export async function getQuestionTemplateAssessmentTemplates(
     templateId: string,
-    ownerId: string,
 ): Promise<AssessmentTemplateResponse[]> {
     const response =
         await api.getAssessmentTemplatesForQuestionTemplateQuestionTemplatesQuestionTemplateIdAssessmentTemplatesGet(
             templateId,
-            { owner_id: ownerId },
         );
     return response.data;
 }

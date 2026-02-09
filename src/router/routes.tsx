@@ -3,6 +3,7 @@ import type { ComponentType } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
+import { ProtectedRoute } from "./ProtectedRoute";
 import { ROUTES } from "./paths";
 
 // Re-export ROUTES for convenience
@@ -38,29 +39,32 @@ export const router = createBrowserRouter([
                 index: true,
                 element: <Navigate to={ROUTES.FOLDER_ROOT} replace />,
             },
-            {
-                path: "folders/:folderId",
-                element: lazyRoute(FolderPage),
-            },
+            // Public routes
             {
                 path: "question-builder",
-                element: lazyRoute(QuestionBuilderPage),
-            },
-            {
-                path: "questions/:questionId/edit",
                 element: lazyRoute(QuestionBuilderPage),
             },
             {
                 path: "template-builder",
                 element: lazyRoute(TemplateBuilderPage),
             },
+            // Protected routes
             {
-                path: "assessments/:assessmentId",
-                element: lazyRoute(AssessmentPage),
-            },
-            {
-                path: "assessment-templates/:templateId",
-                element: lazyRoute(AssessmentTemplatePage),
+                element: <ProtectedRoute />,
+                children: [
+                    {
+                        path: "folders/:folderId",
+                        element: lazyRoute(FolderPage),
+                    },
+                    {
+                        path: "assessments/:assessmentId",
+                        element: lazyRoute(AssessmentPage),
+                    },
+                    {
+                        path: "assessment-templates/:templateId",
+                        element: lazyRoute(AssessmentTemplatePage),
+                    },
+                ],
             },
         ],
     },

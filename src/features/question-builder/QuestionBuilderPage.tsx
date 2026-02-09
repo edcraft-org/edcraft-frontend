@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { Loader2, Wand2, Save, ArrowLeft } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
+import { useAuthDialogStore } from "@/shared/stores/auth-dialog.store";
 import {
     useAddQuestionToAssessment,
     useCreateAssessment,
@@ -47,6 +48,7 @@ function QuestionBuilderPage() {
     const destinationAssessmentId = searchParams.get("destination");
     const user = useUserStore((state) => state.user);
     const rootFolderId = useUserStore((state) => state.rootFolderId);
+    const openAuthDialog = useAuthDialogStore((state) => state.setOpen);
 
     // Code analysis state
     const analyseCode = useAnalyseCode();
@@ -202,7 +204,6 @@ function QuestionBuilderPage() {
 
         createAssessment.mutate(
             {
-                owner_id: user.id,
                 folder_id: folderId,
                 title,
                 description,
@@ -226,7 +227,6 @@ function QuestionBuilderPage() {
                 assessmentId,
                 data: {
                     question: {
-                        owner_id: user.id,
                         question_type: generatedQuestion.question_type,
                         question_text: generatedQuestion.text,
                         additional_data: {
@@ -359,7 +359,13 @@ function QuestionBuilderPage() {
                                 )}
                                 <Button
                                     className="w-full"
-                                    onClick={() => setShowSaveModal(true)}
+                                    onClick={() => {
+                                        if (!user) {
+                                            openAuthDialog(true);
+                                            return;
+                                        }
+                                        setShowSaveModal(true);
+                                    }}
                                     disabled={createAssessment.isPending || addQuestion.isPending}
                                 >
                                     {createAssessment.isPending || addQuestion.isPending ? (

@@ -2,14 +2,15 @@ export const queryKeys = {
   // User queries
   users: {
     all: ["users"] as const,
+    me: ["users", "me"] as const,
     detail: (id: string) => ["users", id] as const,
   },
 
   // Folder queries
   folders: {
     all: (ownerId: string) => ["folders", ownerId] as const,
-    byFolder: (ownerId: string, parentId: string) =>
-      ["folders", ownerId, parentId] as const,
+    byFolder: (parentId: string) =>
+      ["folders", parentId] as const,
     root: (ownerId: string) => ["folders", ownerId, "root"] as const,
     detail: (id: string) => ["folder", id] as const,
     contents: (id: string) => ["folder", id, "contents"] as const,

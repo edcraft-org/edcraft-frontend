@@ -25,7 +25,7 @@ import type {
 export function useAssessments(ownerId: string | undefined, folderId?: string) {
     return useQuery({
         queryKey: queryKeys.assessments.byFolder(ownerId || "", folderId || ""),
-        queryFn: () => getAssessments(ownerId!, folderId),
+        queryFn: () => getAssessments(folderId),
         enabled: !!ownerId,
     });
 }

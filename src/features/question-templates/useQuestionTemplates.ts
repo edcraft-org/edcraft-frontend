@@ -19,7 +19,7 @@ import type {
 export function useQuestionTemplates(ownerId: string | undefined) {
     return useQuery({
         queryKey: queryKeys.questionTemplates.all(ownerId ?? ""),
-        queryFn: () => getQuestionTemplates(ownerId!),
+        queryFn: () => getQuestionTemplates(),
         enabled: !!ownerId,
     });
 }
@@ -40,7 +40,7 @@ export function useQuestionTemplateAssessmentTemplates(
 ) {
     return useQuery({
         queryKey: queryKeys.questionTemplates.assessmentTemplates(templateId ?? ""),
-        queryFn: () => getQuestionTemplateAssessmentTemplates(templateId!, ownerId!),
+        queryFn: () => getQuestionTemplateAssessmentTemplates(templateId!),
         enabled: !!templateId && !!ownerId,
     });
 }

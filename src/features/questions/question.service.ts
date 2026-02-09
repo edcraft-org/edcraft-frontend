@@ -8,10 +8,8 @@ import type {
 } from "@/api/models";
 
 // Get all questions for a user
-export async function getQuestions(
-  ownerId: string,
-): Promise<QuestionResponse[]> {
-  const response = await api.listQuestionsQuestionsGet({ owner_id: ownerId });
+export async function getQuestions(): Promise<QuestionResponse[]> {
+  const response = await api.listQuestionsQuestionsGet();
   return response.data;
 }
 
@@ -43,11 +41,9 @@ export async function deleteQuestion(
 // Get assessments that contain a specific question
 export async function getAssessmentsContainingQuestion(
   questionId: string,
-  ownerId: string,
 ): Promise<AssessmentResponse[]> {
   const response = await api.getAssessmentsForQuestionQuestionsQuestionIdAssessmentsGet(
     questionId,
-    { owner_id: ownerId }
   );
   return response.data;
 }

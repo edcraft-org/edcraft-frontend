@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { UserSelector } from "./UserSelector";
+import { AuthButton } from "./AuthButton";
+import { AuthDialog } from "@/components/auth/AuthDialog";
 import { ROUTES } from "@/router/paths";
 import { FileQuestion, LayoutTemplate } from "lucide-react";
 
@@ -30,8 +31,9 @@ export function Header() {
                 {/* Spacer */}
                 <div className="flex-1" />
 
-                <UserSelector />
+                <AuthButton />
             </div>
+            <AuthDialog />
         </header>
     );
 }

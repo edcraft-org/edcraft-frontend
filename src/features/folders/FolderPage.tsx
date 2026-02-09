@@ -139,7 +139,6 @@ function FolderPage() {
 
         createFolder.mutate(
             {
-                owner_id: session.userId,
                 parent_id: session.folderId,
                 name,
                 description,
@@ -162,7 +161,6 @@ function FolderPage() {
 
         createAssessment.mutate(
             {
-                owner_id: session.userId,
                 folder_id: session.folderId,
                 title,
                 description,
@@ -186,7 +184,6 @@ function FolderPage() {
 
         createAssessmentTemplate.mutate(
             {
-                owner_id: session.userId,
                 folder_id: session.folderId,
                 title,
                 description,
@@ -475,7 +472,6 @@ function FolderPage() {
                     updateAssessmentTemplate.isPending
                 }
                 resourceType={selectedResource?.resourceType ?? "folder"}
-                ownerId={user?.id || ""}
                 originalFolderId={folderId || ""}
             />
 

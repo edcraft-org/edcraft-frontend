@@ -16,7 +16,7 @@ export function Sidebar() {
                 <div className="p-4">
                     <h2 className="text-sm font-medium text-muted-foreground mb-4">Folders</h2>
                     <div className="text-sm text-muted-foreground">
-                        Select a user to view folders
+                        Sign in to view folders
                     </div>
                 </div>
             </aside>

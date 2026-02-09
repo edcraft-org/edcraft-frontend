@@ -62,7 +62,6 @@ interface MoveModalProps {
     onSubmit: (targetFolderId: string) => void;
     isLoading?: boolean;
     resourceType: "folder" | "assessment" | "assessment_template";
-    ownerId: string;
     originalFolderId: string;
 }
 
@@ -72,7 +71,6 @@ export function MoveModal({
     onSubmit,
     isLoading,
     resourceType,
-    ownerId,
     originalFolderId,
 }: MoveModalProps) {
     const [currentViewFolderId, setCurrentViewFolderId] = useState<string | null>(null);
@@ -94,7 +92,7 @@ export function MoveModal({
     // Fetch child folders of current view
     const { data: childFolders, isLoading: isLoadingChildren } = useFolders(
         open && currentViewFolderId
-            ? { owner_id: ownerId, parent_id: currentViewFolderId }
+            ? { parent_id: currentViewFolderId }
             : undefined,
     );
 

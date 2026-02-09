@@ -21,12 +21,11 @@ import type {
     MoveFolderRequest,
 } from "@/api/models";
 
-// Hook to fetch the root folder for a user
-export function useUserRootFolder(userId: string | undefined) {
+// Hook to fetch the root folder for the authenticated user
+export function useUserRootFolder() {
     return useQuery({
-        queryKey: queryKeys.folders.root(userId || ""),
-        queryFn: () => getUserRootFolder(userId!),
-        enabled: !!userId,
+        queryKey: queryKeys.users.me,
+        queryFn: () => getUserRootFolder(),
     });
 }
 
@@ -35,14 +34,10 @@ export function useFolders(
     params: ListFoldersFoldersGetParams | undefined,
     options?: { enabled?: boolean },
 ) {
-    const enabledByParams = !!params?.owner_id;
-    const enabled =
-        options?.enabled !== undefined ? options.enabled && enabledByParams : enabledByParams;
-
     return useQuery({
-        queryKey: queryKeys.folders.byFolder(params?.owner_id || "", params?.parent_id || ""),
+        queryKey: queryKeys.folders.byFolder(params?.parent_id || ""),
         queryFn: () => listFolders(params!),
-        enabled,
+        enabled: params !== undefined && (options?.enabled ?? true),
     });
 }
 
