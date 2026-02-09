@@ -19,6 +19,7 @@ const AssessmentTemplatePage = lazy(
 const TemplateBuilderPage = lazy(
     () => import("@/features/question-template-builder/TemplateBuilderPage"),
 );
+const OAuthCallbackPage = lazy(() => import("@/features/auth/OAuthCallbackPage"));
 
 // Helper to wrap lazy loaded components with Suspense
 function lazyRoute(Component: ComponentType) {
@@ -47,6 +48,10 @@ export const router = createBrowserRouter([
             {
                 path: "template-builder",
                 element: lazyRoute(TemplateBuilderPage),
+            },
+            {
+                path: "auth/callback",
+                element: lazyRoute(OAuthCallbackPage),
             },
             // Protected routes
             {

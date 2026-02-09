@@ -1,7 +1,7 @@
 import { api } from "@/api/client";
 import { useUserStore } from "@/shared/stores/user.store";
 
-async function fetchAndStoreUser() {
+export async function fetchAndStoreUser() {
     const [userRes, folderRes] = await Promise.all([
         api.getUserUsersMeGet(),
         api.getUserRootFolderUsersMeRootFolderGet(),

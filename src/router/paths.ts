@@ -9,4 +9,5 @@ export const ROUTES = {
   TEMPLATE_EDIT: (id: string) => `/templates/${id}/edit`,
   ASSESSMENT: (id: string) => `/assessments/${id}`,
   ASSESSMENT_TEMPLATE: (id: string) => `/assessment-templates/${id}`,
+  AUTH_CALLBACK: "/auth/callback",
 } as const;

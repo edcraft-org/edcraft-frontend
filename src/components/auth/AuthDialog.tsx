@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuthDialogStore } from "@/shared/stores/auth-dialog.store";
 import { login, signup } from "@/features/auth/auth.service";
+import { OAuthButtons } from "./OAuthButtons";
 
 const loginSchema = z.object({
     email: z.email("Please enter a valid email"),
@@ -76,8 +77,9 @@ function LoginForm({ onClose, onSwitchMode }: { onClose: () => void; onSwitchMod
     };
 
     return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-4">
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                     control={form.control}
                     name="email"
@@ -121,21 +123,35 @@ function LoginForm({ onClose, onSwitchMode }: { onClose: () => void; onSwitchMod
                         </FormItem>
                     )}
                 />
-                <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? "Signing in..." : "Sign In"}
-                </Button>
-                <p className="text-sm text-center text-muted-foreground">
-                    Don't have an account?{" "}
-                    <button
-                        type="button"
-                        onClick={onSwitchMode}
-                        className="underline hover:text-foreground"
-                    >
-                        Register
-                    </button>
-                </p>
-            </form>
-        </Form>
+                    <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                        {form.formState.isSubmitting ? "Signing in..." : "Sign In"}
+                    </Button>
+                    <p className="text-sm text-center text-muted-foreground">
+                        Don't have an account?{" "}
+                        <button
+                            type="button"
+                            onClick={onSwitchMode}
+                            className="underline hover:text-foreground"
+                        >
+                            Register
+                        </button>
+                    </p>
+                </form>
+            </Form>
+
+            <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                        or
+                    </span>
+                </div>
+            </div>
+
+            <OAuthButtons onOAuthStart={onClose} />
+        </div>
     );
 }
 
@@ -157,8 +173,22 @@ function SignupForm({ onSwitchMode }: { onSwitchMode: () => void }) {
     };
 
     return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-4">
+            <OAuthButtons onOAuthStart={() => {}} />
+
+            <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                        Or continue with email
+                    </span>
+                </div>
+            </div>
+
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                     control={form.control}
                     name="email"
@@ -202,20 +232,21 @@ function SignupForm({ onSwitchMode }: { onSwitchMode: () => void }) {
                         </FormItem>
                     )}
                 />
-                <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? "Creating account..." : "Create Account"}
-                </Button>
-                <p className="text-sm text-center text-muted-foreground">
-                    Already have an account?{" "}
-                    <button
-                        type="button"
-                        onClick={onSwitchMode}
-                        className="underline hover:text-foreground"
-                    >
-                        Sign In
-                    </button>
-                </p>
-            </form>
-        </Form>
+                    <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                        {form.formState.isSubmitting ? "Creating account..." : "Create Account"}
+                    </Button>
+                    <p className="text-sm text-center text-muted-foreground">
+                        Already have an account?{" "}
+                        <button
+                            type="button"
+                            onClick={onSwitchMode}
+                            className="underline hover:text-foreground"
+                        >
+                            Sign In
+                        </button>
+                    </p>
+                </form>
+            </Form>
+        </div>
     );
 }
