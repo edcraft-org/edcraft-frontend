@@ -1,5 +1,11 @@
 import { api } from "@/api/client";
+import { setAuthFailureHandler } from "@/api/axiosInstance";
 import { useUserStore } from "@/shared/stores/user.store";
+
+// Set up auth failure handler for axios interceptor
+setAuthFailureHandler(() => {
+    useUserStore.getState().logout();
+});
 
 export async function fetchAndStoreUser() {
     const [userRes, folderRes] = await Promise.all([
@@ -34,4 +40,14 @@ export async function initAuth() {
     } finally {
         useUserStore.getState().setIsAuthChecked(true);
     }
+}
+
+export async function verifyEmail(token: string) {
+    const response = await api.verifyEmailAuthVerifyEmailPost({ token });
+    return response.data;
+}
+
+export async function resendVerification(email: string) {
+    const response = await api.resendVerificationAuthResendVerificationPost({ email });
+    return response.data;
 }

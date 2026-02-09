@@ -15,8 +15,14 @@ export class ApiError extends Error {
     }
 }
 
+// Callback for handling logout on auth failure (set by auth service)
+let onAuthFailure: (() => void) | null = null;
+export const setAuthFailureHandler = (handler: () => void) => {
+    onAuthFailure = handler;
+};
+
 const instance = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
+    baseURL: "/api",
     headers: {
         "Content-Type": "application/json",
     },
@@ -54,8 +60,9 @@ instance.interceptors.response.use(
                 return instance(originalRequest);
             } catch {
                 // Refresh failed — clear auth state
-                const { useUserStore } = await import("@/shared/stores/user.store");
-                useUserStore.getState().logout();
+                if (onAuthFailure) {
+                    onAuthFailure();
+                }
                 return Promise.reject(error);
             }
         }
@@ -71,23 +78,29 @@ instance.interceptors.response.use(
             // Show user-friendly toast for specific errors
             if (apiError.status >= 500) {
                 toast.error("Server error. Please try again later.");
+            } else if (
+                apiError.status === 401 &&
+                error.config?.url?.includes("/auth/") &&
+                !error.config?.url?.includes("/auth/refresh")
+            ) {
+                toast.error(apiError.detail || "Authentication failed");
             } else if (apiError.status === 404) {
                 toast.error(apiError.detail || "Resource not found");
             } else if (apiError.status === 403) {
                 toast.error("You do not have permission to perform this action");
             } else if (apiError.status === 400) {
                 toast.error(apiError.detail || "Invalid request");
+            } else if (apiError.status === 409) {
+                toast.error(apiError.detail || "Conflict error");
             }
 
-            // Log errors in development
-            if (import.meta.env.DEV) {
-                console.error("API Error:", {
-                    status: apiError.status,
-                    detail: apiError.detail,
-                    type: apiError.errorType,
-                    url: error.config?.url,
-                });
-            }
+            // Log API errors for debugging
+            console.error("API Error:", {
+                status: apiError.status,
+                detail: apiError.detail,
+                type: apiError.errorType,
+                url: error.config?.url,
+            });
 
             throw apiError;
         }
@@ -101,17 +114,13 @@ instance.interceptors.response.use(
                 "network_error",
             );
 
-            if (import.meta.env.DEV) {
-                console.error("Network Error:", error.message);
-            }
+            console.error("Network Error:", error.message);
 
             throw networkError;
         }
 
         // Request setup error
-        if (import.meta.env.DEV) {
-            console.error("Request Error:", error.message);
-        }
+        console.error("Request Error:", error.message);
         throw error;
     },
 );

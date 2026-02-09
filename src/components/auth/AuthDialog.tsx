@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
     Form,
@@ -16,8 +16,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuthDialogStore } from "@/shared/stores/auth-dialog.store";
-import { login, signup } from "@/features/auth/auth.service";
+import { login, signup, resendVerification } from "@/features/auth/auth.service";
 import { OAuthButtons } from "./OAuthButtons";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const loginSchema = z.object({
     email: z.email("Please enter a valid email"),
@@ -80,49 +81,49 @@ function LoginForm({ onClose, onSwitchMode }: { onClose: () => void; onSwitchMod
         <div className="space-y-4">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                                <Input type="email" placeholder="you@example.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                                <div className="relative">
-                                    <Input
-                                        type={showPassword ? "text" : "password"}
-                                        placeholder="Password"
-                                        {...field}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff className="h-4 w-4" />
-                                        ) : (
-                                            <Eye className="h-4 w-4" />
-                                        )}
-                                    </button>
-                                </div>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                    <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                    <Input type="email" placeholder="you@example.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <FormControl>
+                                    <div className="relative">
+                                        <Input
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="Password"
+                                            {...field}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                        >
+                                            {showPassword ? (
+                                                <EyeOff className="h-4 w-4" />
+                                            ) : (
+                                                <Eye className="h-4 w-4" />
+                                            )}
+                                        </button>
+                                    </div>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                     <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
                         {form.formState.isSubmitting ? "Signing in..." : "Sign In"}
                     </Button>
@@ -144,9 +145,7 @@ function LoginForm({ onClose, onSwitchMode }: { onClose: () => void; onSwitchMod
                     <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                        or
-                    </span>
+                    <span className="bg-background px-2 text-muted-foreground">or</span>
                 </div>
             </div>
 
@@ -157,6 +156,8 @@ function LoginForm({ onClose, onSwitchMode }: { onClose: () => void; onSwitchMod
 
 function SignupForm({ onSwitchMode }: { onSwitchMode: () => void }) {
     const [showPassword, setShowPassword] = useState(false);
+    const [signupEmail, setSignupEmail] = useState<string | null>(null);
+    const [isResending, setIsResending] = useState(false);
     const form = useForm<SignupFormValues>({
         resolver: zodResolver(signupSchema),
         defaultValues: { email: "", password: "" },
@@ -165,73 +166,113 @@ function SignupForm({ onSwitchMode }: { onSwitchMode: () => void }) {
     const onSubmit = async (values: SignupFormValues) => {
         try {
             await signup(values.email, values.password);
-            toast.success("Account created. Please sign in.");
-            onSwitchMode();
+            setSignupEmail(values.email);
+            toast.success("Account created successfully!");
         } catch {
             // Error toast already shown by axios interceptor if 4xx
         }
     };
 
+    const handleResend = async () => {
+        if (!signupEmail) return;
+
+        setIsResending(true);
+        try {
+            await resendVerification(signupEmail);
+            toast.success("Verification email sent! Please check your inbox.");
+        } catch (err: any) {
+            const message =
+                err?.response?.data?.detail ||
+                err?.message ||
+                "Failed to resend verification email";
+            toast.error(message);
+        } finally {
+            setIsResending(false);
+        }
+    };
+
+    // Show verification message after successful signup
+    if (signupEmail) {
+        return (
+            <div className="space-y-4">
+                <Alert>
+                    <Mail className="h-4 w-4" />
+                    <AlertTitle>Verify Your Email</AlertTitle>
+                    <AlertDescription className="space-y-3">
+                        <p>
+                            We've sent a verification email to <strong>{signupEmail}</strong>.
+                        </p>
+                        <p className="text-sm">
+                            Please check your inbox and click the verification link to activate your
+                            account.
+                        </p>
+                        <div className="flex gap-2 pt-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleResend}
+                                disabled={isResending}
+                            >
+                                {isResending ? "Sending..." : "Resend Email"}
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={onSwitchMode}>
+                                Back to Sign In
+                            </Button>
+                        </div>
+                    </AlertDescription>
+                </Alert>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-4">
-            <OAuthButtons onOAuthStart={() => {}} />
-
-            <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                        Or continue with email
-                    </span>
-                </div>
-            </div>
-
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                                <Input type="email" placeholder="you@example.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                                <div className="relative">
-                                    <Input
-                                        type={showPassword ? "text" : "password"}
-                                        placeholder="Password"
-                                        {...field}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff className="h-4 w-4" />
-                                        ) : (
-                                            <Eye className="h-4 w-4" />
-                                        )}
-                                    </button>
-                                </div>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                    <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                    <Input type="email" placeholder="you@example.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <FormControl>
+                                    <div className="relative">
+                                        <Input
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="Password"
+                                            {...field}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                        >
+                                            {showPassword ? (
+                                                <EyeOff className="h-4 w-4" />
+                                            ) : (
+                                                <Eye className="h-4 w-4" />
+                                            )}
+                                        </button>
+                                    </div>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
                     <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
                         {form.formState.isSubmitting ? "Creating account..." : "Create Account"}
                     </Button>
@@ -245,6 +286,17 @@ function SignupForm({ onSwitchMode }: { onSwitchMode: () => void }) {
                             Sign In
                         </button>
                     </p>
+
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-background px-2 text-muted-foreground">Or</span>
+                        </div>
+                    </div>
+
+                    <OAuthButtons onOAuthStart={() => {}} />
                 </form>
             </Form>
         </div>
