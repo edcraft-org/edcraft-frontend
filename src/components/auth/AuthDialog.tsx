@@ -180,10 +180,11 @@ function SignupForm({ onSwitchMode }: { onSwitchMode: () => void }) {
         try {
             await resendVerification(signupEmail);
             toast.success("Verification email sent! Please check your inbox.");
-        } catch (err: any) {
+        } catch (err: unknown) {
             const message =
-                err?.response?.data?.detail ||
-                err?.message ||
+                (err as { response?: { data?: { detail?: string } }; message?: string })?.response
+                    ?.data?.detail ||
+                (err as { message?: string })?.message ||
                 "Failed to resend verification email";
             toast.error(message);
         } finally {

@@ -6,7 +6,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
-import type { QuestionResponse } from "@/api/models";
+import type { QuestionResponse } from "@/types/frontend.types";
 
 interface QuestionActionsMenuProps {
     question: QuestionResponse;

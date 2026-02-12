@@ -8,17 +8,13 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { QuestionEditor } from "./QuestionEditor";
-import type { QuestionResponse } from "@/api/models";
+import type { QuestionResponse, QuestionEditorData } from "@/types/frontend.types";
 
 interface EditQuestionModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     question: QuestionResponse | null;
-    onSave: (data: {
-        question_type: QuestionResponse["question_type"];
-        question_text: QuestionResponse["question_text"];
-        additional_data: QuestionResponse["additional_data"];
-    }) => void;
+    onSave: (data: QuestionEditorData) => void;
     isLoading?: boolean;
 }
 

@@ -26,6 +26,7 @@ import {
     useAddQuestionToAssessment,
     useCreateAssessment,
 } from "@/features/assessments/useAssessments";
+import { generatedQuestionToRequestData } from "@/shared/utils/questionUtils";
 import type { Question, QuestionTemplateResponse } from "@/api/models";
 import type { QuestionTemplateConfig } from "../types";
 
@@ -128,16 +129,7 @@ export function CreateFromTemplateModal({
             {
                 assessmentId,
                 data: {
-                    question: {
-                        template_id: template.id,
-                        question_type: generatedQuestion.question_type,
-                        question_text: generatedQuestion.text,
-                        additional_data: {
-                            options: (generatedQuestion.options || []) as string[],
-                            correct_indices: generatedQuestion.correct_indices || [],
-                            answer: String(generatedQuestion.answer || ""),
-                        },
-                    },
+                    question: generatedQuestionToRequestData(generatedQuestion, template.id),
                 },
             },
             {

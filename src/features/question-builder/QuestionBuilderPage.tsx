@@ -28,6 +28,7 @@ import {
 } from "@/shared/components";
 import { SaveQuestionModal, QuestionDisplay } from "./components";
 import { flattenTarget } from "@/shared/components/target-selector/utils/transformTarget";
+import { generatedQuestionToRequestData } from "@/shared/utils/questionUtils";
 import type { CodeInfo, Question, QuestionGenerationRequest } from "@/api/models";
 
 // Schema for the question builder form
@@ -226,15 +227,7 @@ function QuestionBuilderPage() {
             {
                 assessmentId,
                 data: {
-                    question: {
-                        question_type: generatedQuestion.question_type,
-                        question_text: generatedQuestion.text,
-                        additional_data: {
-                            options: (generatedQuestion.options || []) as string[],
-                            correct_indices: generatedQuestion.correct_indices || [],
-                            answer: String(generatedQuestion.answer || ""),
-                        },
-                    },
+                    question: generatedQuestionToRequestData(generatedQuestion),
                 },
             },
             {

@@ -1,17 +1,23 @@
 // Frontend-specific types
 
-import type { TargetElementType } from "@/api/models";
+import type {
+    TargetElementType,
+    MCQResponse,
+    MRQResponse,
+    ShortAnswerResponse,
+    CreateMCQRequest,
+    CreateMRQRequest,
+    CreateShortAnswerRequest,
+} from "@/api/models";
 
-// Question additional data types
-export interface MultipleChoiceAdditionalData {
-    options: string[];
-    correct_indices: number[];
-    answer?: string;
-}
+// Union type for all question responses
+export type QuestionResponse = MCQResponse | MRQResponse | ShortAnswerResponse;
 
-export interface ShortAnswerAdditionalData {
-    answer: string;
-}
+// Union type for editable question data
+export type QuestionEditorData = Omit<
+    CreateMCQRequest | CreateMRQRequest | CreateShortAnswerRequest,
+    "template_id"
+>;
 
 /**
  * Modifier types for target elements

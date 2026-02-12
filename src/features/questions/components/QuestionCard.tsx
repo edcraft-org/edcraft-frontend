@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import type { QuestionResponse } from "@/api/models";
-import type { MultipleChoiceAdditionalData } from "@/types/frontend.types";
+import type { QuestionResponse } from "@/types/frontend.types";
+import { getOptions, getCorrectIndices, getAnswerText } from "@/shared/utils/questionUtils";
 import { QuestionActionsMenu } from "./QuestionActionsMenu";
 import { QuestionContent } from "@/components/QuestionContent";
 
@@ -19,21 +19,11 @@ export function QuestionCard({
     onDuplicate,
     onRemove,
 }: QuestionCardProps) {
-    const { question_text, question_type, additional_data } = question;
+    const { question_text, question_type } = question;
 
-    // Type guard for MCQ/MRQ
-    const isMCQOrMRQ = question_type === "mcq" || question_type === "mrq";
-    const hasOptions =
-        isMCQOrMRQ && "options" in additional_data && Array.isArray(additional_data.options);
-
-    const options = hasOptions
-        ? (additional_data as unknown as MultipleChoiceAdditionalData).options
-        : undefined;
-    const correctIndices =
-        hasOptions && "correct_indices" in additional_data
-            ? (additional_data as unknown as MultipleChoiceAdditionalData).correct_indices
-            : undefined;
-    const answer = "answer" in additional_data ? additional_data.answer : undefined;
+    const options = getOptions(question);
+    const correctIndices = getCorrectIndices(question);
+    const answer = getAnswerText(question);
 
     return (
         <Card className="relative w-full group">

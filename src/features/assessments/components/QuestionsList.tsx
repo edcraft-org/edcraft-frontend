@@ -1,4 +1,4 @@
-import type { QuestionResponse } from "@/api/models";
+import type { QuestionResponse } from "@/types/frontend.types";
 import { QuestionCard } from "@/features/questions";
 
 interface QuestionsListProps {

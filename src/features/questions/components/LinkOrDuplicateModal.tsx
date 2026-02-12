@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Link2, Copy, AlertTriangle, Loader2 } from "lucide-react";
 import { useQuestionAssessments } from "../useQuestions";
-import type { QuestionResponse } from "@/api/models";
+import type { QuestionResponse } from "@/types/frontend.types";
 
 interface LinkOrDuplicateModalProps {
     open: boolean;

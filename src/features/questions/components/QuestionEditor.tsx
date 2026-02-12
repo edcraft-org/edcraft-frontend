@@ -23,11 +23,9 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Plus, Trash2, Check } from "lucide-react";
-import type {
-    MultipleChoiceAdditionalData,
-    ShortAnswerAdditionalData,
-} from "@/types/frontend.types";
-import type { QuestionResponse } from "@/api/models";
+import type { QuestionResponse, QuestionEditorData } from "@/types/frontend.types";
+import type { CreateMCQRequest, CreateMRQRequest, CreateShortAnswerRequest } from "@/api/models";
+import { getOptions, getCorrectIndices, isShortAnswerResponse } from "@/shared/utils/questionUtils";
 
 // Schema for the question form
 const questionFormSchema = z
@@ -91,39 +89,29 @@ type QuestionFormValues = z.infer<typeof questionFormSchema>;
 
 interface QuestionEditorProps {
     question?: QuestionResponse;
-    onSave: (data: {
-        question_type: QuestionResponse["question_type"];
-        question_text: QuestionResponse["question_text"];
-        additional_data: QuestionResponse["additional_data"];
-    }) => void;
+    onSave: (data: QuestionEditorData) => void;
     onCancel?: () => void;
     isLoading?: boolean;
 }
 
 export function QuestionEditor({ question, onSave, onCancel, isLoading }: QuestionEditorProps) {
     // Parse existing question data
-    const existingOptions =
-        question?.additional_data && "options" in question.additional_data
-            ? (question.additional_data as unknown as MultipleChoiceAdditionalData).options.map(
-                  (v: string) => ({ value: v }),
-              )
-            : [{ value: "" }, { value: "" }];
+    const existingOptions = question
+        ? (getOptions(question)?.map((v) => ({ value: v })) ?? [{ value: "" }, { value: "" }])
+        : [{ value: "" }, { value: "" }];
 
-    const existingCorrectIndices =
-        question?.additional_data && "correct_indices" in question.additional_data
-            ? (question.additional_data as unknown as MultipleChoiceAdditionalData).correct_indices
-            : [];
+    const existingCorrectIndices = question ? (getCorrectIndices(question) ?? []) : [];
 
     const existingAnswer =
-        question?.additional_data && "answer" in question.additional_data
-            ? (question.additional_data as unknown as ShortAnswerAdditionalData).answer
+        question && isShortAnswerResponse(question)
+            ? question.short_answer_data.correct_answer
             : "";
 
     const form = useForm<QuestionFormValues>({
         resolver: zodResolver(questionFormSchema),
         defaultValues: {
-            question_type: (question?.question_type as "mcq" | "mrq" | "short_answer") || "mcq",
-            question_text: question?.question_text || "",
+            question_type: question?.question_type ?? "mcq",
+            question_text: question?.question_text ?? "",
             options: existingOptions,
             correct_indices: existingCorrectIndices,
             answer: existingAnswer,
@@ -139,31 +127,45 @@ export function QuestionEditor({ question, onSave, onCancel, isLoading }: Questi
     const correctIndices = form.watch("correct_indices") || [];
 
     const handleSubmit = (values: QuestionFormValues) => {
-        let additional_data: MultipleChoiceAdditionalData | ShortAnswerAdditionalData;
-
         if (values.question_type === "short_answer") {
-            additional_data = {
-                answer: values.answer || "",
+            // Short answer request
+            const data: Omit<CreateShortAnswerRequest, "template_id"> = {
+                question_type: "short_answer",
+                question_text: values.question_text,
+                data: {
+                    correct_answer: values.answer || "",
+                },
             };
-        } else {
-            // MCQ or MRQ
+            onSave(data);
+        } else if (values.question_type === "mcq") {
+            // MCQ request
             const options = values.options?.map((o) => o.value) || [];
-            const indices = values.correct_indices || [];
-            additional_data = {
-                options,
-                correct_indices: indices,
-                answer: indices
-                    .map((i) => options[i])
-                    .filter(Boolean)
-                    .join(", "),
-            };
-        }
+            const correctIndex = values.correct_indices?.[0] ?? 0;
 
-        onSave({
-            question_type: values.question_type,
-            question_text: values.question_text,
-            additional_data: additional_data as unknown as QuestionResponse["additional_data"],
-        });
+            const data: Omit<CreateMCQRequest, "template_id"> = {
+                question_type: "mcq",
+                question_text: values.question_text,
+                data: {
+                    options,
+                    correct_index: correctIndex,
+                },
+            };
+            onSave(data);
+        } else {
+            // MRQ request
+            const options = values.options?.map((o) => o.value) || [];
+            const correctIndices = values.correct_indices || [];
+
+            const data: Omit<CreateMRQRequest, "template_id"> = {
+                question_type: "mrq",
+                question_text: values.question_text,
+                data: {
+                    options,
+                    correct_indices: correctIndices,
+                },
+            };
+            onSave(data);
+        }
     };
 
     const toggleCorrectIndex = (index: number) => {

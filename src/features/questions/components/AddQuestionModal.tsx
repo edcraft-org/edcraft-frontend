@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Wand2, PenLine, Search } from "lucide-react";
 import { ROUTES } from "@/router/paths";
-import type { QuestionResponse } from "@/api/models";
+import type { QuestionResponse, QuestionEditorData } from "@/types/frontend.types";
 import { QuestionBrowser } from "./QuestionBrowser";
 import { QuestionEditor } from "./QuestionEditor";
 
@@ -23,11 +23,7 @@ interface AddQuestionModalProps {
     onOpenChange: (open: boolean) => void;
     assessmentId: string;
     ownerId: string;
-    onSaveQuestion: (data: {
-        question_type: QuestionResponse["question_type"];
-        question_text: QuestionResponse["question_text"];
-        additional_data: QuestionResponse["additional_data"];
-    }) => void;
+    onSaveQuestion: (data: QuestionEditorData) => void;
     onSelectExisting: (question: QuestionResponse) => void;
     isSaving?: boolean;
 }

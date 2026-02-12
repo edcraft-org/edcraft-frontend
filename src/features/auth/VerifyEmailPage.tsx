@@ -37,10 +37,13 @@ export function VerifyEmailPage() {
                 setTimeout(() => {
                     navigate("/", { replace: true });
                 }, 3000);
-            } catch (err: any) {
+            } catch (err: unknown) {
                 setStatus("error");
                 const message =
-                    err?.response?.data?.detail || err?.message || "Email verification failed";
+                    (err as { response?: { data?: { detail?: string } }; message?: string })
+                        ?.response?.data?.detail ||
+                    (err as { message?: string })?.message ||
+                    "Email verification failed";
                 setErrorMessage(message);
                 toast.error(message);
             }
@@ -60,10 +63,11 @@ export function VerifyEmailPage() {
             await resendVerification(resendEmail);
             toast.success("Verification email sent! Please check your inbox.");
             setResendEmail("");
-        } catch (err: any) {
+        } catch (err: unknown) {
             const message =
-                err?.response?.data?.detail ||
-                err?.message ||
+                (err as { response?: { data?: { detail?: string } }; message?: string })?.response
+                    ?.data?.detail ||
+                (err as { message?: string })?.message ||
                 "Failed to resend verification email";
             toast.error(message);
         } finally {

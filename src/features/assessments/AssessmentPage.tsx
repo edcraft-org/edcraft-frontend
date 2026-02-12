@@ -20,7 +20,9 @@ import {
     LinkOrDuplicateModal,
     useUpdateQuestion,
 } from "@/features/questions";
-import type { QuestionResponse } from "@/api/models";
+import type { QuestionResponse, QuestionEditorData } from "@/types/frontend.types";
+import type { CreateMCQRequest, CreateMRQRequest, CreateShortAnswerRequest } from "@/api/models";
+import { questionResponseToRequestData } from "@/shared/utils/questionUtils";
 
 function AssessmentPage() {
     const { assessmentId } = useParams<{ assessmentId: string }>();
@@ -80,12 +82,7 @@ function AssessmentPage() {
     // Adds a new question to the assessment
     const handleAddQuestionMutation = (
         assessmentId: string,
-        questionData: {
-            template_id?: string | null;
-            question_type: QuestionResponse["question_type"];
-            question_text: QuestionResponse["question_text"];
-            additional_data: QuestionResponse["additional_data"];
-        },
+        questionData: QuestionEditorData & { template_id?: string | null },
         successMessage: string,
         onSuccess: () => void,
     ) => {
@@ -93,9 +90,10 @@ function AssessmentPage() {
             {
                 assessmentId,
                 data: {
-                    question: {
-                        ...questionData,
-                    },
+                    question: questionData as
+                        | CreateMCQRequest
+                        | CreateMRQRequest
+                        | CreateShortAnswerRequest,
                 },
             },
             {
@@ -157,21 +155,14 @@ function AssessmentPage() {
         setShowLinkOrDuplicateModal(true);
     };
 
-    const handleSaveNewQuestion = (data: {
-        question_type: QuestionResponse["question_type"];
-        question_text: QuestionResponse["question_text"];
-        additional_data: QuestionResponse["additional_data"];
-    }) => {
+    const handleSaveNewQuestion = (data: QuestionEditorData) => {
         if (addQuestion.isPending) return;
 
         const session = validateSession();
         if (!session) return;
 
-        handleAddQuestionMutation(
-            session.assessmentId,
-            data,
-            "Question added successfully",
-            () => setShowAddModal(false),
+        handleAddQuestionMutation(session.assessmentId, data, "Question added successfully", () =>
+            setShowAddModal(false),
         );
     };
 
@@ -199,13 +190,12 @@ function AssessmentPage() {
         const question = questionParam || validateQuestionSelected(selectedQuestion);
         if (!question) return;
 
+        const requestData = questionResponseToRequestData(question);
         handleAddQuestionMutation(
             session.assessmentId,
             {
+                ...requestData,
                 template_id: question.template_id,
-                question_type: question.question_type,
-                question_text: question.question_text,
-                additional_data: question.additional_data,
             },
             "Question duplicated successfully",
             () => {
@@ -237,11 +227,7 @@ function AssessmentPage() {
     };
 
     // Handle updating an edited question
-    const handleSaveEditedQuestion = (data: {
-        question_type: QuestionResponse["question_type"];
-        question_text: QuestionResponse["question_text"];
-        additional_data: QuestionResponse["additional_data"];
-    }) => {
+    const handleSaveEditedQuestion = (data: QuestionEditorData) => {
         if (updateQuestion.isPending) return;
 
         const question = validateQuestionSelected(selectedQuestion);
@@ -250,7 +236,11 @@ function AssessmentPage() {
         updateQuestion.mutate(
             {
                 questionId: question.id,
-                data,
+                data: {
+                    question_type: data.question_type,
+                    question_text: data.question_text,
+                    data: data.data,
+                },
             },
             {
                 onSuccess: () => {
@@ -275,7 +265,11 @@ function AssessmentPage() {
         <div className="p-6 space-y-6">
             {/* Header */}
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate(`/folders/${assessment.folder_id}`)}>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate(`/folders/${assessment.folder_id}`)}
+                >
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <div className="flex-1">
