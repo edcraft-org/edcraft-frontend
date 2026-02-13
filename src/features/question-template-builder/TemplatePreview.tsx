@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Code2, FileQuestion, CheckCircle2 } from "lucide-react";
 import type { TemplatePreviewResponse } from "@/api/models";
-import type { QuestionTemplateConfig } from "@/features/question-templates";
 
 interface TemplatePreviewProps {
     preview: TemplatePreviewResponse;
@@ -12,7 +11,6 @@ interface TemplatePreviewProps {
 
 export function TemplatePreview({ preview }: TemplatePreviewProps) {
     const { question_text, question_type, preview_question } = preview;
-    const template_config = preview.template_config as unknown as QuestionTemplateConfig;
 
     return (
         <div className="space-y-4">
@@ -90,25 +88,25 @@ export function TemplatePreview({ preview }: TemplatePreviewProps) {
                         <div>
                             <span className="text-muted-foreground">Entry Function:</span>
                             <span className="ml-2 font-mono">
-                                {template_config.entry_function as string}
+                                {preview.entry_function}
                             </span>
                         </div>
                         <div>
                             <span className="text-muted-foreground">Output Type:</span>
                             <span className="ml-2">
-                                {template_config.question_spec.output_type}
+                                {preview.output_type}
                             </span>
                         </div>
                         <div>
                             <span className="text-muted-foreground">Question Type:</span>
                             <span className="ml-2">
-                                {template_config.question_spec.question_type}
+                                {preview.question_type}
                             </span>
                         </div>
                         <div>
                             <span className="text-muted-foreground">Distractors:</span>
                             <span className="ml-2">
-                                {template_config.generation_options.num_distractors}
+                                {preview.num_distractors}
                             </span>
                         </div>
                     </div>

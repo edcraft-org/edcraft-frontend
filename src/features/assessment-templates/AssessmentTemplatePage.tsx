@@ -11,8 +11,8 @@ import { useUserStore } from "@/shared/stores/user.store";
 import {
     AddQuestionTemplateModal,
     LinkOrDuplicateTemplateModal,
-    type QuestionTemplateConfig,
 } from "@/features/question-templates";
+import type { CreateTargetElementRequest } from "@/api/models";
 import {
     InstantiateAssessmentModal,
     QuestionTemplatesList,
@@ -86,10 +86,14 @@ function AssessmentTemplatePage() {
     const handleAddQuestionTemplateMutation = (
         templateId: string,
         templateData: {
-            question_type: QuestionTemplateResponse["question_type"];
-            question_text: QuestionTemplateResponse["question_text"];
+            question_type: string;
+            question_text: string;
             description?: string | undefined;
-            template_config: QuestionTemplateConfig;
+            code: string;
+            entry_function: string;
+            output_type: string;
+            num_distractors: number;
+            target_elements: CreateTargetElementRequest[];
         },
         successMessage: string,
         onSuccess: () => void,
@@ -198,13 +202,26 @@ function AssessmentTemplatePage() {
         const template = validateTemplateSelected(selectedTemplate);
         if (!template) return;
 
+        // Convert target_elements: TargetElementResponse[] → CreateTargetElementRequest[]
+        const targetElements = template.target_elements.map(
+            ({ order: _, element_type, id_list, ...rest }) => ({
+                element_type,
+                id_list,
+                ...rest,
+            }),
+        );
+
         handleAddQuestionTemplateMutation(
             session.templateId,
             {
                 question_type: template.question_type,
                 question_text: template.question_text,
                 description: template.description ?? undefined,
-                template_config: template.template_config as unknown as QuestionTemplateConfig,
+                code: template.code,
+                entry_function: template.entry_function,
+                output_type: template.output_type,
+                num_distractors: template.num_distractors,
+                target_elements: targetElements,
             },
             "Question template duplicated successfully",
             () => {

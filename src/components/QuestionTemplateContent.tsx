@@ -1,7 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Code } from "lucide-react";
 import type { QuestionTemplateResponse } from "@/api/models";
-import type { QuestionTemplateConfig } from "@/features/question-templates/types";
 import type { ReactNode } from "react";
 
 interface QuestionTemplateContentProps {
@@ -15,8 +14,6 @@ export function QuestionTemplateContent({
     index,
     actions,
 }: QuestionTemplateContentProps) {
-    const template_config = template.template_config as unknown as QuestionTemplateConfig;
-
     return (
         <Card className="group">
             <CardHeader>
@@ -49,24 +46,24 @@ export function QuestionTemplateContent({
                     <div className="grid grid-cols-2 gap-2 text-xs pl-5">
                         <div>
                             <span className="text-muted-foreground">Entry Function:</span>
-                            <span className="ml-1 font-mono">{template_config.entry_function}</span>
+                            <span className="ml-1 font-mono">{template.entry_function}</span>
                         </div>
                         <div>
                             <span className="text-muted-foreground">Output Type:</span>
                             <span className="ml-1">
-                                {template_config.question_spec.output_type}
+                                {template.output_type}
                             </span>
                         </div>
                         <div>
                             <span className="text-muted-foreground">Question Type:</span>
                             <span className="ml-1">
-                                {template_config.question_spec.question_type}
+                                {template.question_type}
                             </span>
                         </div>
                         <div>
                             <span className="text-muted-foreground">Distractors:</span>
                             <span className="ml-1">
-                                {template_config.generation_options.num_distractors}
+                                {template.num_distractors}
                             </span>
                         </div>
                     </div>

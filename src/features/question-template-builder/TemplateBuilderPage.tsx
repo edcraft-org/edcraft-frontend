@@ -41,7 +41,6 @@ import {
     unflattenTarget,
 } from "@/shared/components/target-selector/utils/transformTarget";
 import type { CodeInfo, TemplatePreviewResponse } from "@/api/models";
-import type { QuestionTemplateConfig } from "../question-templates";
 
 // Schema for the template builder form
 const templateBuilderSchema = z.object({
@@ -111,28 +110,39 @@ function TemplateBuilderPage() {
     // Prepopulate form when editing existing template
     useEffect(() => {
         if (isEditMode && existingTemplate) {
-            const config = existingTemplate.template_config as unknown as QuestionTemplateConfig;
-
             // Prepopulate form fields
             form.setValue("templateDescription", existingTemplate.description || "");
-            form.setValue("code", config.code);
-            form.setValue("entryFunction", config.entry_function);
-            form.setValue("outputType", config.question_spec.output_type);
-            form.setValue("questionType", config.question_spec.question_type);
-            form.setValue("numDistractors", config.generation_options.num_distractors || 4);
+            form.setValue("code", existingTemplate.code);
+            form.setValue("entryFunction", existingTemplate.entry_function);
+            form.setValue(
+                "outputType",
+                existingTemplate.output_type as "first" | "last" | "list" | "count",
+            );
+            form.setValue(
+                "questionType",
+                existingTemplate.question_type as "mcq" | "mrq" | "short_answer",
+            );
+            form.setValue("numDistractors", existingTemplate.num_distractors || 4);
 
             // Trigger code analysis
             analyseCode.mutate(
-                { code: config.code },
+                { code: existingTemplate.code },
                 {
                     onSuccess: (data) => {
                         setCodeInfo(data.code_info);
 
                         // Reconstruct target selection
                         try {
-                            const reconstructedTarget = unflattenTarget(
-                                config.question_spec.target,
-                            );
+                            // Sort by order and convert TargetElementResponse[] to TargetElement[]
+                            const sortedElements = [...existingTemplate.target_elements]
+                                .sort((a, b) => a.order - b.order)
+                                .map(({ order: _, element_type, id_list, ...rest }) => ({
+                                    type: element_type,
+                                    id: id_list,
+                                    ...rest,
+                                }));
+
+                            const reconstructedTarget = unflattenTarget(sortedElements);
                             setTargetSelection(reconstructedTarget);
                         } catch (error) {
                             console.error("Failed to reconstruct target:", error);
@@ -270,6 +280,13 @@ function TemplateBuilderPage() {
 
         const values = form.getValues();
 
+        // Convert preview.target_elements to CreateTargetElementRequest[]
+        const targetElements = preview.target_elements.map(({ element_type, id_list, ...rest }) => ({
+            element_type,
+            id_list,
+            ...rest,
+        }));
+
         updateQuestionTemplate.mutate(
             {
                 templateId: existingTemplate.id,
@@ -277,7 +294,11 @@ function TemplateBuilderPage() {
                     question_type: values.questionType,
                     question_text: preview.question_text,
                     description: values.templateDescription || undefined,
-                    template_config: preview.template_config as unknown as QuestionTemplateConfig,
+                    code: preview.code,
+                    entry_function: preview.entry_function,
+                    output_type: preview.output_type,
+                    num_distractors: preview.num_distractors,
+                    target_elements: targetElements,
                 },
             },
             {
@@ -304,6 +325,13 @@ function TemplateBuilderPage() {
 
         const values = form.getValues();
 
+        // Convert preview.target_elements to CreateTargetElementRequest[]
+        const targetElements = preview.target_elements.map(({ element_type, id_list, ...rest }) => ({
+            element_type,
+            id_list,
+            ...rest,
+        }));
+
         addQuestionTemplate.mutate(
             {
                 templateId: newAssessmentTemplateId,
@@ -312,8 +340,11 @@ function TemplateBuilderPage() {
                         question_type: values.questionType,
                         question_text: preview.question_text,
                         description: values.templateDescription || undefined,
-                        template_config:
-                            preview.template_config as unknown as QuestionTemplateConfig,
+                        code: preview.code,
+                        entry_function: preview.entry_function,
+                        output_type: preview.output_type,
+                        num_distractors: preview.num_distractors,
+                        target_elements: targetElements,
                     },
                 },
             },

@@ -25,6 +25,15 @@ export default defineConfig([
         'warn',
         { allowExportNames: ['ROUTES', 'router', 'queryClient', 'queryKeys'] },
       ],
+      // Allow unused variables that start with underscore
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+        },
+      ],
     },
   },
   // Ignore react-refresh warnings in shadcn/ui components

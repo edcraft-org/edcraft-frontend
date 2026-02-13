@@ -12,5 +12,3 @@ export {
     useUpdateQuestionTemplate,
     useDeleteQuestionTemplate,
 } from "./useQuestionTemplates";
-
-export type { QuestionTemplateConfig } from "./types";

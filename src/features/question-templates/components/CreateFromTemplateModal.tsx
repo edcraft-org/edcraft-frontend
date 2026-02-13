@@ -28,7 +28,6 @@ import {
 } from "@/features/assessments/useAssessments";
 import { generatedQuestionToRequestData } from "@/shared/utils/questionUtils";
 import type { Question, QuestionTemplateResponse } from "@/api/models";
-import type { QuestionTemplateConfig } from "../types";
 
 // Schema for the form
 const templateFormSchema = z.object({
@@ -57,8 +56,6 @@ export function CreateFromTemplateModal({
     const generateQuestion = useGenerateFromTemplate();
     const createAssessment = useCreateAssessment();
     const addQuestion = useAddQuestionToAssessment();
-
-    const template_config = template?.template_config as unknown as QuestionTemplateConfig;
 
     // Form setup
     const form = useForm<TemplateFormValues>({
@@ -175,7 +172,7 @@ export function CreateFromTemplateModal({
                                                 Entry Function:
                                             </span>
                                             <span className="ml-2 font-mono">
-                                                {template_config.entry_function as string}
+                                                {template.entry_function}
                                             </span>
                                         </div>
                                         <div>
@@ -183,7 +180,7 @@ export function CreateFromTemplateModal({
                                                 Output Type:
                                             </span>
                                             <span className="ml-2">
-                                                {template_config.question_spec.output_type}
+                                                {template.output_type}
                                             </span>
                                         </div>
                                         <div>
@@ -191,7 +188,7 @@ export function CreateFromTemplateModal({
                                                 Question Type:
                                             </span>
                                             <span className="ml-2">
-                                                {template_config.question_spec.question_type}
+                                                {template.question_type}
                                             </span>
                                         </div>
                                         <div>
@@ -199,7 +196,7 @@ export function CreateFromTemplateModal({
                                                 Distractors:
                                             </span>
                                             <span className="ml-2">
-                                                {template_config.generation_options.num_distractors}
+                                                {template.num_distractors}
                                             </span>
                                         </div>
                                     </div>
