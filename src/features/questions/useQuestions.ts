@@ -7,7 +7,7 @@ import {
     getQuestion,
     updateQuestion,
     deleteQuestion,
-    getAssessmentsContainingQuestion,
+    getQuestionUsage,
 } from "./question.service";
 import type { UpdateQuestionRequest } from "@/api/models/updateQuestionRequest";
 
@@ -29,14 +29,11 @@ export function useQuestion(questionId: string | undefined) {
     });
 }
 
-// Hook to fetch assessments that contain a question
-export function useQuestionAssessments(
-    questionId: string | undefined,
-    ownerId: string | undefined,
-) {
+// Hook to fetch usage information for a question
+export function useQuestionUsage(questionId: string | undefined, ownerId: string | undefined) {
     return useQuery({
-        queryKey: queryKeys.questions.assessments(questionId ?? ""),
-        queryFn: () => getAssessmentsContainingQuestion(questionId!),
+        queryKey: queryKeys.questions.usage(questionId ?? ""),
+        queryFn: () => getQuestionUsage(questionId!),
         enabled: !!questionId && !!ownerId,
     });
 }
@@ -62,6 +59,13 @@ export function useUpdateQuestion() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.assessments.allDetails(),
             });
+            // Invalidate all question bank lists and details as they may include the updated question
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.questionBanks.all(updatedQuestion.owner_id),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.questionBanks.allDetails(),
+            });
         },
     });
 }
@@ -83,6 +87,13 @@ export function useDeleteQuestion() {
             });
             queryClient.invalidateQueries({
                 queryKey: queryKeys.assessments.allDetails(),
+            });
+            // Invalidate all question bank lists and details as they may include the deleted question
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.questionBanks.all(variables.ownerId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.questionBanks.allDetails(),
             });
         },
     });

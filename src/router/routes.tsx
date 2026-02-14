@@ -16,6 +16,7 @@ const AssessmentPage = lazy(() => import("@/features/assessments/AssessmentPage"
 const AssessmentTemplatePage = lazy(
     () => import("@/features/assessment-templates/AssessmentTemplatePage"),
 );
+const QuestionBankPage = lazy(() => import("@/features/question-banks/QuestionBankPage"));
 const TemplateBuilderPage = lazy(
     () => import("@/features/question-template-builder/TemplateBuilderPage"),
 );
@@ -73,6 +74,10 @@ export const router = createBrowserRouter([
                     {
                         path: "assessment-templates/:templateId",
                         element: lazyRoute(AssessmentTemplatePage),
+                    },
+                    {
+                        path: "question-banks/:questionBankId",
+                        element: lazyRoute(QuestionBankPage),
                     },
                 ],
             },

@@ -12,6 +12,7 @@ import {
     CreateFolderModal,
     CreateAssessmentModal,
     CreateAssessmentTemplateModal,
+    CreateQuestionBankModal,
     RenameModal,
     MoveModal,
     DeleteConfirmationDialog,
@@ -38,6 +39,11 @@ import {
     useUpdateAssessmentTemplate,
     useDeleteAssessmentTemplate,
 } from "@/features/assessment-templates/useAssessmentTemplates";
+import {
+    useCreateQuestionBank,
+    useUpdateQuestionBank,
+    useDeleteQuestionBank,
+} from "@/features/question-banks/useQuestionBanks";
 
 function FolderPage() {
     const { folderId: rawFolderId } = useParams<{ folderId: string }>();
@@ -52,6 +58,7 @@ function FolderPage() {
     const [showCreateFolder, setShowCreateFolder] = useState(false);
     const [showCreateAssessment, setShowCreateAssessment] = useState(false);
     const [showCreateTemplate, setShowCreateTemplate] = useState(false);
+    const [showCreateQuestionBank, setShowCreateQuestionBank] = useState(false);
 
     // Action modal state - single resource with modal type
     const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
@@ -61,6 +68,7 @@ function FolderPage() {
     const createFolder = useCreateFolder();
     const createAssessment = useCreateAssessment();
     const createAssessmentTemplate = useCreateAssessmentTemplate();
+    const createQuestionBank = useCreateQuestionBank();
 
     // Update/Delete/Move mutations
     const updateFolder = useUpdateFolder();
@@ -70,6 +78,8 @@ function FolderPage() {
     const deleteAssessment = useDeleteAssessment();
     const updateAssessmentTemplate = useUpdateAssessmentTemplate();
     const deleteAssessmentTemplate = useDeleteAssessmentTemplate();
+    const updateQuestionBank = useUpdateQuestionBank();
+    const deleteQuestionBank = useDeleteQuestionBank();
 
     // Fetch folder contents
     const {
@@ -126,6 +136,14 @@ function FolderPage() {
                 update: updateAssessmentTemplate,
                 move: updateAssessmentTemplate,
                 delete: deleteAssessmentTemplate,
+            },
+        },
+        question_bank: {
+            label: "Question bank",
+            mutations: {
+                update: updateQuestionBank,
+                move: updateQuestionBank,
+                delete: deleteQuestionBank,
             },
         },
     } as const;
@@ -199,6 +217,29 @@ function FolderPage() {
         );
     };
 
+    const handleCreateQuestionBank = (title: string, description?: string) => {
+        if (createQuestionBank.isPending) return;
+
+        const session = validateSession();
+        if (!session) return;
+
+        createQuestionBank.mutate(
+            {
+                folder_id: session.folderId,
+                title,
+                description,
+            },
+            {
+                onSuccess: (newQuestionBank) => {
+                    toast.success("Question bank created successfully");
+                    setShowCreateQuestionBank(false);
+                    navigate(ROUTES.QUESTION_BANK(newQuestionBank.id));
+                },
+                onError: (error) => handleMutationError(error, "create question bank"),
+            },
+        );
+    };
+
     // Rename Handlers
     const handleRename = (name: string, description?: string) => {
         if (!selectedResource) return;
@@ -225,10 +266,16 @@ function FolderPage() {
                 { assessmentId: id, data: { title: name, description }, oldFolderId: session.folderId },
                 { onSuccess, onError },
             );
-        } else {
+        } else if (resourceType === "assessment_template") {
             if (updateAssessmentTemplate.isPending) return;
             updateAssessmentTemplate.mutate(
                 { templateId: id, data: { title: name, description }, oldFolderId: session.folderId },
+                { onSuccess, onError },
+            );
+        } else {
+            if (updateQuestionBank.isPending) return;
+            updateQuestionBank.mutate(
+                { questionBankId: id, data: { title: name, description }, oldFolderId: session.folderId },
                 { onSuccess, onError },
             );
         }
@@ -263,10 +310,16 @@ function FolderPage() {
                 { assessmentId: id, data: { folder_id: targetFolderId }, oldFolderId: session.folderId },
                 { onSuccess, onError },
             );
-        } else {
+        } else if (resourceType === "assessment_template") {
             if (updateAssessmentTemplate.isPending) return;
             updateAssessmentTemplate.mutate(
                 { templateId: id, data: { folder_id: targetFolderId }, oldFolderId: session.folderId },
+                { onSuccess, onError },
+            );
+        } else {
+            if (updateQuestionBank.isPending) return;
+            updateQuestionBank.mutate(
+                { questionBankId: id, data: { folder_id: targetFolderId }, oldFolderId: session.folderId },
                 { onSuccess, onError },
             );
         }
@@ -278,8 +331,10 @@ function FolderPage() {
             navigate(ROUTES.FOLDER(resource.id));
         } else if (resource.resourceType === "assessment") {
             navigate(ROUTES.ASSESSMENT(resource.id));
-        } else {
+        } else if (resource.resourceType === "assessment_template") {
             navigate(ROUTES.ASSESSMENT_TEMPLATE(resource.id));
+        } else {
+            navigate(ROUTES.QUESTION_BANK(resource.id));
         }
     };
 
@@ -332,10 +387,16 @@ function FolderPage() {
                 { assessmentId: id, ownerId: session.userId, folderId: session.folderId },
                 { onSuccess, onError },
             );
-        } else {
+        } else if (resourceType === "assessment_template") {
             if (deleteAssessmentTemplate.isPending) return;
             deleteAssessmentTemplate.mutate(
                 { templateId: id, ownerId: session.userId, folderId: session.folderId },
+                { onSuccess, onError },
+            );
+        } else {
+            if (deleteQuestionBank.isPending) return;
+            deleteQuestionBank.mutate(
+                { questionBankId: id, ownerId: session.userId, folderId: session.folderId },
                 { onSuccess, onError },
             );
         }
@@ -379,6 +440,10 @@ function FolderPage() {
             ...t,
             resourceType: "assessment_template" as const,
         })),
+        ...(contents?.question_banks ?? []).map((qb) => ({
+            ...qb,
+            resourceType: "question_bank" as const,
+        })),
     ];
 
     return (
@@ -398,6 +463,7 @@ function FolderPage() {
                     onCreateFolder={() => setShowCreateFolder(true)}
                     onCreateAssessment={() => setShowCreateAssessment(true)}
                     onCreateTemplate={() => setShowCreateTemplate(true)}
+                    onCreateQuestionBank={() => setShowCreateQuestionBank(true)}
                 />
             </div>
 
@@ -447,6 +513,13 @@ function FolderPage() {
                 isLoading={createAssessmentTemplate.isPending}
             />
 
+            <CreateQuestionBankModal
+                open={showCreateQuestionBank}
+                onOpenChange={setShowCreateQuestionBank}
+                onSubmit={handleCreateQuestionBank}
+                isLoading={createQuestionBank.isPending}
+            />
+
             {/* Action Modals */}
             <RenameModal
                 open={activeModal === "rename"}
@@ -455,7 +528,8 @@ function FolderPage() {
                 isLoading={
                     updateFolder.isPending ||
                     updateAssessment.isPending ||
-                    updateAssessmentTemplate.isPending
+                    updateAssessmentTemplate.isPending ||
+                    updateQuestionBank.isPending
                 }
                 resourceType={selectedResource?.resourceType ?? "folder"}
                 currentName={selectedResource ? getResourceDisplayName(selectedResource) : ""}
@@ -469,7 +543,8 @@ function FolderPage() {
                 isLoading={
                     moveFolder.isPending ||
                     updateAssessment.isPending ||
-                    updateAssessmentTemplate.isPending
+                    updateAssessmentTemplate.isPending ||
+                    updateQuestionBank.isPending
                 }
                 resourceType={selectedResource?.resourceType ?? "folder"}
                 originalFolderId={folderId || ""}
@@ -482,7 +557,8 @@ function FolderPage() {
                 isLoading={
                     deleteFolder.isPending ||
                     deleteAssessment.isPending ||
-                    deleteAssessmentTemplate.isPending
+                    deleteAssessmentTemplate.isPending ||
+                    deleteQuestionBank.isPending
                 }
                 resourceType={selectedResource?.resourceType ?? "folder"}
                 resourceName={selectedResource ? getResourceDisplayName(selectedResource) : ""}

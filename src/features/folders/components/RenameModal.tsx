@@ -1,9 +1,10 @@
-// RenameModal - Modal for renaming folders, assessments, and assessment templates
+// RenameModal - Modal for renaming folders, assessments, assessment templates, and question banks
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import type { ResourceType } from "../types";
 import {
     Dialog,
     DialogContent,
@@ -44,7 +45,7 @@ interface RenameModalConfig {
 }
 
 // Config definitions for each resource type
-const RENAME_CONFIGS: Record<"folder" | "assessment" | "assessment_template", RenameModalConfig> = {
+const RENAME_CONFIGS: Record<ResourceType, RenameModalConfig> = {
     folder: {
         title: "Rename Folder",
         description: "Update the name and description.",
@@ -63,6 +64,12 @@ const RENAME_CONFIGS: Record<"folder" | "assessment" | "assessment_template", Re
         fieldLabel: "Title",
         fieldPlaceholder: "Enter template title",
     },
+    question_bank: {
+        title: "Rename Question Bank",
+        description: "Update the title and description.",
+        fieldLabel: "Title",
+        fieldPlaceholder: "Enter question bank title",
+    },
 };
 
 interface RenameModalProps {
@@ -70,7 +77,7 @@ interface RenameModalProps {
     onOpenChange: (open: boolean) => void;
     onSubmit: (name: string, description?: string) => void;
     isLoading?: boolean;
-    resourceType: "folder" | "assessment" | "assessment_template";
+    resourceType: ResourceType;
     currentName: string;
     currentDescription?: string | null;
 }

@@ -1,7 +1,7 @@
 // Question service - API calls for question management
 
 import { api } from "@/api/client";
-import type { UpdateQuestionRequest, AssessmentResponse } from "@/api/models";
+import type { UpdateQuestionRequest, QuestionUsageResponse } from "@/api/models";
 import type { QuestionResponse } from "@/types/frontend.types";
 
 // Get all questions for a user
@@ -31,11 +31,10 @@ export async function deleteQuestion(questionId: string): Promise<void> {
     return response.data;
 }
 
-// Get assessments that contain a specific question
-export async function getAssessmentsContainingQuestion(
+// Get usage information for a question
+export async function getQuestionUsage(
     questionId: string,
-): Promise<AssessmentResponse[]> {
-    const response =
-        await api.getAssessmentsForQuestionQuestionsQuestionIdAssessmentsGet(questionId);
+): Promise<QuestionUsageResponse> {
+    const response = await api.getQuestionUsageQuestionsQuestionIdUsageGet(questionId);
     return response.data;
 }

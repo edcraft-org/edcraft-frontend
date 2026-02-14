@@ -10,7 +10,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Link2, Copy, AlertTriangle, Loader2 } from "lucide-react";
-import { useQuestionAssessments } from "../useQuestions";
+import { useQuestionUsage } from "../useQuestions";
 import type { QuestionResponse } from "@/types/frontend.types";
 
 interface LinkOrDuplicateModalProps {
@@ -32,12 +32,14 @@ export function LinkOrDuplicateModal({
     onDuplicate,
     isLoading,
 }: LinkOrDuplicateModalProps) {
-    const { data: assessments, isLoading: loadingAssessments } = useQuestionAssessments(
+    const { data: usage, isLoading: loadingUsage } = useQuestionUsage(
         open ? (question?.id ?? undefined) : undefined,
         ownerId,
     );
 
-    const usageCount = assessments?.length ?? 0;
+    const assessmentCount = usage?.assessments?.length ?? 0;
+    const questionBankCount = usage?.question_banks?.length ?? 0;
+    const totalCount = assessmentCount + questionBankCount;
 
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -53,18 +55,26 @@ export function LinkOrDuplicateModal({
                                 How would you like to add this question to the assessment?
                             </p>
 
-                            {loadingAssessments ? (
+                            {loadingUsage ? (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                     Checking usage...
                                 </div>
-                            ) : usageCount > 0 ? (
+                            ) : totalCount > 0 ? (
                                 <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-3">
                                     <p className="text-sm text-amber-800 dark:text-amber-200">
                                         This question is currently used in{" "}
-                                        <strong>
-                                            {usageCount} assessment{usageCount !== 1 ? "s" : ""}
-                                        </strong>
+                                        {assessmentCount > 0 && (
+                                            <strong>
+                                                {assessmentCount} assessment{assessmentCount !== 1 ? "s" : ""}
+                                            </strong>
+                                        )}
+                                        {assessmentCount > 0 && questionBankCount > 0 && " and "}
+                                        {questionBankCount > 0 && (
+                                            <strong>
+                                                {questionBankCount} question bank{questionBankCount !== 1 ? "s" : ""}
+                                            </strong>
+                                        )}
                                         .
                                     </p>
                                 </div>
@@ -80,9 +90,8 @@ export function LinkOrDuplicateModal({
                                     <div>
                                         <div className="font-medium text-sm">Link</div>
                                         <p className="text-xs text-muted-foreground">
-                                            Changes to this question will affect all assessments
-                                            using it.
-                                            {usageCount > 0 &&
+                                            Changes to this question will affect all assessments and question banks using it.
+                                            {totalCount > 0 &&
                                                 " Best for keeping questions synchronized."}
                                         </p>
                                     </div>
@@ -97,9 +106,8 @@ export function LinkOrDuplicateModal({
                                     <div>
                                         <div className="font-medium text-sm">Duplicate</div>
                                         <p className="text-xs text-muted-foreground">
-                                            Creates an independent copy. Changes won't affect other
-                                            assessments.
-                                            {usageCount > 0 && " Best for making variations."}
+                                            Creates an independent copy. Changes won't affect other assessments or question banks.
+                                            {totalCount > 0 && " Best for making variations."}
                                         </p>
                                     </div>
                                 </button>

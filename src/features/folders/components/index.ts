@@ -3,6 +3,7 @@ export { CreateResourceModal } from "./CreateResourceModal";
 export { CreateFolderModal } from "./CreateFolderModal";
 export { CreateAssessmentModal } from "./CreateAssessmentModal";
 export { CreateAssessmentTemplateModal } from "./CreateAssessmentTemplateModal";
+export { CreateQuestionBankModal } from "./CreateQuestionBankModal";
 export { RenameModal } from "./RenameModal";
 export { MoveModal } from "./MoveModal";
 export { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";

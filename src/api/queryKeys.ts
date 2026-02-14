@@ -31,7 +31,16 @@ export const queryKeys = {
   questions: {
     all: (ownerId: string) => ["questions", ownerId] as const,
     detail: (id: string) => ["questions", "detail", id] as const,
-    assessments: (id: string) => ["questions", id, "assessments"] as const,
+    usage: (id: string) => ["questions", id, "usage"] as const,
+  },
+
+  // Question bank queries
+  questionBanks: {
+    all: (ownerId: string) => ["question-banks", ownerId] as const,
+    byFolder: (ownerId: string, folderId: string) =>
+      ["question-banks", ownerId, folderId] as const,
+    detail: (id: string) => ["question-banks", "detail", id] as const,
+    allDetails: () => ["question-banks", "detail"] as const,
   },
 
   // Assessment template queries

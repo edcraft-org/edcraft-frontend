@@ -1,6 +1,8 @@
-// MoveModal - Modal for moving folders, assessments, and assessment templates to a different folder
+// MoveModal - Modal for moving folders, assessments,
+// assessment templates, and question banks to a different folder
 
 import { useState, useEffect } from "react";
+import type { ResourceType } from "../types";
 import {
     Dialog,
     DialogContent,
@@ -61,7 +63,7 @@ interface MoveModalProps {
     onOpenChange: (open: boolean) => void;
     onSubmit: (targetFolderId: string) => void;
     isLoading?: boolean;
-    resourceType: "folder" | "assessment" | "assessment_template";
+    resourceType: ResourceType;
     originalFolderId: string;
 }
 

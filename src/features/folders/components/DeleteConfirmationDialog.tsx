@@ -1,4 +1,5 @@
-// DeleteConfirmationDialog - Confirmation dialog for deleting folders, assessments, and assessment templates
+// DeleteConfirmationDialog
+// Confirmation dialog for deleting folders, assessments, assessment templates, and question banks
 
 import {
     AlertDialog,
@@ -11,13 +12,14 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Loader2 } from "lucide-react";
+import type { ResourceType } from "../types";
 
 interface DeleteConfirmationDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onConfirm: () => void;
     isLoading?: boolean;
-    resourceType: "folder" | "assessment" | "assessment_template";
+    resourceType: ResourceType;
     resourceName: string;
 }
 
@@ -37,6 +39,8 @@ export function DeleteConfirmationDialog({
                 return "Delete Assessment";
             case "assessment_template":
                 return "Delete Assessment Template";
+            case "question_bank":
+                return "Delete Question Bank";
         }
     };
 
@@ -48,6 +52,8 @@ export function DeleteConfirmationDialog({
                 return `Are you sure you want to delete the assessment "${resourceName}"? This action cannot be undone.`;
             case "assessment_template":
                 return `Are you sure you want to delete the assessment template "${resourceName}"? This action cannot be undone.`;
+            case "question_bank":
+                return `Are you sure you want to delete the question bank "${resourceName}"? This action cannot be undone.`;
         }
     };
 
