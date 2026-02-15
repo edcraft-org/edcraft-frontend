@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ROUTES } from "@/router";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, Plus } from "lucide-react";
+import { ArrowLeft, Play, Plus, GripVertical } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
 import {
     AddQuestionTemplateModal,
@@ -24,6 +24,7 @@ import {
     useRemoveQuestionTemplateFromAssessmentTemplate,
     useAssessmentTemplate,
     useGenerateAssessmentFromTemplate,
+    useReorderQuestionTemplatesInAssessmentTemplate,
 } from "./useAssessmentTemplates";
 import type { QuestionTemplateResponse } from "@/api/models";
 import { CreateFromTemplateModal } from "../question-templates/components";
@@ -39,6 +40,8 @@ function AssessmentTemplatePage() {
     const [selectedTemplate, setSelectedTemplate] = useState<QuestionTemplateResponse | null>(null);
     const [showCreateFromTemplate, setShowCreateFromTemplate] = useState(false);
     const [showInstantiateDialog, setShowInstantiateDialog] = useState(false);
+    const [isReorderMode, setIsReorderMode] = useState(false);
+    const [reorderedTemplates, setReorderedTemplates] = useState<QuestionTemplateResponse[]>([]);
 
     const { data: assessmentTemplate, isLoading } = useAssessmentTemplate(templateId || "");
 
@@ -46,6 +49,7 @@ function AssessmentTemplatePage() {
     const linkQuestionTemplate = useLinkQuestionTemplateToAssessmentTemplate();
     const removeQuestionTemplate = useRemoveQuestionTemplateFromAssessmentTemplate();
     const generateAssessment = useGenerateAssessmentFromTemplate();
+    const reorderMutation = useReorderQuestionTemplatesInAssessmentTemplate();
 
     const sortedTemplates = useMemo(
         () => [...(assessmentTemplate?.question_templates ?? [])].sort((a, b) => a.order - b.order),
@@ -279,6 +283,38 @@ function AssessmentTemplatePage() {
         );
     };
 
+    // Handle reordering templates
+    const handleReorder = (newOrder: QuestionTemplateResponse[]) => {
+        setReorderedTemplates(newOrder);
+    };
+
+    const handleSaveReorder = () => {
+        if (reorderMutation.isPending || !templateId) return;
+
+        const session = validateSession();
+        if (!session) return;
+
+        const templateOrders = reorderedTemplates.map((t, index) => ({
+            question_template_id: t.id,
+            order: index + 1,
+        }));
+
+        reorderMutation.mutate(
+            {
+                templateId,
+                data: { question_template_orders: templateOrders },
+            },
+            {
+                onSuccess: () => {
+                    toast.success("Templates reordered successfully");
+                    setIsReorderMode(false);
+                    setReorderedTemplates([]);
+                },
+                onError: (error) => handleMutationError(error, "reorder templates"),
+            },
+        );
+    };
+
     if (isLoading) {
         return <PageSkeleton />;
     }
@@ -310,19 +346,48 @@ function AssessmentTemplatePage() {
                         </p>
                     )}
                 </div>
-                <Button variant="outline" onClick={() => setShowInstantiateDialog(true)}>
-                    <Play className="h-4 w-4 mr-2" />
-                    Instantiate Assessment
-                </Button>
-                <Button onClick={() => setShowAddTemplateModal(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Template
-                </Button>
+                {!isReorderMode ? (
+                    <>
+                        <Button variant="outline" onClick={() => setShowInstantiateDialog(true)}>
+                            <Play className="h-4 w-4 mr-2" />
+                            Instantiate Assessment
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setIsReorderMode(true);
+                                setReorderedTemplates(sortedTemplates);
+                            }}
+                        >
+                            <GripVertical className="h-4 w-4 mr-2" />
+                            Reorder
+                        </Button>
+                        <Button onClick={() => setShowAddTemplateModal(true)}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Template
+                        </Button>
+                    </>
+                ) : (
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setIsReorderMode(false);
+                                setReorderedTemplates([]);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button onClick={handleSaveReorder} disabled={reorderMutation.isPending}>
+                            {reorderMutation.isPending ? "Saving..." : "Save Order"}
+                        </Button>
+                    </div>
+                )}
             </div>
 
             {/* Question Templates List */}
             <QuestionTemplatesList
-                templates={sortedTemplates}
+                templates={isReorderMode ? reorderedTemplates : sortedTemplates}
                 onCreateQuestion={handleCreateQuestion}
                 onEdit={handleEditTemplate}
                 onDuplicate={(template) => {
@@ -333,6 +398,8 @@ function AssessmentTemplatePage() {
                     setSelectedTemplate(template);
                     setShowRemoveDialog(true);
                 }}
+                isReorderMode={isReorderMode}
+                onReorder={handleReorder}
             />
 
             {/* Add Question Template Modal */}

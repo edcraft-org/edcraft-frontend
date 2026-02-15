@@ -5,13 +5,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, GripVertical } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
 import {
     useAssessment,
     useAddQuestionToAssessment,
     useLinkQuestionToAssessment,
     useRemoveQuestionFromAssessment,
+    useReorderQuestions,
 } from "./useAssessments";
 import { QuestionsList, RemoveQuestionDialog } from "./components";
 import {
@@ -34,6 +35,8 @@ function AssessmentPage() {
     const [showLinkOrDuplicateModal, setShowLinkOrDuplicateModal] = useState(false);
     const [showRemoveDialog, setShowRemoveDialog] = useState(false);
     const [selectedQuestion, setSelectedQuestion] = useState<QuestionResponse | null>(null);
+    const [isReorderMode, setIsReorderMode] = useState(false);
+    const [reorderedQuestions, setReorderedQuestions] = useState<QuestionResponse[]>([]);
 
     const { data: assessment, isLoading } = useAssessment(assessmentId || "");
 
@@ -41,6 +44,7 @@ function AssessmentPage() {
     const linkQuestion = useLinkQuestionToAssessment();
     const removeQuestion = useRemoveQuestionFromAssessment();
     const updateQuestion = useUpdateQuestion();
+    const reorderMutation = useReorderQuestions();
 
     const sortedQuestions = useMemo(
         () => [...(assessment?.questions ?? [])].sort((a, b) => a.order - b.order),
@@ -253,6 +257,38 @@ function AssessmentPage() {
         );
     };
 
+    // Handle reordering questions
+    const handleReorder = (newOrder: QuestionResponse[]) => {
+        setReorderedQuestions(newOrder);
+    };
+
+    const handleSaveReorder = () => {
+        if (reorderMutation.isPending) return;
+
+        const session = validateSession();
+        if (!session) return;
+
+        const questionOrders = reorderedQuestions.map((q, index) => ({
+            question_id: q.id,
+            order: index + 1,
+        }));
+
+        reorderMutation.mutate(
+            {
+                assessmentId: session.assessmentId,
+                data: { question_orders: questionOrders },
+            },
+            {
+                onSuccess: () => {
+                    toast.success("Questions reordered successfully");
+                    setIsReorderMode(false);
+                    setReorderedQuestions([]);
+                },
+                onError: (error) => handleMutationError(error, "reorder questions"),
+            },
+        );
+    };
+
     if (isLoading) {
         return <PageSkeleton />;
     }
@@ -278,20 +314,51 @@ function AssessmentPage() {
                         <p className="text-muted-foreground mt-1">{assessment.description}</p>
                     )}
                 </div>
-                <Button onClick={() => setShowAddModal(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Question
-                </Button>
+                {!isReorderMode ? (
+                    <>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setIsReorderMode(true);
+                                setReorderedQuestions(sortedQuestions);
+                            }}
+                        >
+                            <GripVertical className="h-4 w-4 mr-2" />
+                            Reorder
+                        </Button>
+                        <Button onClick={() => setShowAddModal(true)}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Question
+                        </Button>
+                    </>
+                ) : (
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setIsReorderMode(false);
+                                setReorderedQuestions([]);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button onClick={handleSaveReorder} disabled={reorderMutation.isPending}>
+                            {reorderMutation.isPending ? "Saving..." : "Save Order"}
+                        </Button>
+                    </div>
+                )}
             </div>
 
             <QuestionsList
-                questions={sortedQuestions}
+                questions={isReorderMode ? reorderedQuestions : sortedQuestions}
                 onEdit={handleEditQuestion}
                 onDuplicate={handleDuplicateQuestion}
                 onRemove={(question) => {
                     setSelectedQuestion(question);
                     setShowRemoveDialog(true);
                 }}
+                isReorderMode={isReorderMode}
+                onReorder={handleReorder}
             />
 
             {user && (
