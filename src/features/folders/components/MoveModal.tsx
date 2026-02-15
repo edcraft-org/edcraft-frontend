@@ -1,5 +1,4 @@
-// MoveModal - Modal for moving folders, assessments,
-// assessment templates, and question banks to a different folder
+// MoveModal - Modal for moving resources to a different folder
 
 import { useState, useEffect } from "react";
 import type { ResourceType } from "../types";

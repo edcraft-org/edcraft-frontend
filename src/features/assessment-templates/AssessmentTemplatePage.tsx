@@ -173,7 +173,7 @@ function AssessmentTemplatePage() {
     const handleEditTemplate = (template: QuestionTemplateResponse) => {
         setSelectedTemplate(template);
         navigate(
-            `${ROUTES.TEMPLATE_BUILDER}?templateId=${template.id}&assessmentTemplateId=${assessmentTemplate?.id}`,
+            `${ROUTES.TEMPLATE_BUILDER}?templateId=${template.id}`,
         );
     };
 
@@ -407,7 +407,7 @@ function AssessmentTemplatePage() {
                 <AddQuestionTemplateModal
                     open={showAddTemplateModal}
                     onOpenChange={setShowAddTemplateModal}
-                    assessmentTemplateId={templateId}
+                    destination={{ type: "assessmentTemplate", id: templateId }}
                     ownerId={user.id}
                     onSelectExisting={handleSelectExisting}
                 />

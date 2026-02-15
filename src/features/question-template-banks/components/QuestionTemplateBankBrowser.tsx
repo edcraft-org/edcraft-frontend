@@ -1,36 +1,38 @@
-// AssessmentTemplateBrowser - Browse and search through existing assessment templates
+// QuestionTemplateBankBrowser - Browse and search through existing question template banks
 
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, FileStack } from "lucide-react";
-import type { AssessmentTemplateResponse } from "@/api/models";
+import { Loader2, Database } from "lucide-react";
+import type { QuestionTemplateBankResponse } from "@/api/models";
 
-interface AssessmentTemplateBrowserProps {
-    templates: AssessmentTemplateResponse[];
+interface QuestionTemplateBankBrowserProps {
+    questionTemplateBanks: QuestionTemplateBankResponse[];
     isLoading: boolean;
-    onSelectTemplate: (templateId: string) => void;
+    onSelectQuestionTemplateBank: (questionTemplateBankId: string) => void;
     disabled?: boolean;
-    preSelectedTemplateId?: string;
+    preSelectedQuestionTemplateBankId?: string;
 }
 
-export function AssessmentTemplateBrowser({
-    templates,
+export function QuestionTemplateBankBrowser({
+    questionTemplateBanks,
     isLoading,
-    onSelectTemplate,
+    onSelectQuestionTemplateBank,
     disabled,
-    preSelectedTemplateId,
-}: AssessmentTemplateBrowserProps) {
+    preSelectedQuestionTemplateBankId,
+}: QuestionTemplateBankBrowserProps) {
     const [searchQuery, setSearchQuery] = useState("");
 
-    const filteredTemplates =
-        templates?.filter((t) => t.title.toLowerCase().includes(searchQuery.toLowerCase())) || [];
+    const filteredQuestionTemplateBanks =
+        questionTemplateBanks?.filter((qtb) =>
+            qtb.title.toLowerCase().includes(searchQuery.toLowerCase()),
+        ) || [];
 
     return (
         <div className="space-y-3">
             <Input
-                placeholder="Search template banks..."
+                placeholder="Search question template banks..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -40,38 +42,38 @@ export function AssessmentTemplateBrowser({
                     <div className="flex items-center justify-center py-8">
                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
-                ) : filteredTemplates.length === 0 ? (
+                ) : filteredQuestionTemplateBanks.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                         {searchQuery
-                            ? "No template banks match your search"
-                            : "No template banks yet. Create one above."}
+                            ? "No question template banks match your search"
+                            : "No question template banks yet. Create one above."}
                     </div>
                 ) : (
                     <div className="space-y-2">
-                        {filteredTemplates.map((template) => (
+                        {filteredQuestionTemplateBanks.map((questionTemplateBank) => (
                             <Card
-                                key={template.id}
+                                key={questionTemplateBank.id}
                                 className={`cursor-pointer hover:bg-muted/50 transition-colors ${
-                                    preSelectedTemplateId === template.id
+                                    preSelectedQuestionTemplateBankId === questionTemplateBank.id
                                         ? "border-primary"
                                         : ""
                                 }`}
                                 onClick={() => {
                                     if (!disabled) {
-                                        onSelectTemplate(template.id);
+                                        onSelectQuestionTemplateBank(questionTemplateBank.id);
                                     }
                                 }}
                             >
                                 <CardContent className="p-3">
                                     <div className="flex items-center gap-3">
-                                        <FileStack className="h-4 w-4 text-muted-foreground" />
+                                        <Database className="h-4 w-4 text-muted-foreground" />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-medium truncate">
-                                                {template.title}
+                                                {questionTemplateBank.title}
                                             </p>
-                                            {template.description && (
+                                            {questionTemplateBank.description && (
                                                 <p className="text-xs text-muted-foreground truncate">
-                                                    {template.description}
+                                                    {questionTemplateBank.description}
                                                 </p>
                                             )}
                                         </div>

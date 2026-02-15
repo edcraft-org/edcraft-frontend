@@ -10,7 +10,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Link2, Copy, AlertTriangle, Loader2 } from "lucide-react";
-import { useQuestionTemplateAssessmentTemplates } from "@/features/question-templates/useQuestionTemplates";
+import { useQuestionTemplateUsage } from "@/features/question-templates/useQuestionTemplates";
 import type { QuestionTemplateResponse } from "@/api/models";
 
 interface LinkOrDuplicateTemplateModalProps {
@@ -32,13 +32,14 @@ export function LinkOrDuplicateTemplateModal({
     onDuplicate,
     isLoading,
 }: LinkOrDuplicateTemplateModalProps) {
-    const { data: assessmentTemplates, isLoading: loadingAssessmentTemplates } =
-        useQuestionTemplateAssessmentTemplates(
-            open ? (template?.id ?? undefined) : undefined,
-            ownerId,
-        );
+    const { data: usage, isLoading: loadingUsage } = useQuestionTemplateUsage(
+        open ? (template?.id ?? undefined) : undefined,
+        ownerId,
+    );
 
-    const usageCount = assessmentTemplates?.length ?? 0;
+    const assessmentTemplateCount = usage?.assessment_templates?.length ?? 0;
+    const questionTemplateBankCount = usage?.question_template_banks?.length ?? 0;
+    const totalCount = assessmentTemplateCount + questionTemplateBankCount;
 
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -55,19 +56,26 @@ export function LinkOrDuplicateTemplateModal({
                                 template?
                             </p>
 
-                            {loadingAssessmentTemplates ? (
+                            {loadingUsage ? (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                     Checking usage...
                                 </div>
-                            ) : usageCount > 0 ? (
+                            ) : totalCount > 0 ? (
                                 <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-3">
                                     <p className="text-sm text-amber-800 dark:text-amber-200">
                                         This question template is currently used in{" "}
-                                        <strong>
-                                            {usageCount} assessment template
-                                            {usageCount !== 1 ? "s" : ""}
-                                        </strong>
+                                        {assessmentTemplateCount > 0 && (
+                                            <strong>
+                                                {assessmentTemplateCount} assessment template{assessmentTemplateCount !== 1 ? "s" : ""}
+                                            </strong>
+                                        )}
+                                        {assessmentTemplateCount > 0 && questionTemplateBankCount > 0 && " and "}
+                                        {questionTemplateBankCount > 0 && (
+                                            <strong>
+                                                {questionTemplateBankCount} question template bank{questionTemplateBankCount !== 1 ? "s" : ""}
+                                            </strong>
+                                        )}
                                         .
                                     </p>
                                 </div>
@@ -83,10 +91,10 @@ export function LinkOrDuplicateTemplateModal({
                                     <div>
                                         <div className="font-medium text-sm">Link</div>
                                         <p className="text-xs text-muted-foreground">
-                                            Changes to this question template will affect all
-                                            assessment templates using it.
-                                            {usageCount > 0 &&
-                                                " Best for keeping templates synchronized."}
+                                            Changes to this question template will affect all places using
+                                            it.
+                                            {totalCount > 0 &&
+                                                " Best for keeping templates synchronized across all usages."}
                                         </p>
                                     </div>
                                 </button>
@@ -100,9 +108,9 @@ export function LinkOrDuplicateTemplateModal({
                                     <div>
                                         <div className="font-medium text-sm">Duplicate</div>
                                         <p className="text-xs text-muted-foreground">
-                                            Creates an independent copy. Changes won't affect other
-                                            assessment templates.
-                                            {usageCount > 0 && " Best for making variations."}
+                                            Creates an independent copy. Changes won't affect other usages.
+                                            {totalCount > 0 &&
+                                                " Best for making variations without affecting other usages."}
                                         </p>
                                     </div>
                                 </button>

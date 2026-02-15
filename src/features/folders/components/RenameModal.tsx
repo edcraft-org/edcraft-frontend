@@ -1,4 +1,4 @@
-// RenameModal - Modal for renaming folders, assessments, assessment templates, and question banks
+// RenameModal - Modal for renaming resources
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -70,6 +70,12 @@ const RENAME_CONFIGS: Record<ResourceType, RenameModalConfig> = {
         fieldLabel: "Title",
         fieldPlaceholder: "Enter question bank title",
     },
+    question_template_bank: {
+        title: "Rename Question Template Bank",
+        description: "Update the title and description.",
+        fieldLabel: "Title",
+        fieldPlaceholder: "Enter question template bank title",
+    }
 };
 
 interface RenameModalProps {

@@ -7,7 +7,7 @@ import {
     getQuestionTemplate,
     updateQuestionTemplate,
     deleteQuestionTemplate,
-    getQuestionTemplateAssessmentTemplates,
+    getQuestionTemplateUsage,
     generateFromTemplate,
 } from "./question-template.service";
 import type {
@@ -33,14 +33,14 @@ export function useQuestionTemplate(templateId: string | undefined) {
     });
 }
 
-// Hook to fetch assessment templates that contain a question template
-export function useQuestionTemplateAssessmentTemplates(
+// Hook to fetch usage information for a question template
+export function useQuestionTemplateUsage(
     templateId: string | undefined,
     ownerId: string | undefined,
 ) {
     return useQuery({
-        queryKey: queryKeys.questionTemplates.assessmentTemplates(templateId ?? ""),
-        queryFn: () => getQuestionTemplateAssessmentTemplates(templateId!),
+        queryKey: queryKeys.questionTemplates.usage(templateId ?? ""),
+        queryFn: () => getQuestionTemplateUsage(templateId!),
         enabled: !!templateId && !!ownerId,
     });
 }
@@ -64,9 +64,18 @@ export function useUpdateQuestionTemplate() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.questionTemplates.all(updatedTemplate.owner_id),
             });
-            // Invalidate assessment templates owned by the same owner as these may contain the updated template
+            // Invalidate resources owned by the same owner as these may contain the updated template
             queryClient.invalidateQueries({
                 queryKey: queryKeys.assessmentTemplates.all(updatedTemplate.owner_id),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.assessmentTemplates.detail(updatedTemplate.owner_id),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.questionTemplateBanks.all(updatedTemplate.owner_id),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.questionTemplateBanks.detail(updatedTemplate.owner_id),
             });
         },
     });
@@ -86,6 +95,15 @@ export function useDeleteQuestionTemplate() {
             // Invalidate assessment templates owned by the same owner as these may contain the deleted template
             queryClient.invalidateQueries({
                 queryKey: queryKeys.assessmentTemplates.all(variables.ownerId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.assessmentTemplates.detail(variables.ownerId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.questionTemplateBanks.all(variables.ownerId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.questionTemplateBanks.detail(variables.ownerId),
             });
         },
     });

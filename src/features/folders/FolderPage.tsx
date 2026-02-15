@@ -13,6 +13,7 @@ import {
     CreateAssessmentModal,
     CreateAssessmentTemplateModal,
     CreateQuestionBankModal,
+    CreateQuestionTemplateBankModal,
     RenameModal,
     MoveModal,
     DeleteConfirmationDialog,
@@ -44,6 +45,11 @@ import {
     useUpdateQuestionBank,
     useDeleteQuestionBank,
 } from "@/features/question-banks/useQuestionBanks";
+import {
+    useCreateQuestionTemplateBank,
+    useUpdateQuestionTemplateBank,
+    useDeleteQuestionTemplateBank,
+} from "@/features/question-template-banks/useQuestionTemplateBanks";
 
 function FolderPage() {
     const { folderId: rawFolderId } = useParams<{ folderId: string }>();
@@ -59,6 +65,7 @@ function FolderPage() {
     const [showCreateAssessment, setShowCreateAssessment] = useState(false);
     const [showCreateTemplate, setShowCreateTemplate] = useState(false);
     const [showCreateQuestionBank, setShowCreateQuestionBank] = useState(false);
+    const [showCreateQuestionTemplateBank, setShowCreateQuestionTemplateBank] = useState(false);
 
     // Action modal state - single resource with modal type
     const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
@@ -69,6 +76,7 @@ function FolderPage() {
     const createAssessment = useCreateAssessment();
     const createAssessmentTemplate = useCreateAssessmentTemplate();
     const createQuestionBank = useCreateQuestionBank();
+    const createQuestionTemplateBank = useCreateQuestionTemplateBank();
 
     // Update/Delete/Move mutations
     const updateFolder = useUpdateFolder();
@@ -80,6 +88,8 @@ function FolderPage() {
     const deleteAssessmentTemplate = useDeleteAssessmentTemplate();
     const updateQuestionBank = useUpdateQuestionBank();
     const deleteQuestionBank = useDeleteQuestionBank();
+    const updateQuestionTemplateBank = useUpdateQuestionTemplateBank();
+    const deleteQuestionTemplateBank = useDeleteQuestionTemplateBank();
 
     // Fetch folder contents
     const {
@@ -144,6 +154,14 @@ function FolderPage() {
                 update: updateQuestionBank,
                 move: updateQuestionBank,
                 delete: deleteQuestionBank,
+            },
+        },
+        question_template_bank: {
+            label: "Question template bank",
+            mutations: {
+                update: updateQuestionTemplateBank,
+                move: updateQuestionTemplateBank,
+                delete: deleteQuestionTemplateBank,
             },
         },
     } as const;
@@ -240,6 +258,29 @@ function FolderPage() {
         );
     };
 
+    const handleCreateQuestionTemplateBank = (title: string, description?: string) => {
+        if (createQuestionTemplateBank.isPending) return;
+
+        const session = validateSession();
+        if (!session) return;
+
+        createQuestionTemplateBank.mutate(
+            {
+                folder_id: session.folderId,
+                title,
+                description,
+            },
+            {
+                onSuccess: (newTemplateBank) => {
+                    toast.success("Question template bank created successfully");
+                    setShowCreateQuestionTemplateBank(false);
+                    navigate(ROUTES.QUESTION_TEMPLATE_BANK(newTemplateBank.id));
+                },
+                onError: (error) => handleMutationError(error, "create template bank"),
+            },
+        );
+    };
+
     // Rename Handlers
     const handleRename = (name: string, description?: string) => {
         if (!selectedResource) return;
@@ -272,10 +313,16 @@ function FolderPage() {
                 { templateId: id, data: { title: name, description }, oldFolderId: session.folderId },
                 { onSuccess, onError },
             );
-        } else {
+        } else if (resourceType === "question_bank") {
             if (updateQuestionBank.isPending) return;
             updateQuestionBank.mutate(
                 { questionBankId: id, data: { title: name, description }, oldFolderId: session.folderId },
+                { onSuccess, onError },
+            );
+        } else {
+            if (updateQuestionTemplateBank.isPending) return;
+            updateQuestionTemplateBank.mutate(
+                { templateBankId: id, data: { title: name, description }, oldFolderId: session.folderId },
                 { onSuccess, onError },
             );
         }
@@ -316,10 +363,16 @@ function FolderPage() {
                 { templateId: id, data: { folder_id: targetFolderId }, oldFolderId: session.folderId },
                 { onSuccess, onError },
             );
-        } else {
+        } else if (resourceType === "question_bank") {
             if (updateQuestionBank.isPending) return;
             updateQuestionBank.mutate(
                 { questionBankId: id, data: { folder_id: targetFolderId }, oldFolderId: session.folderId },
+                { onSuccess, onError },
+            );
+        } else {
+            if (updateQuestionTemplateBank.isPending) return;
+            updateQuestionTemplateBank.mutate(
+                { templateBankId: id, data: { folder_id: targetFolderId }, oldFolderId: session.folderId },
                 { onSuccess, onError },
             );
         }
@@ -333,8 +386,10 @@ function FolderPage() {
             navigate(ROUTES.ASSESSMENT(resource.id));
         } else if (resource.resourceType === "assessment_template") {
             navigate(ROUTES.ASSESSMENT_TEMPLATE(resource.id));
-        } else {
+        } else if (resource.resourceType === "question_bank") {
             navigate(ROUTES.QUESTION_BANK(resource.id));
+        } else {
+            navigate(ROUTES.QUESTION_TEMPLATE_BANK(resource.id));
         }
     };
 
@@ -393,10 +448,16 @@ function FolderPage() {
                 { templateId: id, ownerId: session.userId, folderId: session.folderId },
                 { onSuccess, onError },
             );
-        } else {
+        } else if (resourceType === "question_bank") {
             if (deleteQuestionBank.isPending) return;
             deleteQuestionBank.mutate(
                 { questionBankId: id, ownerId: session.userId, folderId: session.folderId },
+                { onSuccess, onError },
+            );
+        } else {
+            if (deleteQuestionTemplateBank.isPending) return;
+            deleteQuestionTemplateBank.mutate(
+                { templateBankId: id, ownerId: session.userId, folderId: session.folderId },
                 { onSuccess, onError },
             );
         }
@@ -444,6 +505,10 @@ function FolderPage() {
             ...qb,
             resourceType: "question_bank" as const,
         })),
+        ...(contents?.question_template_banks ?? []).map((qtb) => ({
+            ...qtb,
+            resourceType: "question_template_bank" as const,
+        })),
     ];
 
     return (
@@ -464,6 +529,7 @@ function FolderPage() {
                     onCreateAssessment={() => setShowCreateAssessment(true)}
                     onCreateTemplate={() => setShowCreateTemplate(true)}
                     onCreateQuestionBank={() => setShowCreateQuestionBank(true)}
+                    onCreateQuestionTemplateBank={() => setShowCreateQuestionTemplateBank(true)}
                 />
             </div>
 
@@ -520,6 +586,13 @@ function FolderPage() {
                 isLoading={createQuestionBank.isPending}
             />
 
+            <CreateQuestionTemplateBankModal
+                open={showCreateQuestionTemplateBank}
+                onOpenChange={setShowCreateQuestionTemplateBank}
+                onSubmit={handleCreateQuestionTemplateBank}
+                isLoading={createQuestionTemplateBank.isPending}
+            />
+
             {/* Action Modals */}
             <RenameModal
                 open={activeModal === "rename"}
@@ -529,7 +602,8 @@ function FolderPage() {
                     updateFolder.isPending ||
                     updateAssessment.isPending ||
                     updateAssessmentTemplate.isPending ||
-                    updateQuestionBank.isPending
+                    updateQuestionBank.isPending ||
+                    updateQuestionTemplateBank.isPending
                 }
                 resourceType={selectedResource?.resourceType ?? "folder"}
                 currentName={selectedResource ? getResourceDisplayName(selectedResource) : ""}
@@ -544,7 +618,8 @@ function FolderPage() {
                     moveFolder.isPending ||
                     updateAssessment.isPending ||
                     updateAssessmentTemplate.isPending ||
-                    updateQuestionBank.isPending
+                    updateQuestionBank.isPending ||
+                    updateQuestionTemplateBank.isPending
                 }
                 resourceType={selectedResource?.resourceType ?? "folder"}
                 originalFolderId={folderId || ""}
@@ -558,7 +633,8 @@ function FolderPage() {
                     deleteFolder.isPending ||
                     deleteAssessment.isPending ||
                     deleteAssessmentTemplate.isPending ||
-                    deleteQuestionBank.isPending
+                    deleteQuestionBank.isPending ||
+                    deleteQuestionTemplateBank.isPending
                 }
                 resourceType={selectedResource?.resourceType ?? "folder"}
                 resourceName={selectedResource ? getResourceDisplayName(selectedResource) : ""}

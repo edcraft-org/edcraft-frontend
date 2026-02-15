@@ -41,6 +41,8 @@ export function DeleteConfirmationDialog({
                 return "Delete Assessment Template";
             case "question_bank":
                 return "Delete Question Bank";
+            case "question_template_bank":
+                return "Delete Question Template Bank";
         }
     };
 
@@ -54,6 +56,8 @@ export function DeleteConfirmationDialog({
                 return `Are you sure you want to delete the assessment template "${resourceName}"? This action cannot be undone.`;
             case "question_bank":
                 return `Are you sure you want to delete the question bank "${resourceName}"? This action cannot be undone.`;
+            case "question_template_bank":
+                return `Are you sure you want to delete the question template bank "${resourceName}"? This action cannot be undone.`;
         }
     };
 

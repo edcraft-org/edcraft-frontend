@@ -10,5 +10,6 @@ export const ROUTES = {
   ASSESSMENT: (id: string) => `/assessments/${id}`,
   ASSESSMENT_TEMPLATE: (id: string) => `/assessment-templates/${id}`,
   QUESTION_BANK: (id: string) => `/question-banks/${id}`,
+  QUESTION_TEMPLATE_BANK: (id: string) => `/question-template-banks/${id}`,
   AUTH_CALLBACK: "/auth/callback",
 } as const;

@@ -6,7 +6,14 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Folder as FolderIcon, FileText, LayoutTemplate, Database, MoreVertical } from "lucide-react";
+import {
+    Folder as FolderIcon,
+    FileText,
+    LayoutTemplate,
+    Database,
+    BookTemplate,
+    MoreVertical,
+} from "lucide-react";
 import type { ResourceType } from "../types";
 
 interface Resource {
@@ -36,6 +43,8 @@ export function ResourceCard({ resource, onClick, onRename, onMove, onDelete }: 
                 return <LayoutTemplate className="h-5 w-5 text-purple-500" />;
             case "question_bank":
                 return <Database className="h-5 w-5 text-orange-500" />;
+            case "question_template_bank":
+                return <BookTemplate className="h-5 w-5 text-indigo-500" />;
         }
     };
 

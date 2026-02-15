@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { ROUTES } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,6 +27,10 @@ import {
     useCreateAssessmentTemplate,
     useAddQuestionTemplateToAssessmentTemplate,
 } from "@/features/assessment-templates/useAssessmentTemplates";
+import {
+    useInsertQuestionTemplateIntoBank,
+    useCreateQuestionTemplateBank,
+} from "@/features/question-template-banks/useQuestionTemplateBanks";
 import {
     useQuestionTemplate,
     useUpdateQuestionTemplate,
@@ -60,10 +65,10 @@ function TemplateBuilderPage() {
     const openAuthDialog = useAuthDialogStore((state) => state.setOpen);
     const currentFolderId = useFolderStore((state) => state.currentFolderId);
 
-    // Edit mode detection
     const [searchParams] = useSearchParams();
     const templateId = searchParams.get("templateId");
-    const assessmentTemplateId = searchParams.get("assessmentTemplateId");
+    const destinationAssessmentTemplateId = searchParams.get("assessmentTemplateId");
+    const destinationTemplateBankId = searchParams.get("bankId");
     const isEditMode = Boolean(templateId);
 
     // Fetch template data if in edit mode
@@ -87,6 +92,8 @@ function TemplateBuilderPage() {
     const generatePreview = useGenerateTemplatePreview();
     const createAssessmentTemplate = useCreateAssessmentTemplate();
     const addQuestionTemplate = useAddQuestionTemplateToAssessmentTemplate();
+    const createQuestionTemplateBank = useCreateQuestionTemplateBank();
+    const insertQuestionTemplateIntoBank = useInsertQuestionTemplateIntoBank();
     const updateQuestionTemplate = useUpdateQuestionTemplate();
 
     // Form setup with react-hook-form
@@ -251,7 +258,7 @@ function TemplateBuilderPage() {
         }
     };
 
-    const handleSaveToNewBank = (
+    const handleSaveToNewAssessmentTemplate = (
         title: string,
         description: string | undefined,
         folderId: string,
@@ -266,26 +273,142 @@ function TemplateBuilderPage() {
             },
             {
                 onSuccess: (newAssessmentTemplate) => {
-                    handleCreateTemplate(newAssessmentTemplate.id);
+                    handleSaveToExistingAssessmentTemplate(newAssessmentTemplate.id);
                 },
                 onError: (error) => {
-                    toast.error(`Failed to create template bank: ${error.message}`);
+                    toast.error(`Failed to create assessment template: ${error.message}`);
                 },
             },
         );
     };
 
-    const handleUpdateTemplate = (newAssessmentTemplateId?: string) => {
+    const handleSaveToExistingAssessmentTemplate = (assessmentTemplateId: string) => {
+        if (!preview || !user) return;
+
+        const values = form.getValues();
+
+        // Convert preview.target_elements to CreateTargetElementRequest[]
+        const targetElements = preview.target_elements.map(
+            ({ element_type, id_list, ...rest }) => ({
+                element_type,
+                id_list,
+                ...rest,
+            }),
+        );
+
+        const templateData = {
+            question_type: values.questionType,
+            question_text: preview.question_text,
+            description: values.templateDescription || undefined,
+            code: preview.code,
+            entry_function: preview.entry_function,
+            output_type: preview.output_type,
+            num_distractors: preview.num_distractors,
+            target_elements: targetElements,
+        };
+
+        addQuestionTemplate.mutate(
+            {
+                templateId: assessmentTemplateId,
+                data: {
+                    question_template: templateData,
+                },
+            },
+            {
+                onSuccess: () => {
+                    toast.success("Template added successfully");
+                    setShowSaveModal(false);
+                    navigate(ROUTES.ASSESSMENT_TEMPLATE(assessmentTemplateId));
+                },
+                onError: (error) => {
+                    toast.error(`Failed to add template: ${error.message}`);
+                },
+            },
+        );
+    };
+
+    const handleSaveToNewQuestionTemplateBank = (
+        title: string,
+        description: string | undefined,
+        folderId: string,
+    ) => {
+        if (!preview || !user) return;
+
+        createQuestionTemplateBank.mutate(
+            {
+                folder_id: folderId,
+                title,
+                description,
+            },
+            {
+                onSuccess: (newQuestionTemplateBank) => {
+                    handleSaveToExistingQuestionTemplateBank(newQuestionTemplateBank.id);
+                },
+                onError: (error) => {
+                    toast.error(`Failed to create question template bank: ${error.message}`);
+                },
+            },
+        );
+    };
+
+    const handleSaveToExistingQuestionTemplateBank = (questionTemplateBankId: string) => {
+        if (!preview || !user) return;
+
+        const values = form.getValues();
+
+        // Convert preview.target_elements to CreateTargetElementRequest[]
+        const targetElements = preview.target_elements.map(
+            ({ element_type, id_list, ...rest }) => ({
+                element_type,
+                id_list,
+                ...rest,
+            }),
+        );
+
+        const templateData = {
+            question_type: values.questionType,
+            question_text: preview.question_text,
+            description: values.templateDescription || undefined,
+            code: preview.code,
+            entry_function: preview.entry_function,
+            output_type: preview.output_type,
+            num_distractors: preview.num_distractors,
+            target_elements: targetElements,
+        };
+
+        insertQuestionTemplateIntoBank.mutate(
+            {
+                templateBankId: questionTemplateBankId,
+                data: {
+                    question_template: templateData,
+                },
+            },
+            {
+                onSuccess: () => {
+                    toast.success("Template added to template bank successfully");
+                    setShowSaveModal(false);
+                    navigate(ROUTES.QUESTION_TEMPLATE_BANK(questionTemplateBankId));
+                },
+                onError: (error) => {
+                    toast.error(`Failed to add template: ${error.message}`);
+                },
+            },
+        );
+    };
+
+    const handleUpdateTemplate = () => {
         if (!preview || !user || !existingTemplate) return;
 
         const values = form.getValues();
 
         // Convert preview.target_elements to CreateTargetElementRequest[]
-        const targetElements = preview.target_elements.map(({ element_type, id_list, ...rest }) => ({
-            element_type,
-            id_list,
-            ...rest,
-        }));
+        const targetElements = preview.target_elements.map(
+            ({ element_type, id_list, ...rest }) => ({
+                element_type,
+                id_list,
+                ...rest,
+            }),
+        );
 
         updateQuestionTemplate.mutate(
             {
@@ -306,56 +429,17 @@ function TemplateBuilderPage() {
                     toast.success("Template updated successfully");
                     setShowSaveModal(false);
 
-                    const targetAssessmentId = assessmentTemplateId || newAssessmentTemplateId;
-                    if (targetAssessmentId) {
-                        navigate(`/assessment-templates/${targetAssessmentId}`);
+                    // Navigate back to the appropriate destination
+                    if (destinationAssessmentTemplateId) {
+                        navigate(ROUTES.ASSESSMENT_TEMPLATE(destinationAssessmentTemplateId));
+                    } else if (destinationTemplateBankId) {
+                        navigate(ROUTES.QUESTION_TEMPLATE_BANK(destinationTemplateBankId));
                     } else {
                         navigate(-1);
                     }
                 },
                 onError: (error) => {
                     toast.error(`Failed to update template: ${error.message}`);
-                },
-            },
-        );
-    };
-
-    const handleCreateTemplate = (newAssessmentTemplateId: string) => {
-        if (!preview || !user) return;
-
-        const values = form.getValues();
-
-        // Convert preview.target_elements to CreateTargetElementRequest[]
-        const targetElements = preview.target_elements.map(({ element_type, id_list, ...rest }) => ({
-            element_type,
-            id_list,
-            ...rest,
-        }));
-
-        addQuestionTemplate.mutate(
-            {
-                templateId: newAssessmentTemplateId,
-                data: {
-                    question_template: {
-                        question_type: values.questionType,
-                        question_text: preview.question_text,
-                        description: values.templateDescription || undefined,
-                        code: preview.code,
-                        entry_function: preview.entry_function,
-                        output_type: preview.output_type,
-                        num_distractors: preview.num_distractors,
-                        target_elements: targetElements,
-                    },
-                },
-            },
-            {
-                onSuccess: () => {
-                    toast.success("Template added successfully");
-                    setShowSaveModal(false);
-                    navigate(`/assessment-templates/${newAssessmentTemplateId}`);
-                },
-                onError: (error) => {
-                    toast.error(`Failed to add template: ${error.message}`);
                 },
             },
         );
@@ -502,12 +586,16 @@ function TemplateBuilderPage() {
                                         isEditMode
                                             ? updateQuestionTemplate.isPending
                                             : createAssessmentTemplate.isPending ||
-                                              addQuestionTemplate.isPending
+                                              addQuestionTemplate.isPending ||
+                                              createQuestionTemplateBank.isPending ||
+                                              insertQuestionTemplateIntoBank.isPending
                                     }
                                 >
                                     {(isEditMode && updateQuestionTemplate.isPending) ||
                                     createAssessmentTemplate.isPending ||
-                                    addQuestionTemplate.isPending ? (
+                                    addQuestionTemplate.isPending ||
+                                    createQuestionTemplateBank.isPending ||
+                                    insertQuestionTemplateIntoBank.isPending ? (
                                         <>
                                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                             {isEditMode ? "Updating..." : "Saving..."}
@@ -545,10 +633,29 @@ function TemplateBuilderPage() {
                         onOpenChange={setShowSaveModal}
                         ownerId={user?.id || ""}
                         currentFolderId={currentFolderId || ""}
-                        onSaveToNew={handleSaveToNewBank}
-                        onSaveToExisting={handleCreateTemplate}
-                        isLoading={
+                        onSaveToNewAssessmentTemplate={handleSaveToNewAssessmentTemplate}
+                        onSaveToExistingAssessmentTemplate={handleSaveToExistingAssessmentTemplate}
+                        onSaveToNewQuestionTemplateBank={handleSaveToNewQuestionTemplateBank}
+                        onSaveToExistingQuestionTemplateBank={
+                            handleSaveToExistingQuestionTemplateBank
+                        }
+                        isLoadingAssessmentTemplate={
                             createAssessmentTemplate.isPending || addQuestionTemplate.isPending
+                        }
+                        isLoadingQuestionTemplateBank={
+                            createQuestionTemplateBank.isPending ||
+                            insertQuestionTemplateIntoBank.isPending
+                        }
+                        preSelectedAssessmentTemplateId={
+                            destinationAssessmentTemplateId || undefined
+                        }
+                        preSelectedQuestionTemplateBankId={destinationTemplateBankId || undefined}
+                        initialView={
+                            destinationAssessmentTemplateId
+                                ? "assessment-template"
+                                : destinationTemplateBankId
+                                  ? "question-template-bank"
+                                  : "destination"
                         }
                     />
                 )}

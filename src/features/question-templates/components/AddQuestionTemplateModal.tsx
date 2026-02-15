@@ -20,7 +20,9 @@ type ModalView = "options" | "browse";
 interface AddQuestionTemplateModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    assessmentTemplateId: string;
+    destination:
+        | { type: "assessmentTemplate"; id: string }
+        | { type: "templateBank"; id: string };
     ownerId: string;
     onSelectExisting: (template: QuestionTemplateResponse) => void;
 }
@@ -28,7 +30,7 @@ interface AddQuestionTemplateModalProps {
 export function AddQuestionTemplateModal({
     open,
     onOpenChange,
-    assessmentTemplateId,
+    destination,
     ownerId,
     onSelectExisting,
 }: AddQuestionTemplateModalProps) {
@@ -41,7 +43,11 @@ export function AddQuestionTemplateModal({
     };
 
     const handleGenerateNew = () => {
-        navigate(`${ROUTES.TEMPLATE_BUILDER}?destination=${assessmentTemplateId}`);
+        if (destination.type === "assessmentTemplate") {
+            navigate(`${ROUTES.TEMPLATE_BUILDER}?assessmentTemplateId=${destination.id}`);
+        } else {
+            navigate(`${ROUTES.TEMPLATE_BUILDER}?bankId=${destination.id}`);
+        }
         handleClose();
     };
 
@@ -54,8 +60,7 @@ export function AddQuestionTemplateModal({
                         {view === "browse" && "Select Template from Bank"}
                     </DialogTitle>
                     <DialogDescription>
-                        {view === "options" &&
-                            "Choose how you want to add a question template to this assessment template."}
+                        {view === "options" && "Choose how you want to add a question template."}
                         {view === "browse" &&
                             "Browse and select a question template from your template bank."}
                     </DialogDescription>

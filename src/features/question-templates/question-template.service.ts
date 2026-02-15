@@ -2,11 +2,11 @@
 
 import { api } from "@/api/client";
 import type {
-    AssessmentTemplateResponse,
     GenerateQuestionFromTemplateRequest,
     Question,
     QuestionTemplateResponse,
     QuestionTemplateSummaryResponse,
+    QuestionTemplateUsageResponse,
     UpdateQuestionTemplateRequest,
 } from "@/api/models";
 
@@ -41,14 +41,12 @@ export async function deleteQuestionTemplate(templateId: string): Promise<void> 
     return response.data;
 }
 
-// Get assessment templates that contain a specific question template
-export async function getQuestionTemplateAssessmentTemplates(
+// Get usage information for a question template
+export async function getQuestionTemplateUsage(
     templateId: string,
-): Promise<AssessmentTemplateResponse[]> {
+): Promise<QuestionTemplateUsageResponse> {
     const response =
-        await api.getAssessmentTemplatesForQuestionTemplateQuestionTemplatesQuestionTemplateIdAssessmentTemplatesGet(
-            templateId,
-        );
+        await api.getQuestionTemplateUsageQuestionTemplatesQuestionTemplateIdUsageGet(templateId);
     return response.data;
 }
 

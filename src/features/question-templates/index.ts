@@ -8,7 +8,7 @@ export {
 export {
     useQuestionTemplates,
     useQuestionTemplate,
-    useQuestionTemplateAssessmentTemplates,
     useUpdateQuestionTemplate,
     useDeleteQuestionTemplate,
+    useQuestionTemplateUsage,
 } from "./useQuestionTemplates";
