@@ -26,6 +26,10 @@ import {
     useAddQuestionToAssessment,
     useCreateAssessment,
 } from "@/features/assessments/useAssessments";
+import {
+    useCreateQuestionBank,
+    useAddQuestionToQuestionBank,
+} from "@/features/question-banks/useQuestionBanks";
 import { generatedQuestionToRequestData } from "@/shared/utils/questionUtils";
 import type { Question, QuestionTemplateResponse } from "@/api/models";
 
@@ -56,6 +60,8 @@ export function CreateFromTemplateModal({
     const generateQuestion = useGenerateFromTemplate();
     const createAssessment = useCreateAssessment();
     const addQuestion = useAddQuestionToAssessment();
+    const createQuestionBank = useCreateQuestionBank();
+    const addQuestionToQuestionBank = useAddQuestionToQuestionBank();
 
     // Form setup
     const form = useForm<TemplateFormValues>({
@@ -132,6 +138,53 @@ export function CreateFromTemplateModal({
             {
                 onSuccess: () => {
                     toast.success("Question added to assessment");
+                    setShowSaveModal(false);
+                    handleClose();
+                },
+                onError: (error) => {
+                    toast.error(`Failed to add question: ${error.message}`);
+                },
+            },
+        );
+    };
+
+    const handleSaveToNewQuestionBank = (
+        title: string,
+        description: string | undefined,
+        folderId: string,
+    ) => {
+        if (!generatedQuestion || !user || !template) return;
+
+        createQuestionBank.mutate(
+            {
+                folder_id: folderId,
+                title,
+                description,
+            },
+            {
+                onSuccess: (newQuestionBank) => {
+                    handleSaveToExistingQuestionBank(newQuestionBank.id);
+                },
+                onError: (error) => {
+                    toast.error(`Failed to create question bank: ${error.message}`);
+                },
+            },
+        );
+    };
+
+    const handleSaveToExistingQuestionBank = (questionBankId: string) => {
+        if (!generatedQuestion || !user || !template) return;
+
+        addQuestionToQuestionBank.mutate(
+            {
+                questionBankId,
+                data: {
+                    question: generatedQuestionToRequestData(generatedQuestion, template.id),
+                },
+            },
+            {
+                onSuccess: () => {
+                    toast.success("Question added to question bank");
                     setShowSaveModal(false);
                     handleClose();
                 },
@@ -268,9 +321,14 @@ export function CreateFromTemplateModal({
                 onOpenChange={setShowSaveModal}
                 ownerId={user?.id || ""}
                 currentFolderId={rootFolderId || ""}
-                onSaveToNew={handleSaveToNewAssessment}
-                onSaveToExisting={handleSaveToExistingAssessment}
-                isLoading={createAssessment.isPending || addQuestion.isPending}
+                onSaveToNewAssessment={handleSaveToNewAssessment}
+                onSaveToExistingAssessment={handleSaveToExistingAssessment}
+                onSaveToNewQuestionBank={handleSaveToNewQuestionBank}
+                onSaveToExistingQuestionBank={handleSaveToExistingQuestionBank}
+                isLoadingAssessment={createAssessment.isPending || addQuestion.isPending}
+                isLoadingQuestionBank={
+                    createQuestionBank.isPending || addQuestionToQuestionBank.isPending
+                }
             />
         </>
     );

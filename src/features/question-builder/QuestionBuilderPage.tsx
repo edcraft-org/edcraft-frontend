@@ -17,6 +17,10 @@ import {
     useAddQuestionToAssessment,
     useCreateAssessment,
 } from "@/features/assessments/useAssessments";
+import {
+    useCreateQuestionBank,
+    useAddQuestionToQuestionBank,
+} from "@/features/question-banks/useQuestionBanks";
 import { useAnalyseCode } from "@/shared/hooks/useCodeAnalysis";
 import { api } from "@/api/client";
 import type { TargetSelection } from "@/types/frontend.types";
@@ -46,7 +50,10 @@ type QuestionBuilderFormValues = z.infer<typeof questionBuilderSchema>;
 function QuestionBuilderPage() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const destinationAssessmentId = searchParams.get("destination");
+
+    const destinationAssessmentId = searchParams.get("assessmentDestination");
+    const destinationQuestionBankId = searchParams.get("questionBankDestination");
+
     const user = useUserStore((state) => state.user);
     const rootFolderId = useUserStore((state) => state.rootFolderId);
     const openAuthDialog = useAuthDialogStore((state) => state.setOpen);
@@ -74,6 +81,8 @@ function QuestionBuilderPage() {
     // Mutations
     const addQuestion = useAddQuestionToAssessment();
     const createAssessment = useCreateAssessment();
+    const createQuestionBank = useCreateQuestionBank();
+    const addQuestionToQuestionBank = useAddQuestionToQuestionBank();
 
     // Form setup with react-hook-form
     const form = useForm<QuestionBuilderFormValues>({
@@ -194,6 +203,53 @@ function QuestionBuilderPage() {
                 toast.error(`Failed to generate question: ${error.message}`);
             },
         });
+    };
+
+    const handleSaveToNewQuestionBank = (
+        title: string,
+        description: string | undefined,
+        folderId: string,
+    ) => {
+        if (!generatedQuestion || !user) return;
+
+        createQuestionBank.mutate(
+            {
+                folder_id: folderId,
+                title,
+                description,
+            },
+            {
+                onSuccess: (newQuestionBank) => {
+                    handleSaveToExistingQuestionBank(newQuestionBank.id);
+                },
+                onError: (error) => {
+                    toast.error(`Failed to create question bank: ${error.message}`);
+                },
+            },
+        );
+    };
+
+    const handleSaveToExistingQuestionBank = (questionBankId: string) => {
+        if (!generatedQuestion || !user) return;
+
+        addQuestionToQuestionBank.mutate(
+            {
+                questionBankId,
+                data: {
+                    question: generatedQuestionToRequestData(generatedQuestion),
+                },
+            },
+            {
+                onSuccess: () => {
+                    toast.success("Question added to question bank");
+                    setShowSaveModal(false);
+                    navigate(`/question-banks/${questionBankId}`);
+                },
+                onError: (error) => {
+                    toast.error(`Failed to add question: ${error.message}`);
+                },
+            },
+        );
     };
 
     const handleSaveToNewAssessment = (
@@ -359,9 +415,17 @@ function QuestionBuilderPage() {
                                         }
                                         setShowSaveModal(true);
                                     }}
-                                    disabled={createAssessment.isPending || addQuestion.isPending}
+                                    disabled={
+                                        createAssessment.isPending ||
+                                        addQuestion.isPending ||
+                                        createQuestionBank.isPending ||
+                                        addQuestionToQuestionBank.isPending
+                                    }
                                 >
-                                    {createAssessment.isPending || addQuestion.isPending ? (
+                                    {createAssessment.isPending ||
+                                    addQuestion.isPending ||
+                                    createQuestionBank.isPending ||
+                                    addQuestionToQuestionBank.isPending ? (
                                         <>
                                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                             Saving...
@@ -369,7 +433,7 @@ function QuestionBuilderPage() {
                                     ) : (
                                         <>
                                             <Save className="h-4 w-4 mr-2" />
-                                            Save to Assessment
+                                            Save Question
                                         </>
                                     )}
                                 </Button>
@@ -393,16 +457,29 @@ function QuestionBuilderPage() {
                     </div>
                 </div>
 
-                {/* Save Modal */}
+                {/* Save Question Modal */}
                 <SaveQuestionModal
                     open={showSaveModal}
                     onOpenChange={setShowSaveModal}
                     ownerId={user?.id || ""}
                     currentFolderId={rootFolderId || ""}
-                    onSaveToNew={handleSaveToNewAssessment}
-                    onSaveToExisting={handleSaveToExistingAssessment}
-                    isLoading={createAssessment.isPending || addQuestion.isPending}
+                    onSaveToNewAssessment={handleSaveToNewAssessment}
+                    onSaveToExistingAssessment={handleSaveToExistingAssessment}
+                    onSaveToNewQuestionBank={handleSaveToNewQuestionBank}
+                    onSaveToExistingQuestionBank={handleSaveToExistingQuestionBank}
+                    isLoadingAssessment={createAssessment.isPending || addQuestion.isPending}
+                    isLoadingQuestionBank={
+                        createQuestionBank.isPending || addQuestionToQuestionBank.isPending
+                    }
                     preSelectedAssessmentId={destinationAssessmentId || undefined}
+                    preSelectedQuestionBankId={destinationQuestionBankId || undefined}
+                    initialView={
+                        destinationAssessmentId
+                            ? "assessment"
+                            : destinationQuestionBankId
+                              ? "question-bank"
+                              : "destination"
+                    }
                 />
             </div>
         </Form>

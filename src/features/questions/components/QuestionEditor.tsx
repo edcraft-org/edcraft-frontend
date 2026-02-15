@@ -33,7 +33,7 @@ const questionFormSchema = z
         question_type: z.enum(["mcq", "mrq", "short_answer"]),
         question_text: z.string().min(1, "Question text is required"),
         options: z
-            .array(z.object({ value: z.string().min(1, "Option cannot be empty") }))
+            .array(z.object({ value: z.string() }))
             .optional(),
         correct_indices: z.array(z.number()).optional(),
         answer: z.string().optional(),
@@ -58,6 +58,19 @@ const questionFormSchema = z
                     code: "custom",
                     message: "At least 2 options are required for multiple choice questions",
                     path: ["options"],
+                });
+            }
+
+            // Validate each option has a non-empty value
+            if (data.options) {
+                data.options.forEach((option, index) => {
+                    if (!option.value || option.value.trim() === "") {
+                        ctx.addIssue({
+                            code: "custom",
+                            message: "Option cannot be empty",
+                            path: ["options", index, "value"],
+                        });
+                    }
                 });
             }
 

@@ -306,6 +306,7 @@ function QuestionBankPage() {
                     onSaveQuestion={handleSaveNewQuestion}
                     onSelectExisting={handleSelectExisting}
                     isSaving={addQuestion.isPending}
+                    destinationType="questionBank"
                 />
             )}
 

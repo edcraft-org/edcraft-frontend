@@ -303,6 +303,7 @@ function AssessmentPage() {
                     onSaveQuestion={handleSaveNewQuestion}
                     onSelectExisting={handleSelectExisting}
                     isSaving={addQuestion.isPending}
+                    destinationType="assessment"
                 />
             )}
 

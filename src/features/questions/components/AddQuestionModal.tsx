@@ -1,4 +1,4 @@
-// AddQuestionModal - Modal for adding questions to an assessment
+// AddQuestionModal - Modal for adding questions
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -26,6 +26,7 @@ interface AddQuestionModalProps {
     onSaveQuestion: (data: QuestionEditorData) => void;
     onSelectExisting: (question: QuestionResponse) => void;
     isSaving?: boolean;
+    destinationType?: "assessment" | "questionBank";
 }
 
 export function AddQuestionModal({
@@ -36,6 +37,7 @@ export function AddQuestionModal({
     onSaveQuestion,
     onSelectExisting,
     isSaving = false,
+    destinationType = "assessment",
 }: AddQuestionModalProps) {
     const navigate = useNavigate();
     const [view, setView] = useState<ModalView>("options");
@@ -46,7 +48,11 @@ export function AddQuestionModal({
     };
 
     const handleGenerateNew = () => {
-        navigate(`${ROUTES.QUESTION_BUILDER}?destination=${assessmentId}`);
+        const param =
+            destinationType === "questionBank"
+                ? `questionBankDestination=${assessmentId}`
+                : `assessmentDestination=${assessmentId}`;
+        navigate(`${ROUTES.QUESTION_BUILDER}?${param}`);
         handleClose();
     };
 
@@ -65,10 +71,10 @@ export function AddQuestionModal({
                     </DialogTitle>
                     <DialogDescription>
                         {view === "options" &&
-                            "Choose how you want to add a question to this assessment."}
+                            "Choose how you want to add a question."}
                         {view === "browse" &&
                             "Browse and select a question from your question bank."}
-                        {view === "create" && "Create a new question to add to this assessment."}
+                        {view === "create" && "Create a new question."}
                     </DialogDescription>
                 </DialogHeader>
 
