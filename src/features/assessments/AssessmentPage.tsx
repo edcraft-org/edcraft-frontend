@@ -14,7 +14,7 @@ import {
     useRemoveQuestionFromAssessment,
     useReorderQuestions,
 } from "./useAssessments";
-import { QuestionsList, RemoveQuestionDialog } from "./components";
+import { QuestionsList, RemoveQuestionDialog, VisibilityDropdown } from "./components";
 import {
     EditQuestionModal,
     AddQuestionModal,
@@ -39,6 +39,8 @@ function AssessmentPage() {
     const [reorderedQuestions, setReorderedQuestions] = useState<QuestionResponse[]>([]);
 
     const { data: assessment, isLoading } = useAssessment(assessmentId || "");
+
+    const isOwner = !!(user && assessment?.owner_id === user.id);
 
     const addQuestion = useAddQuestionToAssessment();
     const linkQuestion = useLinkQuestionToAssessment();
@@ -314,7 +316,14 @@ function AssessmentPage() {
                         <p className="text-muted-foreground mt-1">{assessment.description}</p>
                     )}
                 </div>
-                {!isReorderMode ? (
+                {isOwner && assessment && (
+                    <VisibilityDropdown
+                        assessmentId={assessment.id}
+                        currentVisibility={assessment.visibility}
+                        folderId={assessment.folder_id}
+                    />
+                )}
+                {isOwner && !isReorderMode ? (
                     <>
                         <Button
                             variant="outline"
@@ -331,7 +340,7 @@ function AssessmentPage() {
                             Add Question
                         </Button>
                     </>
-                ) : (
+                ) : isOwner && isReorderMode ? (
                     <div className="flex gap-2">
                         <Button
                             variant="outline"
@@ -346,7 +355,7 @@ function AssessmentPage() {
                             {reorderMutation.isPending ? "Saving..." : "Save Order"}
                         </Button>
                     </div>
-                )}
+                ) : null}
             </div>
 
             <QuestionsList
@@ -359,6 +368,7 @@ function AssessmentPage() {
                 }}
                 isReorderMode={isReorderMode}
                 onReorder={handleReorder}
+                isOwner={isOwner}
             />
 
             {user && (

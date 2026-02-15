@@ -24,6 +24,7 @@ interface QuestionsListProps {
     onRemove: (question: QuestionResponse) => void;
     isReorderMode?: boolean;
     onReorder?: (newOrder: QuestionResponse[]) => void;
+    isOwner?: boolean;
 }
 
 export function QuestionsList({
@@ -33,6 +34,7 @@ export function QuestionsList({
     onRemove,
     isReorderMode = false,
     onReorder,
+    isOwner = true,
 }: QuestionsListProps) {
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -88,6 +90,7 @@ export function QuestionsList({
                                 onEdit={onEdit}
                                 onDuplicate={onDuplicate}
                                 onRemove={onRemove}
+                                showActions={isOwner}
                             />
                         </SortableItem>
                     ))}

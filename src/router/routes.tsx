@@ -62,6 +62,10 @@ export const router = createBrowserRouter([
                 path: "auth/verify-email",
                 element: lazyRoute(VerifyEmailPage),
             },
+            {
+                path: "assessments/:assessmentId",
+                element: lazyRoute(AssessmentPage),
+            },
             // Protected routes
             {
                 element: <ProtectedRoute />,
@@ -69,10 +73,6 @@ export const router = createBrowserRouter([
                     {
                         path: "folders/:folderId",
                         element: lazyRoute(FolderPage),
-                    },
-                    {
-                        path: "assessments/:assessmentId",
-                        element: lazyRoute(AssessmentPage),
                     },
                     {
                         path: "assessment-templates/:templateId",

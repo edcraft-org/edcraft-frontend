@@ -10,6 +10,7 @@ interface QuestionCardProps {
     onEdit: (question: QuestionResponse) => void;
     onDuplicate: (question: QuestionResponse) => void;
     onRemove: (question: QuestionResponse) => void;
+    showActions?: boolean;
 }
 
 export function QuestionCard({
@@ -18,6 +19,7 @@ export function QuestionCard({
     onEdit,
     onDuplicate,
     onRemove,
+    showActions = true,
 }: QuestionCardProps) {
     const { question_text, question_type } = question;
 
@@ -38,12 +40,14 @@ export function QuestionCard({
                         {question_type.toUpperCase()}
                     </span>
                 </div>
-                <QuestionActionsMenu
-                    question={question}
-                    onEdit={onEdit}
-                    onDuplicate={onDuplicate}
-                    onRemove={onRemove}
-                />
+                {showActions && (
+                    <QuestionActionsMenu
+                        question={question}
+                        onEdit={onEdit}
+                        onDuplicate={onDuplicate}
+                        onRemove={onRemove}
+                    />
+                )}
             </CardHeader>
             <CardContent>
                 <QuestionContent
