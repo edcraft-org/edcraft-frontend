@@ -97,8 +97,12 @@ Organize all resources in a hierarchical folder structure. Organize questions an
 - **Sonner** - Toast notifications
 
 ### API Integration
-- **Axios** - HTTP client
+- **Axios** - HTTP client with cookie-based authentication
 - **Orval** - Automatic TypeScript API client generation from OpenAPI spec
+
+### Deployment
+- **Docker** - Containerized deployment with multi-stage builds
+- **Nginx** - Production web server with reverse proxy for API
 
 ## Getting Started
 
@@ -133,6 +137,57 @@ VITE_API_BASE_URL=<backend_url>
 npm run dev
 ```
 
+### Docker Setup
+
+EdCraft frontend can be run in a containerized environment using Docker. This provides a consistent, production-ready deployment.
+
+#### Prerequisites
+
+- Docker and Docker Compose installed
+- Backend API running (see [backend repository](https://github.com/edcraft-org/edcraft-backend))
+
+#### Quick Start with Docker Compose
+
+1. Clone the repository:
+```bash
+git clone https://github.com/edcraft-org/edcraft-frontend.git
+cd edcraft-frontend
+```
+
+2. Build and start all services:
+```bash
+# Assume backend and database started
+docker-compose up -d
+```
+
+3. Access the application:
+   - Frontend: http://localhost:3000
+   - API (proxied): http://localhost:3000/api/*
+
+4. View logs:
+```bash
+docker-compose logs -f frontend
+```
+
+5. Stop services:
+```bash
+docker-compose down
+```
+
+#### Build Docker Image Only
+
+```bash
+# Build the production image
+docker build -t edcraft-frontend .
+
+# Run the container
+docker run -d \
+  --name edcraft-frontend \
+  -p 3000:80 \
+  --network edcraft-network \
+  edcraft-frontend
+```
+
 ## Available Scripts
 
 - `npm run dev` - Start development server with hot reload
@@ -142,35 +197,17 @@ npm run dev
 
 ## Project Structure
 
-```
-src/
-├── api/                    # API client and configuration
-│   ├── client.ts           # Generated API client
-│   ├── axiosInstance.ts    # Axios configuration
-│   ├── queryClient.ts      # React Query configuration
-│   └── queryKeys.ts        # Query key factory
-├── components/             # Shared UI components
-│   ├── layout/             # Layout components (Header, Sidebar, MainLayout)
-│   └── ui/                 # Reusable UI primitives (Button, Dialog, etc.)
-├── features/                       # Feature-based modules
-│   ├── assessments/                # Assessment management
-│   ├── assessment-templates/       # Assessment template management
-│   ├── folders/                    # Folder navigation and organization
-│   ├── questions/                  # Question CRUD operations
-│   ├── question-templates/         # Question template management
-│   ├── question-builder/           # Question generation from code
-│   └── question-template-builder/  # Template creation from code
-├── router/              # Application routing configuration
-│   ├── routes.tsx       # Route definitions with lazy loading
-│   └── paths.ts         # Route path constants
-├── shared/              # Shared utilities and components
-│   ├── components/      # Shared feature components
-│   ├── stores/          # Zustand stores
-│   └── hooks/           # Custom React hooks
-├── lib/                 # Utility functions
-├── constants/           # Application constants
-└── types/               # TypeScript type definitions
-```
+The project follows a feature-based, modular architecture inside the src/ directory.
+* `api/` – Handles backend communication and data fetching setup, including the generated API client, Axios configuration, React Query setup, and query key management.
+* `components/` – Contains shared UI components:
+  * `layout/` for structural components like headers and sidebars.
+  * `ui/` for reusable UI primitives (e.g., buttons, dialogs).
+* `features/` – Organised by domain-specific functionality (e.g., assessments, folders, questions, templates, builders). Each feature encapsulates its own logic and components.
+* `router/` – Manages application routing, including route definitions and path constants.
+- `shared/` – Holds cross-feature reusable logic such as shared components, global Zustand stores, and custom hooks.
+- `lib/` – General utility functions.
+- `constants/` – Centralised application-wide constants.
+- `types/` – TypeScript type definitions.
 
 ## API Integration
 
