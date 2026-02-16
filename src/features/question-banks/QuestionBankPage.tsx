@@ -13,7 +13,8 @@ import {
     useLinkQuestionToQuestionBank,
     useRemoveQuestionFromQuestionBank,
 } from "./useQuestionBanks";
-import { QuestionsList, RemoveQuestionDialog } from "@/features/assessments/components";
+import { RemoveQuestionDialog } from "@/features/assessments/components";
+import { QuestionCard } from "./components";
 import {
     EditQuestionModal,
     AddQuestionModal,
@@ -287,15 +288,27 @@ function QuestionBankPage() {
                 </Button>
             </div>
 
-            <QuestionsList
-                questions={sortedQuestions}
-                onEdit={handleEditQuestion}
-                onDuplicate={handleDuplicateQuestion}
-                onRemove={(question) => {
-                    setSelectedQuestion(question);
-                    setShowRemoveDialog(true);
-                }}
-            />
+            <div className="space-y-4">
+                {sortedQuestions.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                        <p>No questions yet</p>
+                        <p className="text-sm">Add questions using the button above</p>
+                    </div>
+                ) : (
+                    sortedQuestions.map((question) => (
+                        <QuestionCard
+                            key={question.id}
+                            question={question}
+                            onEdit={handleEditQuestion}
+                            onDuplicate={handleDuplicateQuestion}
+                            onRemove={(question) => {
+                                setSelectedQuestion(question);
+                                setShowRemoveDialog(true);
+                            }}
+                        />
+                    ))
+                )}
+            </div>
 
             {user && (
                 <AddQuestionModal

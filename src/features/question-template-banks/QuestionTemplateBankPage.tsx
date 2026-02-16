@@ -14,10 +14,8 @@ import {
     useLinkQuestionTemplateToBank,
     useRemoveQuestionTemplateFromBank,
 } from "./useQuestionTemplateBanks";
-import {
-    QuestionTemplatesList,
-    RemoveTemplateDialog,
-} from "@/features/assessment-templates/components";
+import { RemoveTemplateDialog } from "@/features/assessment-templates/components";
+import { QuestionTemplateCard } from "./components";
 import {
     AddQuestionTemplateModal,
     LinkOrDuplicateTemplateModal,
@@ -262,16 +260,28 @@ function QuestionTemplateBankPage() {
                 </Button>
             </div>
 
-            <QuestionTemplatesList
-                templates={sortedTemplates}
-                onCreateQuestion={handleCreateQuestion}
-                onEdit={handleEditTemplate}
-                onDuplicate={handleDuplicateTemplate}
-                onRemove={(template) => {
-                    setSelectedTemplate(template);
-                    setShowRemoveDialog(true);
-                }}
-            />
+            <div className="space-y-4">
+                {sortedTemplates.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                        <p>No templates yet</p>
+                        <p className="text-sm">Add templates using the button above</p>
+                    </div>
+                ) : (
+                    sortedTemplates.map((template) => (
+                        <QuestionTemplateCard
+                            key={template.id}
+                            template={template}
+                            onCreateQuestion={handleCreateQuestion}
+                            onEdit={handleEditTemplate}
+                            onDuplicate={handleDuplicateTemplate}
+                            onRemove={(template) => {
+                                setSelectedTemplate(template);
+                                setShowRemoveDialog(true);
+                            }}
+                        />
+                    ))
+                )}
+            </div>
 
             {user && (
                 <AddQuestionTemplateModal

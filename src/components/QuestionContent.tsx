@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 interface QuestionContentProps {
-    questionText: string;
+    questionText?: string;
     questionType: string;
     options?: unknown[];
     correctIndices?: number[];
@@ -54,7 +54,7 @@ export function QuestionContent({
     return (
         <div className="space-y-4">
             {/* Question Text */}
-            <div className="text-base font-normal">{questionText}</div>
+            {questionText && <div className="text-base font-normal">{questionText}</div>}
 
             {/* Options for MCQ/MRQ */}
             {hasOptions && (
