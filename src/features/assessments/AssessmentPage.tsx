@@ -14,7 +14,12 @@ import {
     useRemoveQuestionFromAssessment,
     useReorderQuestions,
 } from "./useAssessments";
-import { QuestionsList, RemoveQuestionDialog, VisibilityDropdown } from "./components";
+import {
+    QuestionsList,
+    RemoveQuestionDialog,
+    VisibilityDropdown,
+    ExportButton,
+} from "./components";
 import {
     EditQuestionModal,
     AddQuestionModal,
@@ -316,6 +321,7 @@ function AssessmentPage() {
                         <p className="text-muted-foreground mt-1">{assessment.description}</p>
                     )}
                 </div>
+                <ExportButton assessment={assessment} />
                 {isOwner && assessment && (
                     <VisibilityDropdown
                         assessmentId={assessment.id}
