@@ -27,7 +27,7 @@ export function QuestionTemplateContent({
                                 {template.question_type.toUpperCase()}
                             </span>
                         </div>
-                        <CardTitle className="text-base">{template.question_text}</CardTitle>
+                        <CardTitle className="text-base whitespace-pre-wrap">{template.question_text_template}</CardTitle>
                     </div>
                     {actions}
                 </div>

@@ -38,7 +38,7 @@ export function QuestionCard({ question, onEdit, onDuplicate, onRemove }: Questi
                             isExpanded && "rotate-90",
                         )}
                     />
-                    <p className="text-base font-normal flex-1">
+                    <p className="text-base font-normal flex-1 whitespace-pre-wrap">
                         <span className="text-xs px-2 py-1 bg-muted rounded flex-shrink-0">
                             {question_type.toUpperCase()}
                         </span>{" "}

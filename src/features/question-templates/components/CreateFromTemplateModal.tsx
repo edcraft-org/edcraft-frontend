@@ -214,7 +214,7 @@ export function CreateFromTemplateModal({
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                        <p className="text-sm">{template.question_text}</p>
+                                        <p className="text-sm whitespace-pre-wrap">{template.question_text_template}</p>
                                     </CardTitle>
                                     <CardDescription>{template.description}</CardDescription>
                                 </CardHeader>

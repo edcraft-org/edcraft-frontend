@@ -54,7 +54,7 @@ export function QuestionContent({
     return (
         <div className="space-y-4">
             {/* Question Text */}
-            {questionText && <div className="text-base font-normal">{questionText}</div>}
+            {questionText && <div className="text-base font-normal whitespace-pre-wrap">{questionText}</div>}
 
             {/* Options for MCQ/MRQ */}
             {hasOptions && (

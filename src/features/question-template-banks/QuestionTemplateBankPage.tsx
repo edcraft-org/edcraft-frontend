@@ -190,7 +190,8 @@ function QuestionTemplateBankPage() {
         // Create a new template with the same data
         const templateData: CreateQuestionTemplateRequest = {
             question_type: template.question_type,
-            question_text: template.question_text,
+            question_text_template: template.question_text_template,
+            text_template_type: template.text_template_type,
             description: template.description,
             code: template.code,
             entry_function: template.entry_function,

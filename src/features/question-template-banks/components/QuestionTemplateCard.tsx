@@ -38,8 +38,8 @@ export function QuestionTemplateCard({
                             isExpanded && "rotate-90",
                         )}
                     />
-                    <p className="text-base font-normal flex-1">
-                        {template.question_text}{" "}
+                    <p className="text-base font-normal flex-1 whitespace-pre-wrap">
+                        {template.question_text_template}{" "}
                         <span className="text-xs px-2 py-1 bg-muted rounded flex-shrink-0">
                             {template.question_type.toUpperCase()}
                         </span>

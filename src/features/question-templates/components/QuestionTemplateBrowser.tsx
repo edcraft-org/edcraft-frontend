@@ -29,7 +29,7 @@ export function QuestionTemplateBrowser({
     const filteredTemplates =
         templates?.filter(
             (t) =>
-                t.question_text.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                t.question_text_template.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 t.description?.toLowerCase().includes(searchQuery.toLowerCase()),
         ) || [];
 
@@ -83,7 +83,7 @@ export function QuestionTemplateBrowser({
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="flex-1 min-w-0 space-y-1">
                                             <p className="text-sm line-clamp-2">
-                                                {template.question_text}
+                                                {template.question_text_template}
                                             </p>
                                             {template.description && (
                                                 <p className="text-xs text-muted-foreground line-clamp-1">

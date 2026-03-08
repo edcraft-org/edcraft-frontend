@@ -1,6 +1,6 @@
 // TemplateBuilderPage - Create question templates (similar to QuestionBuilder but without input data)
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,7 +39,7 @@ import { useAnalyseCode } from "@/shared/hooks/useCodeAnalysis";
 import type { TargetSelection } from "@/types/frontend.types";
 import { CodeInputCard, TargetSelectionCard, QuestionConfigCard } from "@/shared/components";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
-import { SaveTemplateModal } from "./components";
+import { SaveTemplateModal, QuestionTextTemplateCard } from "./components";
 import { TemplatePreview } from "./TemplatePreview";
 import {
     flattenTarget,
@@ -85,6 +85,10 @@ function TemplateBuilderPage() {
     const [preview, setPreview] = useState<TemplatePreviewResponse | null>(null);
     const [showSaveModal, setShowSaveModal] = useState(false);
 
+    // Question text template state
+    const [templateMode, setTemplateMode] = useState<"basic" | "mustache">("basic");
+    const [questionTextTemplate, setQuestionTextTemplate] = useState("");
+
     // Ref for scrolling to preview
     const previewRef = useRef<HTMLDivElement>(null);
 
@@ -114,6 +118,15 @@ function TemplateBuilderPage() {
     const entryFunction = form.watch("entryFunction");
     const questionType = form.watch("questionType");
 
+    // Derive qn template variables from the selected entry function's parameters
+    const availableVars = useMemo(() => {
+        if (!codeInfo || !entryFunction) return [];
+        return (
+            codeInfo.functions.find((f) => f.name === entryFunction && f.is_definition)
+                ?.parameters ?? []
+        );
+    }, [codeInfo, entryFunction]);
+
     // Prepopulate form when editing existing template
     useEffect(() => {
         if (isEditMode && existingTemplate) {
@@ -130,6 +143,12 @@ function TemplateBuilderPage() {
                 existingTemplate.question_type as "mcq" | "mrq" | "short_answer",
             );
             form.setValue("numDistractors", existingTemplate.num_distractors || 4);
+
+            // Pre-populate question text template
+            setQuestionTextTemplate(existingTemplate.question_text_template ?? "");
+            setTemplateMode(
+                (existingTemplate.text_template_type as "basic" | "mustache") ?? "basic",
+            );
 
             // Trigger code analysis
             analyseCode.mutate(
@@ -217,6 +236,10 @@ function TemplateBuilderPage() {
             toast.error("Please select an entry function");
             return;
         }
+        if (basicTemplateError) {
+            toast.error("Please fix the question template error before generating");
+            return;
+        }
 
         generatePreview.mutate(
             {
@@ -230,6 +253,10 @@ function TemplateBuilderPage() {
                 generation_options: {
                     num_distractors: values.numDistractors,
                 },
+                ...(questionTextTemplate.trim() && {
+                    question_text_template: questionTextTemplate,
+                    text_template_type: templateMode,
+                }),
             },
             {
                 onSuccess: (data) => {
@@ -243,6 +270,18 @@ function TemplateBuilderPage() {
             },
         );
     };
+
+    // Check that all {var} tokens in the basic template are valid parameters
+    const invalidVars =
+        templateMode === "basic"
+            ? [...questionTextTemplate.matchAll(/\{([^}]+)\}/g)].filter(
+                  (m) => !availableVars.includes(m[1]),
+              )
+            : [];
+    const basicTemplateError =
+        invalidVars.length > 0
+            ? `Unknown variable${invalidVars.length > 1 ? "s" : ""}: ${invalidVars.map((m) => `{${m[1]}}`).join(", ")}`
+            : null;
 
     const handleSaveButtonClick = () => {
         if (!user) {
@@ -298,7 +337,8 @@ function TemplateBuilderPage() {
 
         const templateData = {
             question_type: values.questionType,
-            question_text: preview.question_text,
+            question_text_template: preview.question_text_template,
+            text_template_type: preview.text_template_type,
             description: values.templateDescription || undefined,
             code: preview.code,
             entry_function: preview.entry_function,
@@ -367,7 +407,8 @@ function TemplateBuilderPage() {
 
         const templateData = {
             question_type: values.questionType,
-            question_text: preview.question_text,
+            question_text_template: preview.question_text_template,
+            text_template_type: preview.text_template_type,
             description: values.templateDescription || undefined,
             code: preview.code,
             entry_function: preview.entry_function,
@@ -415,7 +456,8 @@ function TemplateBuilderPage() {
                 templateId: existingTemplate.id,
                 data: {
                     question_type: values.questionType,
-                    question_text: preview.question_text,
+                    question_text_template: preview.question_text_template,
+                    text_template_type: preview.text_template_type,
                     description: values.templateDescription || undefined,
                     code: preview.code,
                     entry_function: preview.entry_function,
@@ -547,6 +589,32 @@ function TemplateBuilderPage() {
                                 control={form.control}
                                 codeInfo={codeInfo}
                                 questionType={questionType}
+                            />
+                        )}
+
+                        {/* Question Text Template - Only show after code analysis */}
+                        {codeInfo && (
+                            <QuestionTextTemplateCard
+                                mode={templateMode}
+                                value={questionTextTemplate}
+                                availableVars={availableVars}
+                                entryFunction={entryFunction}
+                                error={basicTemplateError}
+                                onModeChange={(newMode) => {
+                                    if (newMode === "mustache" && templateMode === "basic") {
+                                        // {var} → {{var}}
+                                        setQuestionTextTemplate((t) =>
+                                            t.replace(/\{([^}]+)\}/g, "{{$1}}"),
+                                        );
+                                    } else if (newMode === "basic" && templateMode === "mustache") {
+                                        // {{var}} → {var}
+                                        setQuestionTextTemplate((t) =>
+                                            t.replace(/\{\{([^}]+)\}\}/g, "{$1}"),
+                                        );
+                                    }
+                                    setTemplateMode(newMode);
+                                }}
+                                onValueChange={setQuestionTextTemplate}
                             />
                         )}
 

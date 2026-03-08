@@ -13,6 +13,7 @@ import {
     LinkOrDuplicateTemplateModal,
 } from "@/features/question-templates";
 import type { CreateTargetElementRequest } from "@/api/models";
+import { TextTemplateType } from "@/api/models";
 import {
     InstantiateAssessmentModal,
     QuestionTemplatesList,
@@ -91,7 +92,8 @@ function AssessmentTemplatePage() {
         templateId: string,
         templateData: {
             question_type: string;
-            question_text: string;
+            question_text_template: string;
+            text_template_type: TextTemplateType;
             description?: string | undefined;
             code: string;
             entry_function: string;
@@ -219,7 +221,8 @@ function AssessmentTemplatePage() {
             session.templateId,
             {
                 question_type: template.question_type,
-                question_text: template.question_text,
+                question_text_template: template.question_text_template,
+                text_template_type: template.text_template_type,
                 description: template.description ?? undefined,
                 code: template.code,
                 entry_function: template.entry_function,
