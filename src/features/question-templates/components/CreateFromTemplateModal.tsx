@@ -1,6 +1,6 @@
 // CreateFromTemplateModal - Modal for generating a question from a question template
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Wand2 } from "lucide-react";
 import { Form } from "@/components/ui/form";
-import { useGenerateFromTemplate } from "../useQuestionTemplates";
+import { useGenerateFromTemplate, useUpdateQuestionTemplate } from "../useQuestionTemplates";
 import { QuestionDisplay } from "@/features/question-builder/components/QuestionDisplay";
 import { SaveQuestionModal } from "@/features/question-builder/components";
 import { InputDataCard } from "@/shared/components";
@@ -54,10 +54,21 @@ export function CreateFromTemplateModal({
     const [generatedQuestion, setGeneratedQuestion] = useState<Question | null>(null);
     const [showSaveModal, setShowSaveModal] = useState(false);
     const [isInputDataValid, setIsInputDataValid] = useState(true);
+    const [currentInputDataConfig, setCurrentInputDataConfig] = useState<
+        Record<string, Record<string, unknown>>
+    >((template?.input_data_config as Record<string, Record<string, unknown>> | undefined) ?? {});
+
+    useEffect(() => {
+        setCurrentInputDataConfig(
+            (template?.input_data_config as Record<string, Record<string, unknown>> | undefined) ??
+                {},
+        );
+    }, [template]);
 
     const user = useUserStore((state) => state.user);
     const rootFolderId = useUserStore((state) => state.rootFolderId);
     const generateQuestion = useGenerateFromTemplate();
+    const updateQuestionTemplate = useUpdateQuestionTemplate();
     const createAssessment = useCreateAssessment();
     const addQuestion = useAddQuestionToAssessment();
     const createQuestionBank = useCreateQuestionBank();
@@ -76,6 +87,29 @@ export function CreateFromTemplateModal({
         form.reset();
         setGeneratedQuestion(null);
         setShowSaveModal(false);
+        setCurrentInputDataConfig(
+            (template?.input_data_config as Record<string, Record<string, unknown>> | undefined) ??
+                {},
+        );
+    };
+
+    const handleSaveConfig = () => {
+        if (!template) return;
+        updateQuestionTemplate.mutate(
+            {
+                templateId: template.id,
+                data: {
+                    input_data_config:
+                        Object.keys(currentInputDataConfig).length > 0
+                            ? currentInputDataConfig
+                            : null,
+                },
+            },
+            {
+                onSuccess: () => toast.success("Input config saved"),
+                onError: (error) => toast.error(`Failed to save config: ${error.message}`),
+            },
+        );
     };
 
     const handleGenerate = () => {
@@ -214,7 +248,9 @@ export function CreateFromTemplateModal({
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                        <p className="text-sm whitespace-pre-wrap">{template.question_text_template}</p>
+                                        <p className="text-sm whitespace-pre-wrap">
+                                            {template.question_text_template}
+                                        </p>
                                     </CardTitle>
                                     <CardDescription>{template.description}</CardDescription>
                                 </CardHeader>
@@ -232,25 +268,19 @@ export function CreateFromTemplateModal({
                                             <span className="text-muted-foreground">
                                                 Output Type:
                                             </span>
-                                            <span className="ml-2">
-                                                {template.output_type}
-                                            </span>
+                                            <span className="ml-2">{template.output_type}</span>
                                         </div>
                                         <div>
                                             <span className="text-muted-foreground">
                                                 Question Type:
                                             </span>
-                                            <span className="ml-2">
-                                                {template.question_type}
-                                            </span>
+                                            <span className="ml-2">{template.question_type}</span>
                                         </div>
                                         <div>
                                             <span className="text-muted-foreground">
                                                 Distractors:
                                             </span>
-                                            <span className="ml-2">
-                                                {template.num_distractors}
-                                            </span>
+                                            <span className="ml-2">{template.num_distractors}</span>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -260,10 +290,14 @@ export function CreateFromTemplateModal({
                             {!generatedQuestion && (
                                 <InputDataCard
                                     entryFunctionParams={template.entry_function_params}
+                                    inputDataConfig={currentInputDataConfig}
+                                    onInputDataConfigChange={setCurrentInputDataConfig}
                                     onInputDataChange={(data) => {
                                         form.setValue("inputData", data);
                                     }}
                                     onValidationChange={setIsInputDataValid}
+                                    onSave={handleSaveConfig}
+                                    isSaving={updateQuestionTemplate.isPending}
                                 />
                             )}
 

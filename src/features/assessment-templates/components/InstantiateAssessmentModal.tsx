@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/form";
 import { InputDataCard } from "@/shared/components";
 import type { AssessmentTemplateQuestionTemplateResponse } from "@/api/models";
+import { useUpdateQuestionTemplate } from "@/features/question-templates/useQuestionTemplates";
 import { QuestionTemplateContent } from "@/components/QuestionTemplateContent";
 
 // Schema for metadata step
@@ -64,15 +65,30 @@ export function InstantiateAssessmentModal({
     const [templateInputs, setTemplateInputs] = useState<Record<number, Record<string, unknown>>>(
         {},
     );
-    const [inputValidationStates, setInputValidationStates] = useState<Record<number, boolean>>(
-        {},
-    );
+    const [inputValidationStates, setInputValidationStates] = useState<Record<number, boolean>>({});
+    const [templateConfigs, setTemplateConfigs] = useState<
+        Record<number, Record<string, Record<string, unknown>>>
+    >({});
+
+    const updateQuestionTemplate = useUpdateQuestionTemplate();
 
     // Initialize template inputs when modal opens or questionTemplates change
     useEffect(() => {
         if (open) {
             setTemplateInputs(Object.fromEntries(questionTemplates.map((_, i) => [i, {}])));
-            setInputValidationStates(Object.fromEntries(questionTemplates.map((_, i) => [i, true])));
+            setInputValidationStates(
+                Object.fromEntries(questionTemplates.map((_, i) => [i, true])),
+            );
+            setTemplateConfigs(
+                Object.fromEntries(
+                    questionTemplates.map((qt, i) => [
+                        i,
+                        (qt.input_data_config as
+                            | Record<string, Record<string, unknown>>
+                            | undefined) ?? {},
+                    ]),
+                ),
+            );
         }
     }, [open, questionTemplates]);
 
@@ -91,7 +107,25 @@ export function InstantiateAssessmentModal({
         setCurrentStep(0);
         metadataForm.reset();
         setTemplateInputs({});
+        setTemplateConfigs({});
     }, [onOpenChange, metadataForm]);
+
+    const handleSaveConfigForStep = (idx: number) => {
+        const qt = questionTemplates[idx];
+        const config = templateConfigs[idx] ?? {};
+        updateQuestionTemplate.mutate(
+            {
+                templateId: qt.id,
+                data: {
+                    input_data_config: Object.keys(config).length > 0 ? config : null,
+                },
+            },
+            {
+                onSuccess: () => toast.success("Input config saved"),
+                onError: (error) => toast.error(`Failed to save config: ${error.message}`),
+            },
+        );
+    };
 
     // Handles navigation to the next step with validation
     const handleNext = async () => {
@@ -144,8 +178,7 @@ export function InstantiateAssessmentModal({
     const progress = ((currentStep + 1) / totalSteps) * 100;
     const isLastStep = currentStep === totalSteps - 1;
     const templateIndex = currentStep - 1;
-    const isCurrentStepValid =
-        currentStep === 0 || (inputValidationStates[templateIndex] ?? true);
+    const isCurrentStepValid = currentStep === 0 || (inputValidationStates[templateIndex] ?? true);
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
@@ -215,7 +248,16 @@ export function InstantiateAssessmentModal({
 
                             <InputDataCard
                                 key={templateIndex}
-                                entryFunctionParams={questionTemplates[templateIndex].entry_function_params}
+                                entryFunctionParams={
+                                    questionTemplates[templateIndex].entry_function_params
+                                }
+                                inputDataConfig={templateConfigs[templateIndex] ?? {}}
+                                onInputDataConfigChange={(cfg) =>
+                                    setTemplateConfigs((prev) => ({
+                                        ...prev,
+                                        [templateIndex]: cfg,
+                                    }))
+                                }
                                 onInputDataChange={(data) => {
                                     setTemplateInputs((prev) => ({
                                         ...prev,
@@ -228,6 +270,8 @@ export function InstantiateAssessmentModal({
                                         [templateIndex]: isValid,
                                     }));
                                 }}
+                                onSave={() => handleSaveConfigForStep(templateIndex)}
+                                isSaving={updateQuestionTemplate.isPending}
                             />
                         </div>
                     )}

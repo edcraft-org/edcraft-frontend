@@ -37,7 +37,12 @@ import {
 } from "@/features/question-templates/useQuestionTemplates";
 import { useAnalyseCode } from "@/shared/hooks/useCodeAnalysis";
 import type { TargetSelection } from "@/types/frontend.types";
-import { CodeInputCard, TargetSelectionCard, QuestionConfigCard } from "@/shared/components";
+import {
+    CodeInputCard,
+    TargetSelectionCard,
+    QuestionConfigCard,
+    InputDataConfigCard,
+} from "@/shared/components";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { SaveTemplateModal, QuestionTextTemplateCard } from "./components";
 import { TemplatePreview } from "./TemplatePreview";
@@ -45,7 +50,7 @@ import {
     flattenTarget,
     unflattenTarget,
 } from "@/shared/components/target-selector/utils/transformTarget";
-import type { CodeInfo, TemplatePreviewResponse } from "@/api/models";
+import type { CodeInfo, EntryFunctionParams, TemplatePreviewResponse } from "@/api/models";
 
 // Schema for the template builder form
 const templateBuilderSchema = z.object({
@@ -89,6 +94,11 @@ function TemplateBuilderPage() {
     const [templateMode, setTemplateMode] = useState<"basic" | "mustache">("basic");
     const [questionTextTemplate, setQuestionTextTemplate] = useState("");
 
+    // Input data config state
+    const [inputDataConfig, setInputDataConfig] = useState<Record<string, Record<string, unknown>>>(
+        {},
+    );
+
     // Ref for scrolling to preview
     const previewRef = useRef<HTMLDivElement>(null);
 
@@ -118,14 +128,23 @@ function TemplateBuilderPage() {
     const entryFunction = form.watch("entryFunction");
     const questionType = form.watch("questionType");
 
-    // Derive qn template variables from the selected entry function's parameters
-    const availableVars = useMemo(() => {
-        if (!codeInfo || !entryFunction) return [];
-        return (
-            codeInfo.functions.find((f) => f.name === entryFunction && f.is_definition)
-                ?.parameters ?? []
-        );
-    }, [codeInfo, entryFunction]);
+    // Derive entry function params from the selected entry function
+    const selectedFunction = useMemo(
+        () => codeInfo?.functions.find((f) => f.name === entryFunction && f.is_definition),
+        [codeInfo, entryFunction],
+    );
+    const availableVars = useMemo(() => selectedFunction?.parameters ?? [], [selectedFunction]);
+    const entryFunctionParams = useMemo<EntryFunctionParams | undefined>(
+        () =>
+            selectedFunction
+                ? {
+                      parameters: selectedFunction.parameters,
+                      has_var_args: false,
+                      has_var_kwargs: false,
+                  }
+                : undefined,
+        [selectedFunction],
+    );
 
     // Prepopulate form when editing existing template
     useEffect(() => {
@@ -148,6 +167,12 @@ function TemplateBuilderPage() {
             setQuestionTextTemplate(existingTemplate.question_text_template ?? "");
             setTemplateMode(
                 (existingTemplate.text_template_type as "basic" | "mustache") ?? "basic",
+            );
+
+            // Pre-populate input data config
+            setInputDataConfig(
+                (existingTemplate.input_data_config as Record<string, Record<string, unknown>>) ??
+                    {},
             );
 
             // Trigger code analysis
@@ -345,6 +370,8 @@ function TemplateBuilderPage() {
             output_type: preview.output_type,
             num_distractors: preview.num_distractors,
             target_elements: targetElements,
+            input_data_config:
+                Object.keys(inputDataConfig).length > 0 ? inputDataConfig : undefined,
         };
 
         addQuestionTemplate.mutate(
@@ -415,6 +442,8 @@ function TemplateBuilderPage() {
             output_type: preview.output_type,
             num_distractors: preview.num_distractors,
             target_elements: targetElements,
+            input_data_config:
+                Object.keys(inputDataConfig).length > 0 ? inputDataConfig : undefined,
         };
 
         insertQuestionTemplateIntoBank.mutate(
@@ -464,6 +493,8 @@ function TemplateBuilderPage() {
                     output_type: preview.output_type,
                     num_distractors: preview.num_distractors,
                     target_elements: targetElements,
+                    input_data_config:
+                        Object.keys(inputDataConfig).length > 0 ? inputDataConfig : null,
                 },
             },
             {
@@ -615,6 +646,15 @@ function TemplateBuilderPage() {
                                     setTemplateMode(newMode);
                                 }}
                                 onValueChange={setQuestionTextTemplate}
+                            />
+                        )}
+
+                        {/* Input Data Config - Only show after entry function is selected */}
+                        {entryFunctionParams && (
+                            <InputDataConfigCard
+                                entryFunctionParams={entryFunctionParams}
+                                initialConfig={inputDataConfig}
+                                onConfigChange={setInputDataConfig}
                             />
                         )}
 

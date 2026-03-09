@@ -69,13 +69,13 @@ export function useUpdateQuestionTemplate() {
                 queryKey: queryKeys.assessmentTemplates.all(updatedTemplate.owner_id),
             });
             queryClient.invalidateQueries({
-                queryKey: queryKeys.assessmentTemplates.detail(updatedTemplate.owner_id),
+                queryKey: ["assessment-templates", "detail"],
             });
             queryClient.invalidateQueries({
                 queryKey: queryKeys.questionTemplateBanks.all(updatedTemplate.owner_id),
             });
             queryClient.invalidateQueries({
-                queryKey: queryKeys.questionTemplateBanks.detail(updatedTemplate.owner_id),
+                queryKey: queryKeys.questionTemplateBanks.allDetails(),
             });
         },
     });
