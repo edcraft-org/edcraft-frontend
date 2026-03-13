@@ -10,6 +10,7 @@ interface QuestionCardProps {
     onEdit: (question: QuestionResponse) => void;
     onDuplicate: (question: QuestionResponse) => void;
     onRemove: (question: QuestionResponse) => void;
+    onAddToCanvas?: (question: QuestionResponse) => void;
     showActions?: boolean;
 }
 
@@ -19,6 +20,7 @@ export function QuestionCard({
     onEdit,
     onDuplicate,
     onRemove,
+    onAddToCanvas,
     showActions = true,
 }: QuestionCardProps) {
     const { question_text, question_type } = question;
@@ -46,6 +48,7 @@ export function QuestionCard({
                         onEdit={onEdit}
                         onDuplicate={onDuplicate}
                         onRemove={onRemove}
+                        onAddToCanvas={onAddToCanvas}
                     />
                 )}
             </CardHeader>

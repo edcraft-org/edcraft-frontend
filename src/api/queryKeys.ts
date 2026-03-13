@@ -66,4 +66,10 @@ export const queryKeys = {
     detail: (id: string) => ["question-template-banks", "detail", id] as const,
     allDetails: () => ["question-template-banks", "detail"] as const,
   },
+
+  // Canvas queries
+  canvas: {
+    courses: () => ["canvas", "courses"] as const,
+    quizzes: (courseId: number) => ["canvas", "quizzes", courseId] as const,
+  },
 };

@@ -12,9 +12,16 @@ interface QuestionCardProps {
     onEdit: (question: QuestionResponse) => void;
     onDuplicate: (question: QuestionResponse) => void;
     onRemove: (question: QuestionResponse) => void;
+    onAddToCanvas?: (question: QuestionResponse) => void;
 }
 
-export function QuestionCard({ question, onEdit, onDuplicate, onRemove }: QuestionCardProps) {
+export function QuestionCard({
+    question,
+    onEdit,
+    onDuplicate,
+    onRemove,
+    onAddToCanvas,
+}: QuestionCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
 
     const { question_text, question_type } = question;
@@ -50,6 +57,7 @@ export function QuestionCard({ question, onEdit, onDuplicate, onRemove }: Questi
                     onEdit={onEdit}
                     onDuplicate={onDuplicate}
                     onRemove={onRemove}
+                    onAddToCanvas={onAddToCanvas}
                 />
             </CardHeader>
             {isExpanded && (

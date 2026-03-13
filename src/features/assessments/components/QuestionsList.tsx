@@ -22,6 +22,7 @@ interface QuestionsListProps {
     onEdit: (question: QuestionResponse) => void;
     onDuplicate: (question: QuestionResponse) => void;
     onRemove: (question: QuestionResponse) => void;
+    onAddToCanvas?: (question: QuestionResponse) => void;
     isReorderMode?: boolean;
     onReorder?: (newOrder: QuestionResponse[]) => void;
     isOwner?: boolean;
@@ -32,6 +33,7 @@ export function QuestionsList({
     onEdit,
     onDuplicate,
     onRemove,
+    onAddToCanvas,
     isReorderMode = false,
     onReorder,
     isOwner = true,
@@ -90,6 +92,7 @@ export function QuestionsList({
                                 onEdit={onEdit}
                                 onDuplicate={onDuplicate}
                                 onRemove={onRemove}
+                                onAddToCanvas={onAddToCanvas}
                                 showActions={isOwner}
                             />
                         </SortableItem>

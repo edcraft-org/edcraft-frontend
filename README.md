@@ -75,6 +75,15 @@ Organize all resources in a hierarchical folder structure. Organize questions an
 - Search and filter (coming soon)
 - Share with students (coming soon)
 
+### Canvas LMS Integration
+
+Export assessments and individual questions directly to Canvas quizzes.
+
+**Setup:**
+1. Start the CORS proxy (see [cors-proxy repository](https://github.com/edcraft-org/cors-proxy))
+2. In the app header, open the user menu and select **Canvas Settings**
+3. Enter your Canvas domain (e.g. `myschool.instructure.com`) and a personal access token
+
 ## Tech Stack
 
 ### Frontend Framework
@@ -130,6 +139,7 @@ npm install
 Create a `.env` file in the root directory:
 ```env
 VITE_API_BASE_URL=<backend_url>
+VITE_CANVAS_PROXY_URL=http://localhost:8080  # URL of the CORS proxy for Canvas API requests
 ```
 
 4. Start the development server:
@@ -208,6 +218,10 @@ The project follows a feature-based, modular architecture inside the src/ direct
 - `lib/` – General utility functions.
 - `constants/` – Centralised application-wide constants.
 - `types/` – TypeScript type definitions.
+
+## Canvas CORS Proxy
+
+Canvas API requests are routed through a Caddy-based CORS proxy to work around browser CORS restrictions. The proxy selects the upstream host from the `X-Host` request header.
 
 ## API Integration
 

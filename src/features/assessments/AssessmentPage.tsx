@@ -1,11 +1,11 @@
 // AssessmentPage - View and manage assessment questions
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, GripVertical, Upload } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
 import {
     useAssessment,
@@ -30,6 +30,12 @@ import type { QuestionResponse, QuestionEditorData } from "@/types/frontend.type
 import type { CreateMCQRequest, CreateMRQRequest, CreateShortAnswerRequest } from "@/api/models";
 import { questionResponseToRequestData } from "@/shared/utils/questionUtils";
 
+const CanvasExportModal = lazy(() =>
+    import("@/features/canvas/components/CanvasExportModal").then((m) => ({
+        default: m.CanvasExportModal,
+    })),
+);
+
 function AssessmentPage() {
     const { assessmentId } = useParams<{ assessmentId: string }>();
     const navigate = useNavigate();
@@ -42,6 +48,11 @@ function AssessmentPage() {
     const [selectedQuestion, setSelectedQuestion] = useState<QuestionResponse | null>(null);
     const [isReorderMode, setIsReorderMode] = useState(false);
     const [reorderedQuestions, setReorderedQuestions] = useState<QuestionResponse[]>([]);
+    const [showCanvasExport, setShowCanvasExport] = useState(false);
+    const [canvasExportQuestions, setCanvasExportQuestions] = useState<QuestionResponse[]>([]);
+    const [canvasExportMode, setCanvasExportMode] = useState<"assessment" | "question">(
+        "assessment",
+    );
 
     const { data: assessment, isLoading } = useAssessment(assessmentId || "");
 
@@ -264,6 +275,12 @@ function AssessmentPage() {
         );
     };
 
+    const handleAddToCanvas = (question: QuestionResponse) => {
+        setCanvasExportQuestions([question]);
+        setCanvasExportMode("question");
+        setShowCanvasExport(true);
+    };
+
     // Handle reordering questions
     const handleReorder = (newOrder: QuestionResponse[]) => {
         setReorderedQuestions(newOrder);
@@ -322,6 +339,17 @@ function AssessmentPage() {
                     )}
                 </div>
                 <ExportButton assessment={assessment} />
+                <Button
+                    variant="outline"
+                    onClick={() => {
+                        setCanvasExportQuestions(sortedQuestions);
+                        setCanvasExportMode("assessment");
+                        setShowCanvasExport(true);
+                    }}
+                >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload to Canvas
+                </Button>
                 {isOwner && assessment && (
                     <VisibilityDropdown
                         assessmentId={assessment.id}
@@ -372,6 +400,7 @@ function AssessmentPage() {
                     setSelectedQuestion(question);
                     setShowRemoveDialog(true);
                 }}
+                onAddToCanvas={handleAddToCanvas}
                 isReorderMode={isReorderMode}
                 onReorder={handleReorder}
                 isOwner={isOwner}
@@ -416,6 +445,16 @@ function AssessmentPage() {
                 onConfirm={handleRemoveQuestion}
                 isLoading={removeQuestion.isPending}
             />
+
+            <Suspense>
+                <CanvasExportModal
+                    open={showCanvasExport}
+                    onOpenChange={setShowCanvasExport}
+                    questions={canvasExportQuestions}
+                    quizTitle={canvasExportMode === "assessment" ? assessment.title : undefined}
+                    mode={canvasExportMode}
+                />
+            </Suspense>
         </div>
     );
 }

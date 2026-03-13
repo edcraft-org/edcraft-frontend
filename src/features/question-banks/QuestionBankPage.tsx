@@ -1,6 +1,6 @@
 // QuestionBankPage - View and manage question bank questions
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
@@ -24,6 +24,11 @@ import {
 import type { QuestionResponse, QuestionEditorData } from "@/types/frontend.types";
 import type { CreateMCQRequest, CreateMRQRequest, CreateShortAnswerRequest } from "@/api/models";
 import { questionResponseToRequestData } from "@/shared/utils/questionUtils";
+const CanvasExportModal = lazy(() =>
+    import("@/features/canvas/components/CanvasExportModal").then((m) => ({
+        default: m.CanvasExportModal,
+    })),
+);
 
 function QuestionBankPage() {
     const { questionBankId } = useParams<{ questionBankId: string }>();
@@ -35,6 +40,8 @@ function QuestionBankPage() {
     const [showLinkOrDuplicateModal, setShowLinkOrDuplicateModal] = useState(false);
     const [showRemoveDialog, setShowRemoveDialog] = useState(false);
     const [selectedQuestion, setSelectedQuestion] = useState<QuestionResponse | null>(null);
+    const [showCanvasExport, setShowCanvasExport] = useState(false);
+    const [canvasQuestions, setCanvasQuestions] = useState<QuestionResponse[]>([]);
 
     const { data: questionBank, isLoading } = useQuestionBank(questionBankId || "");
 
@@ -224,6 +231,11 @@ function QuestionBankPage() {
         });
     };
 
+    const handleAddToCanvas = (question: QuestionResponse) => {
+        setCanvasQuestions([question]);
+        setShowCanvasExport(true);
+    };
+
     // Handle editing a question
     const handleEditQuestion = (question: QuestionResponse) => {
         setSelectedQuestion(question);
@@ -305,6 +317,7 @@ function QuestionBankPage() {
                                 setSelectedQuestion(question);
                                 setShowRemoveDialog(true);
                             }}
+                            onAddToCanvas={handleAddToCanvas}
                         />
                     ))
                 )}
@@ -349,6 +362,15 @@ function QuestionBankPage() {
                 onConfirm={handleRemoveQuestion}
                 isLoading={removeQuestion.isPending}
             />
+
+            <Suspense>
+                <CanvasExportModal
+                    open={showCanvasExport}
+                    onOpenChange={setShowCanvasExport}
+                    questions={canvasQuestions}
+                    mode="question"
+                />
+            </Suspense>
         </div>
     );
 }
