@@ -35,12 +35,6 @@ const styles = StyleSheet.create({
         color: "#6b7280",
         paddingTop: 4,
     },
-    description: {
-        fontSize: 10,
-        fontFamily: "Helvetica-Oblique",
-        color: "#374151",
-        marginBottom: 8,
-    },
     divider: {
         borderBottomWidth: 1,
         borderBottomColor: "#e5e7eb",
@@ -135,12 +129,22 @@ const styles = StyleSheet.create({
         color: "#166534",
         lineHeight: 1.4,
     },
-    answerLine: {
+    answerLineRow: {
+        flexDirection: "row",
+        alignItems: "flex-end",
         marginLeft: 22,
         marginTop: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: "#d1d5db",
-        width: "80%",
+    },
+    answerLineLabel: {
+        fontSize: 9,
+        color: "#374151",
+        marginRight: 6,
+    },
+    answerLine: {
+        width: 150,
+        borderBottomWidth: 0.5,
+        borderBottomColor: "#6b7280",
+        marginBottom: 2,
     },
     // Footer
     footer: {
@@ -181,10 +185,6 @@ export function AssessmentPdfDocument({ assessment, mode }: AssessmentPdfDocumen
                     <Text style={styles.title}>{assessment.title}</Text>
                     <Text style={styles.modeLabel}>{modeLabel}</Text>
                 </View>
-
-                {assessment.description && (
-                    <Text style={styles.description}>{assessment.description}</Text>
-                )}
 
                 <View style={styles.divider} />
 
@@ -258,9 +258,12 @@ export function AssessmentPdfDocument({ assessment, mode }: AssessmentPdfDocumen
                                 </View>
                             )}
 
-                            {/* Short answer: blank line or answer */}
+                            {/* Short answer: "Answer:" label + dark grey line */}
                             {isShortAnswer && mode === "assessment" && (
-                                <View style={styles.answerLine} />
+                                <View style={styles.answerLineRow}>
+                                    <Text style={styles.answerLineLabel}>Answer:</Text>
+                                    <View style={styles.answerLine} />
+                                </View>
                             )}
 
                             {/* Answer section for answer-sheet mode */}
