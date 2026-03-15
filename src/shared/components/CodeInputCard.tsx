@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
     FormControl,
@@ -9,6 +8,19 @@ import {
 } from "@/components/ui/form";
 import { Loader2, Code2, Search } from "lucide-react";
 import type { Control, FieldValues, Path } from "react-hook-form";
+import CodeMirror from "@uiw/react-codemirror";
+import { python } from "@codemirror/lang-python";
+import { indentUnit, bracketMatching } from "@codemirror/language";
+import { keymap, highlightActiveLine } from "@codemirror/view";
+import { indentWithTab } from "@codemirror/commands";
+
+const extensions = [
+    python(),
+    bracketMatching(),
+    highlightActiveLine(),
+    indentUnit.of("    "),
+    keymap.of([indentWithTab]),
+];
 
 interface CodeInputCardProps<T extends FieldValues = FieldValues> {
     control: Control<T>;
@@ -42,13 +54,20 @@ export function CodeInputCard<T extends FieldValues = FieldValues>({
                     render={({ field }) => (
                         <FormItem>
                             <FormControl>
-                                <Textarea
-                                    placeholder="def example(n):&#10;    return n * 2"
-                                    className="font-mono text-sm min-h-[200px]"
-                                    {...field}
-                                    onChange={(e) => onCodeChange(e.target.value)}
-                                    disabled={isAnalysing}
-                                />
+                                <div className="border border-input rounded-md overflow-hidden">
+                                    <CodeMirror
+                                        value={field.value}
+                                        onChange={(val) => {
+                                            field.onChange(val);
+                                            onCodeChange(val);
+                                        }}
+                                        extensions={extensions}
+                                        editable={!isAnalysing}
+                                        minHeight="200px"
+                                        theme="light"
+                                        placeholder={"def example(n):\n    return n * 2"}
+                                    />
+                                </div>
                             </FormControl>
                             <FormMessage />
                         </FormItem>
