@@ -1,10 +1,9 @@
 import { lazy, Suspense } from "react";
 import type { ComponentType } from "react";
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { ProtectedRoute } from "./ProtectedRoute";
-import { ROUTES } from "./paths";
 
 // Re-export ROUTES for convenience
 export { ROUTES } from "./paths";
@@ -25,6 +24,8 @@ const TemplateBuilderPage = lazy(
 );
 const OAuthCallbackPage = lazy(() => import("@/features/auth/OAuthCallbackPage"));
 const VerifyEmailPage = lazy(() => import("@/features/auth/VerifyEmailPage"));
+const LandingPage = lazy(() => import("@/features/landing/LandingPage"));
+const TutorialPage = lazy(() => import("@/features/landing/TutorialPage"));
 
 // Helper to wrap lazy loaded components with Suspense
 function lazyRoute(Component: ComponentType) {
@@ -43,9 +44,13 @@ export const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <Navigate to={ROUTES.FOLDER_ROOT} replace />,
+                element: lazyRoute(LandingPage),
             },
             // Public routes
+            {
+                path: "tutorial",
+                element: lazyRoute(TutorialPage),
+            },
             {
                 path: "question-builder",
                 element: lazyRoute(QuestionBuilderPage),

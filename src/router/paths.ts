@@ -1,6 +1,8 @@
 // Route path constants
 export const ROUTES = {
   HOME: "/",
+  LANDING: "/",
+  TUTORIAL: "/tutorial",
   FOLDER: (id: string) => `/folders/${id}`,
   FOLDER_ROOT: "/folders/root",
   QUESTION_BUILDER: "/question-builder",
