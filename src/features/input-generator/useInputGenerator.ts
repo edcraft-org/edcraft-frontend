@@ -1,10 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
 import { api } from "@/api/client";
-import type { GenerateInputsRequestInputs } from "@/api/models";
+import { pollJob } from "@/api/pollJob";
+import type { GenerateInputsRequestInputs, GenerateInputsResponse } from "@/api/models";
 
 export function useGenerateInputs() {
     return useMutation({
-        mutationFn: (inputs: GenerateInputsRequestInputs) =>
-            api.generateInputsInputGeneratorGeneratePost({ inputs }),
+        mutationFn: async (inputs: GenerateInputsRequestInputs) => {
+            const response = await api.generateInputsInputGeneratorGeneratePost({ inputs });
+            return pollJob<GenerateInputsResponse>(response.data.job_id);
+        },
     });
 }

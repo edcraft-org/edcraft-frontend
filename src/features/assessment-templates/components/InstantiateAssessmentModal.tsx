@@ -198,8 +198,16 @@ export function InstantiateAssessmentModal({
                 />
 
                 <div className="py-4">
+                    {/* Loading state while polling for assessment creation */}
+                    {isLoading && (
+                        <div className="flex flex-col items-center justify-center gap-3 py-8 text-muted-foreground">
+                            <Loader2 className="h-8 w-8 animate-spin" />
+                            <p className="text-sm">Generating assessment, please wait...</p>
+                        </div>
+                    )}
+
                     {/* Step 0: Assessment Metadata */}
-                    {currentStep === 0 && (
+                    {!isLoading && currentStep === 0 && (
                         <Form {...metadataForm}>
                             <div className="space-y-4">
                                 <FormField
@@ -239,7 +247,7 @@ export function InstantiateAssessmentModal({
                     )}
 
                     {/* Steps 1+: Input data for each template */}
-                    {currentStep > 0 && questionTemplates[templateIndex] && (
+                    {!isLoading && currentStep > 0 && questionTemplates[templateIndex] && (
                         <div className="space-y-4">
                             <QuestionTemplateContent
                                 template={questionTemplates[templateIndex]}

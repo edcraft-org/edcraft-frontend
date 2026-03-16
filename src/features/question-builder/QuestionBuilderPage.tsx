@@ -23,6 +23,7 @@ import {
 } from "@/features/question-banks/useQuestionBanks";
 import { useAnalyseCode } from "@/shared/hooks/useCodeAnalysis";
 import { api } from "@/api/client";
+import { pollJob } from "@/api/pollJob";
 import type { TargetSelection } from "@/types/frontend.types";
 import {
     CodeInputCard,
@@ -66,8 +67,11 @@ function QuestionBuilderPage() {
 
     // Question generation mutation
     const generateQuestionMutation = useMutation({
-        mutationFn: (request: QuestionGenerationRequest) =>
-            api.generateQuestionQuestionGenerationGenerateQuestionPost(request),
+        mutationFn: async (request: QuestionGenerationRequest) => {
+            const response =
+                await api.generateQuestionQuestionGenerationGenerateQuestionPost(request);
+            return pollJob<Question>(response.data.job_id);
+        },
     });
 
     const [generatedQuestion, setGeneratedQuestion] = useState<Question | null>(null);
@@ -195,7 +199,7 @@ function QuestionBuilderPage() {
 
         generateQuestionMutation.mutate(request, {
             onSuccess: (data) => {
-                setGeneratedQuestion(data.data);
+                setGeneratedQuestion(data);
                 toast.success("Question generated successfully");
                 previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
             },

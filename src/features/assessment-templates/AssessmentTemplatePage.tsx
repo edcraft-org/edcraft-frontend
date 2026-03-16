@@ -320,30 +320,21 @@ function AssessmentTemplatePage() {
     ) => {
         if (!user || !assessmentTemplate) return;
 
-        generateAssessment.mutate(
-            {
-                templateId: assessmentTemplate.id,
-                data: {
-                    assessment_metadata: {
-                        owner_id: user.id,
-                        folder_id: assessmentTemplate.folder_id,
-                        title,
-                        description,
-                    },
-                    question_inputs: questionInputs,
+        const newAssessment = await generateAssessment.mutateAsync({
+            templateId: assessmentTemplate.id,
+            data: {
+                assessment_metadata: {
+                    owner_id: user.id,
+                    folder_id: assessmentTemplate.folder_id,
+                    title,
+                    description,
                 },
+                question_inputs: questionInputs,
             },
-            {
-                onSuccess: (newAssessment) => {
-                    toast.success("Assessment created successfully");
-                    setShowInstantiateDialog(false);
-                    navigate(`/assessments/${newAssessment.id}`);
-                },
-                onError: (error) => {
-                    toast.error(`Failed to create assessment: ${error.message}`);
-                },
-            },
-        );
+        });
+
+        toast.success("Assessment created successfully");
+        navigate(`/assessments/${newAssessment.id}`);
     };
 
     // Handle reordering templates
