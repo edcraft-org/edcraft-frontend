@@ -1,6 +1,7 @@
 // Template service - API calls for question template management
 
 import { api } from "@/api/client";
+import { pollJob } from "@/api/pollJob";
 import type {
     GenerateQuestionFromTemplateRequest,
     Question,
@@ -60,5 +61,5 @@ export async function generateFromTemplate(
             templateId,
             data,
         );
-    return response.data;
+    return pollJob<Question>(response.data.job_id);
 }

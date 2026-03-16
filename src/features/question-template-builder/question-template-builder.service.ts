@@ -1,6 +1,7 @@
 // Question template builder service - API calls for template generation
 
 import { api } from "@/api/client";
+import { pollJob } from "@/api/pollJob";
 import type {
     AssessmentWithQuestionsResponse,
     GenerateAssessmentFromTemplateRequest,
@@ -16,7 +17,7 @@ export async function generateTemplate(
 ): Promise<TemplatePreviewResponse> {
     const response =
         await api.generateTemplatePreviewQuestionGenerationGenerateTemplatePost(data);
-    return response.data;
+    return pollJob<TemplatePreviewResponse>(response.data.job_id);
 }
 
 // Generate a question from a template (no DB persistence)
@@ -29,7 +30,7 @@ export async function generateQuestionFromTemplate(
             templateId,
             data,
         );
-    return response.data;
+    return pollJob<Question>(response.data.job_id);
 }
 
 // Generate an assessment from a template (with DB persistence)
@@ -42,5 +43,5 @@ export async function generateAssessmentFromTemplate(
             templateId,
             data,
         );
-    return response.data;
+    return pollJob<AssessmentWithQuestionsResponse>(response.data.job_id);
 }

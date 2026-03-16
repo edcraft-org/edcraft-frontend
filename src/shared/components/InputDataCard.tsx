@@ -263,7 +263,7 @@ export function InputDataCard({
             { [paramName]: config },
             {
                 onSuccess: (data) => {
-                    const val = data.data.inputs[paramName];
+                    const val = data.inputs[paramName];
                     setGeneratedValue(paramName, val);
                     toast.success(`Generated value for "${paramName}"`);
                 },
@@ -289,7 +289,7 @@ export function InputDataCard({
         generateInputs.mutate(inputs, {
             onSuccess: (data) => {
                 configuredParams.forEach((paramName) => {
-                    const val = data.data.inputs[paramName];
+                    const val = data.inputs[paramName];
                     if (val !== undefined) setGeneratedValue(paramName, val);
                 });
                 toast.success(`Generated values for ${configuredParams.length} parameter(s)`);
