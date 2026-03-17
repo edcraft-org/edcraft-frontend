@@ -1,5 +1,5 @@
 import { useCanvasStore } from "@/shared/stores/canvas.store";
-import { isMCQResponse, isMRQResponse } from "@/shared/utils/questionUtils";
+import { isMCQResponse, isMRQResponse, isShortAnswerResponse } from "@/shared/utils/questionUtils";
 import type { QuestionResponse } from "@/types/frontend.types";
 import { createCanvasClient } from "./canvasClient";
 import type { CanvasCourse, CanvasQuiz, CanvasQuizQuestion } from "./types";
@@ -71,7 +71,7 @@ export function mapQuestionToCanvas(question: QuestionResponse, index: number): 
         points_possible: 1,
     };
 
-    const correct_answer_weight = 1;
+    const correct_answer_weight = 100;
     const incorrect_answer_weight = 0;
 
     if (isMCQResponse(question)) {
@@ -98,6 +98,19 @@ export function mapQuestionToCanvas(question: QuestionResponse, index: number): 
                     ? correct_answer_weight
                     : incorrect_answer_weight,
             })),
+        };
+    }
+
+    if (isShortAnswerResponse(question)) {
+        return {
+            ...base,
+            question_type: "short_answer_question",
+            answers: [
+                {
+                    answer_text: question.short_answer_data.correct_answer,
+                    answer_weight: correct_answer_weight,
+                },
+            ],
         };
     }
 
