@@ -4,9 +4,12 @@ import { api } from "@/api/client";
 import type {
     AssessmentResponse,
     AssessmentWithQuestionsResponse,
+    CollaboratorResponse,
+    CollaboratorRole,
     CreateAssessmentRequest,
     InsertQuestionIntoAssessmentRequest,
     LinkQuestionToAssessmentRequest,
+    ListAssessmentsAssessmentsGetCollabFilter,
     ReorderQuestionsInAssessmentRequest,
     UpdateAssessmentRequest,
 } from "@/api/models";
@@ -14,11 +17,65 @@ import type {
 // Get all assessments for a user
 export async function getAssessments(
     folderId?: string,
+    collabFilter?: ListAssessmentsAssessmentsGetCollabFilter,
 ): Promise<AssessmentResponse[]> {
     const response = await api.listAssessmentsAssessmentsGet({
         folder_id: folderId,
+        collab_filter: collabFilter,
     });
     return response.data;
+}
+
+// Get assessments shared with the current user (non-owner role)
+export async function getSharedAssessments(): Promise<AssessmentResponse[]> {
+    const response = await api.listAssessmentsAssessmentsGet({ collab_filter: "shared" });
+    return response.data;
+}
+
+// List collaborators for an assessment
+export async function listCollaborators(assessmentId: string): Promise<CollaboratorResponse[]> {
+    const response =
+        await api.listCollaboratorsAssessmentsAssessmentIdCollaboratorsGet(assessmentId);
+    return response.data;
+}
+
+// Add a collaborator to an assessment by email
+export async function addCollaborator(
+    assessmentId: string,
+    email: string,
+    role: CollaboratorRole,
+): Promise<CollaboratorResponse> {
+    const response = await api.addCollaboratorAssessmentsAssessmentIdCollaboratorsPost(
+        assessmentId,
+        { email, role },
+    );
+    return response.data;
+}
+
+// Update a collaborator's role
+export async function updateCollaboratorRole(
+    assessmentId: string,
+    collaboratorId: string,
+    role: CollaboratorRole,
+): Promise<CollaboratorResponse> {
+    const response =
+        await api.updateCollaboratorRoleAssessmentsAssessmentIdCollaboratorsCollaboratorIdPatch(
+            assessmentId,
+            collaboratorId,
+            { role },
+        );
+    return response.data;
+}
+
+// Remove a collaborator from an assessment
+export async function removeCollaborator(
+    assessmentId: string,
+    collaboratorId: string,
+): Promise<void> {
+    await api.removeCollaboratorAssessmentsAssessmentIdCollaboratorsCollaboratorIdDelete(
+        assessmentId,
+        collaboratorId,
+    );
 }
 
 // Get a single assessment with all questions

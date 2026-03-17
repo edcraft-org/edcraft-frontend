@@ -12,8 +12,14 @@ import {
     linkQuestionToAssessment,
     removeQuestionFromAssessment,
     reorderQuestions,
+    getSharedAssessments,
+    listCollaborators,
+    addCollaborator,
+    updateCollaboratorRole,
+    removeCollaborator,
 } from "./assessment.service";
 import type {
+    CollaboratorRole,
     CreateAssessmentRequest,
     InsertQuestionIntoAssessmentRequest,
     LinkQuestionToAssessmentRequest,
@@ -186,6 +192,91 @@ export function useReorderQuestions() {
                 queryKeys.assessments.detail(updatedAssessment.id),
                 updatedAssessment,
             );
+        },
+    });
+}
+
+// Hook to fetch assessments shared with the current user
+export function useSharedAssessments() {
+    return useQuery({
+        queryKey: queryKeys.sharedResources.all(),
+        queryFn: getSharedAssessments,
+    });
+}
+
+// Hook to list collaborators for an assessment (only enabled for editor/owner)
+export function useCollaborators(assessmentId: string | undefined, enabled: boolean) {
+    return useQuery({
+        queryKey: queryKeys.collaborators.byAssessment(assessmentId || ""),
+        queryFn: () => listCollaborators(assessmentId!),
+        enabled: !!assessmentId && enabled,
+    });
+}
+
+// Hook to add a collaborator by email
+export function useAddCollaborator() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            assessmentId,
+            email,
+            role,
+        }: {
+            assessmentId: string;
+            email: string;
+            role: CollaboratorRole;
+        }) => addCollaborator(assessmentId, email, role),
+        onSuccess: (_, { assessmentId }) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.collaborators.byAssessment(assessmentId),
+            });
+        },
+    });
+}
+
+// Hook to update a collaborator's role
+export function useUpdateCollaboratorRole() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            assessmentId,
+            collaboratorId,
+            role,
+        }: {
+            assessmentId: string;
+            collaboratorId: string;
+            role: CollaboratorRole;
+        }) => updateCollaboratorRole(assessmentId, collaboratorId, role),
+        onSuccess: (_, { assessmentId }) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.collaborators.byAssessment(assessmentId),
+            });
+            // Ownership transfer changes my_role — invalidate assessment detail too
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.assessments.detail(assessmentId),
+            });
+        },
+    });
+}
+
+// Hook to remove a collaborator
+export function useRemoveCollaborator() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            assessmentId,
+            collaboratorId,
+        }: {
+            assessmentId: string;
+            collaboratorId: string;
+        }) => removeCollaborator(assessmentId, collaboratorId),
+        onSuccess: (_, { assessmentId }) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.collaborators.byAssessment(assessmentId),
+            });
         },
     });
 }

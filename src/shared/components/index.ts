@@ -1,3 +1,4 @@
+export { CollaborationModal } from "./CollaborationModal";
 export { ErrorBoundary } from "./ErrorBoundary";
 export { ErrorFallback } from "./ErrorFallback";
 export {

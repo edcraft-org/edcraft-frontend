@@ -5,8 +5,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, GripVertical, Upload } from "lucide-react";
+import { ArrowLeft, Plus, GripVertical, Upload, Users } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
+import { CollaboratorRole } from "@/api/models";
+import { CollaborationModal } from "@/shared/components";
 import {
     useAssessment,
     useAddQuestionToAssessment,
@@ -14,12 +16,7 @@ import {
     useRemoveQuestionFromAssessment,
     useReorderQuestions,
 } from "./useAssessments";
-import {
-    QuestionsList,
-    RemoveQuestionDialog,
-    VisibilityDropdown,
-    ExportButton,
-} from "./components";
+import { QuestionsList, RemoveQuestionDialog, ExportButton } from "./components";
 import {
     EditQuestionModal,
     AddQuestionModal,
@@ -53,10 +50,12 @@ function AssessmentPage() {
     const [canvasExportMode, setCanvasExportMode] = useState<"assessment" | "question">(
         "assessment",
     );
+    const [showCollabModal, setShowCollabModal] = useState(false);
 
     const { data: assessment, isLoading } = useAssessment(assessmentId || "");
 
-    const isOwner = !!(user && assessment?.owner_id === user.id);
+    const myRole = assessment?.my_role ?? null;
+    const canEdit = myRole === CollaboratorRole.owner || myRole === CollaboratorRole.editor;
 
     const addQuestion = useAddQuestionToAssessment();
     const linkQuestion = useLinkQuestionToAssessment();
@@ -350,14 +349,13 @@ function AssessmentPage() {
                     <Upload className="h-4 w-4 mr-2" />
                     Upload to Canvas
                 </Button>
-                {isOwner && assessment && (
-                    <VisibilityDropdown
-                        assessmentId={assessment.id}
-                        currentVisibility={assessment.visibility}
-                        folderId={assessment.folder_id}
-                    />
+                {canEdit && (
+                    <Button variant="outline" onClick={() => setShowCollabModal(true)}>
+                        <Users className="h-4 w-4 mr-2" />
+                        Share
+                    </Button>
                 )}
-                {isOwner && !isReorderMode ? (
+                {canEdit && !isReorderMode ? (
                     <>
                         <Button
                             variant="outline"
@@ -374,7 +372,7 @@ function AssessmentPage() {
                             Add Question
                         </Button>
                     </>
-                ) : isOwner && isReorderMode ? (
+                ) : canEdit && isReorderMode ? (
                     <div className="flex gap-2">
                         <Button
                             variant="outline"
@@ -403,7 +401,7 @@ function AssessmentPage() {
                 onAddToCanvas={handleAddToCanvas}
                 isReorderMode={isReorderMode}
                 onReorder={handleReorder}
-                isOwner={isOwner}
+                isOwner={canEdit}
             />
 
             {user && (
@@ -445,6 +443,17 @@ function AssessmentPage() {
                 onConfirm={handleRemoveQuestion}
                 isLoading={removeQuestion.isPending}
             />
+
+            {myRole && (
+                <CollaborationModal
+                    resourceId={assessmentId}
+                    isOpen={showCollabModal}
+                    onOpenChange={setShowCollabModal}
+                    myRole={myRole}
+                    currentVisibility={assessment.visibility}
+                    folderId={assessment.folder_id}
+                />
+            )}
 
             <Suspense>
                 <CanvasExportModal
