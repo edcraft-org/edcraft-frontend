@@ -131,6 +131,32 @@ export async function linkQuestionToAssessment(
     return response.data;
 }
 
+// Sync a linked question's content from its source
+export async function syncQuestionInAssessment(
+    assessmentId: string,
+    questionId: string,
+): Promise<AssessmentWithQuestionsResponse> {
+    const response =
+        await api.syncQuestionInAssessmentAssessmentsAssessmentIdQuestionsQuestionIdSyncPost(
+            assessmentId,
+            questionId,
+        );
+    return response.data;
+}
+
+// Sever the source link on a question (making it fully independent)
+export async function unlinkQuestionInAssessment(
+    assessmentId: string,
+    questionId: string,
+): Promise<AssessmentWithQuestionsResponse> {
+    const response =
+        await api.unlinkQuestionInAssessmentAssessmentsAssessmentIdQuestionsQuestionIdUnlinkPost(
+            assessmentId,
+            questionId,
+        );
+    return response.data;
+}
+
 // Remove (unlink) a question from an assessment
 export async function removeQuestionFromAssessment(
     assessmentId: string,

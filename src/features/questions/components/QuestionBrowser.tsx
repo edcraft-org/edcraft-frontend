@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { useQuestions } from "../useQuestions";
+import { getQuestion } from "../question.service";
 import type { QuestionResponse } from "@/types/frontend.types";
 
 interface QuestionBrowserProps {
@@ -17,6 +18,9 @@ interface QuestionBrowserProps {
 
 export function QuestionBrowser({ ownerId, onSelectQuestion, onBack }: QuestionBrowserProps) {
     const [searchQuery, setSearchQuery] = useState("");
+    const [questionIdInput, setQuestionIdInput] = useState("");
+    const [idFetchError, setIdFetchError] = useState<string | null>(null);
+    const [isFetchingById, setIsFetchingById] = useState(false);
     const { data: questions, isLoading } = useQuestions(ownerId);
 
     const filteredQuestions =
@@ -24,12 +28,56 @@ export function QuestionBrowser({ ownerId, onSelectQuestion, onBack }: QuestionB
             q.question_text.toLowerCase().includes(searchQuery.toLowerCase()),
         ) || [];
 
+    const handleSelectById = async () => {
+        if (!questionIdInput.trim()) return;
+        setIdFetchError(null);
+        setIsFetchingById(true);
+        try {
+            const question = await getQuestion(questionIdInput.trim());
+            onSelectQuestion(question);
+        } catch {
+            setIdFetchError("Question not found or you don't have access to it.");
+        } finally {
+            setIsFetchingById(false);
+        }
+    };
+
     return (
         <div className="space-y-4">
             <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={onBack}>
                     ← Back
                 </Button>
+            </div>
+
+            <div className="space-y-1">
+                <p className="text-xs text-muted-foreground font-medium">Select by Question ID</p>
+                <div className="flex gap-2">
+                    <Input
+                        placeholder="Paste question ID..."
+                        value={questionIdInput}
+                        onChange={(e) => {
+                            setQuestionIdInput(e.target.value);
+                            setIdFetchError(null);
+                        }}
+                        onKeyDown={(e) => e.key === "Enter" && handleSelectById()}
+                    />
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSelectById}
+                        disabled={!questionIdInput.trim() || isFetchingById}
+                    >
+                        {isFetchingById ? <Loader2 className="h-4 w-4 animate-spin" /> : "Select"}
+                    </Button>
+                </div>
+                {idFetchError && <p className="text-xs text-destructive">{idFetchError}</p>}
+            </div>
+
+            <div className="relative flex items-center">
+                <div className="flex-1 border-t border-border" />
+                <span className="px-2 text-xs text-muted-foreground">or</span>
+                <div className="flex-1 border-t border-border" />
             </div>
 
             <Input

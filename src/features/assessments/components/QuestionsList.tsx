@@ -22,10 +22,13 @@ interface QuestionsListProps {
     onEdit: (question: QuestionResponse) => void;
     onDuplicate: (question: QuestionResponse) => void;
     onRemove: (question: QuestionResponse) => void;
-    onAddToCanvas?: (question: QuestionResponse) => void;
+    onAddToCanvas: (question: QuestionResponse) => void;
+    onSync: (question: QuestionResponse) => void;
+    onUnlink: (question: QuestionResponse) => void;
+    onGoToSource: (question: QuestionResponse) => void;
     isReorderMode?: boolean;
     onReorder?: (newOrder: QuestionResponse[]) => void;
-    isOwner?: boolean;
+    canEdit?: boolean;
 }
 
 export function QuestionsList({
@@ -34,9 +37,12 @@ export function QuestionsList({
     onDuplicate,
     onRemove,
     onAddToCanvas,
+    onSync,
+    onUnlink,
+    onGoToSource,
     isReorderMode = false,
     onReorder,
-    isOwner = true,
+    canEdit = true,
 }: QuestionsListProps) {
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -93,7 +99,10 @@ export function QuestionsList({
                                 onDuplicate={onDuplicate}
                                 onRemove={onRemove}
                                 onAddToCanvas={onAddToCanvas}
-                                showActions={isOwner}
+                                onSync={onSync}
+                                onUnlink={onUnlink}
+                                onGoToSource={onGoToSource}
+                                canEdit={canEdit}
                             />
                         </SortableItem>
                     ))}

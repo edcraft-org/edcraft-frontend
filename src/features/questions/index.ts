@@ -9,7 +9,6 @@ export {
 export {
     useQuestions,
     useQuestion,
-    useQuestionUsage,
     useUpdateQuestion,
     useDeleteQuestion,
 } from "./useQuestions";

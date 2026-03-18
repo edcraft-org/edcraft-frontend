@@ -30,7 +30,6 @@ export const queryKeys = {
     questions: {
         all: (ownerId: string) => ["questions", ownerId] as const,
         detail: (id: string) => ["questions", "detail", id] as const,
-        usage: (id: string) => ["questions", id, "usage"] as const,
     },
 
     // Question bank queries

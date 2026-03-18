@@ -49,7 +49,9 @@ export async function exportAssessmentAsPdf(options: ExportOptions): Promise<voi
 
 export function exportAssessmentAsCsv(options: ExportOptions): void {
     const { assessment, mode } = options;
-    const sortedQuestions = [...(assessment.questions ?? [])].sort((a, b) => a.order - b.order);
+    const sortedQuestions = [...(assessment.questions ?? [])].sort(
+        (a, b) => (a.order ?? 0) - (b.order ?? 0),
+    );
 
     const includeAnswers = mode === "answer-sheet";
     const header = ["#", "Type", "Question", "Options"];
@@ -125,7 +127,9 @@ function escapeRtf(text: string): string {
 
 function buildAssessmentRtf(options: ExportOptions): string {
     const { assessment, mode } = options;
-    const sortedQuestions = [...(assessment.questions ?? [])].sort((a, b) => a.order - b.order);
+    const sortedQuestions = [...(assessment.questions ?? [])].sort(
+        (a, b) => (a.order ?? 0) - (b.order ?? 0),
+    );
     const includeAnswers = mode === "answer-sheet";
 
     const parts: string[] = [];

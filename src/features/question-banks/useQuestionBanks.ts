@@ -11,6 +11,8 @@ import {
     addQuestionToQuestionBank,
     linkQuestionToQuestionBank,
     removeQuestionFromQuestionBank,
+    syncQuestionInQuestionBank,
+    unlinkQuestionInQuestionBank,
 } from "./question-bank.service";
 import type {
     CreateQuestionBankRequest,
@@ -168,6 +170,48 @@ export function useRemoveQuestionFromQuestionBank() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.questionBanks.detail(questionBankId),
             });
+        },
+    });
+}
+
+// Hook to sync a linked question from its source in a question bank
+export function useSyncQuestionInQuestionBank() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            questionBankId,
+            questionId,
+        }: {
+            questionBankId: string;
+            questionId: string;
+        }) => syncQuestionInQuestionBank(questionBankId, questionId),
+        onSuccess: (updatedQuestionBank) => {
+            queryClient.setQueryData(
+                queryKeys.questionBanks.detail(updatedQuestionBank.id),
+                updatedQuestionBank,
+            );
+        },
+    });
+}
+
+// Hook to unlink a question from its source in a question bank
+export function useUnlinkQuestionInQuestionBank() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            questionBankId,
+            questionId,
+        }: {
+            questionBankId: string;
+            questionId: string;
+        }) => unlinkQuestionInQuestionBank(questionBankId, questionId),
+        onSuccess: (updatedQuestionBank) => {
+            queryClient.setQueryData(
+                queryKeys.questionBanks.detail(updatedQuestionBank.id),
+                updatedQuestionBank,
+            );
         },
     });
 }

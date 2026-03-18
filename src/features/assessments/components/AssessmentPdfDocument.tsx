@@ -174,7 +174,9 @@ function formatQuestionType(type: string): string {
 }
 
 export function AssessmentPdfDocument({ assessment, mode }: AssessmentPdfDocumentProps) {
-    const sortedQuestions = [...(assessment.questions ?? [])].sort((a, b) => a.order - b.order);
+    const sortedQuestions = [...(assessment.questions ?? [])].sort(
+        (a, b) => (a.order ?? 0) - (b.order ?? 0),
+    );
     const modeLabel = mode === "answer-sheet" ? "Answer Sheet" : "Assessment";
 
     return (
@@ -239,7 +241,9 @@ export function AssessmentPdfDocument({ assessment, mode }: AssessmentPdfDocumen
                                                 <Text
                                                     style={[
                                                         styles.optionLabel,
-                                                        ...(isCorrect ? [styles.optionLabelCorrect] : []),
+                                                        ...(isCorrect
+                                                            ? [styles.optionLabelCorrect]
+                                                            : []),
                                                     ]}
                                                 >
                                                     {getOptionLabel(optIndex)}.
@@ -247,7 +251,9 @@ export function AssessmentPdfDocument({ assessment, mode }: AssessmentPdfDocumen
                                                 <Text
                                                     style={[
                                                         styles.optionText,
-                                                        ...(isCorrect ? [styles.optionTextCorrect] : []),
+                                                        ...(isCorrect
+                                                            ? [styles.optionTextCorrect]
+                                                            : []),
                                                     ]}
                                                 >
                                                     {option}
@@ -273,7 +279,8 @@ export function AssessmentPdfDocument({ assessment, mode }: AssessmentPdfDocumen
                                     {(isMCQ || isMRQ) && correctIndices.length > 0 && (
                                         <View style={styles.answerSection}>
                                             <Text style={styles.answerLabel}>
-                                                Correct answer{correctIndices.length > 1 ? "s" : ""}:
+                                                Correct answer{correctIndices.length > 1 ? "s" : ""}
+                                                :
                                             </Text>
                                             <Text style={styles.answerText}>
                                                 {correctIndices
@@ -290,7 +297,9 @@ export function AssessmentPdfDocument({ assessment, mode }: AssessmentPdfDocumen
                                     {isShortAnswer && (
                                         <View style={styles.answerSection}>
                                             <Text style={styles.answerLabel}>Answer:</Text>
-                                            <Text style={styles.answerText}>{correctAnswerText}</Text>
+                                            <Text style={styles.answerText}>
+                                                {correctAnswerText}
+                                            </Text>
                                         </View>
                                     )}
                                 </>

@@ -7,6 +7,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
+import { toast } from "sonner";
 import type { QuestionResponse } from "@/types/frontend.types";
 
 interface QuestionActionsMenuProps {
@@ -14,7 +15,8 @@ interface QuestionActionsMenuProps {
     onEdit: (question: QuestionResponse) => void;
     onDuplicate: (question: QuestionResponse) => void;
     onRemove: (question: QuestionResponse) => void;
-    onAddToCanvas?: (question: QuestionResponse) => void;
+    onAddToCanvas: (question: QuestionResponse) => void;
+    canEdit: boolean;
 }
 
 export function QuestionActionsMenu({
@@ -23,7 +25,13 @@ export function QuestionActionsMenu({
     onDuplicate,
     onRemove,
     onAddToCanvas,
+    canEdit = true,
 }: QuestionActionsMenuProps) {
+    const handleCopyId = () => {
+        navigator.clipboard.writeText(question.id);
+        toast.success("Question ID copied");
+    };
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -32,8 +40,18 @@ export function QuestionActionsMenu({
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit(question)}>Edit</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onDuplicate(question)}>Duplicate</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleCopyId}>
+                    Copy Question ID
+                </DropdownMenuItem>
+                {canEdit && (
+                    <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => onEdit(question)}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onDuplicate(question)}>
+                            Duplicate
+                        </DropdownMenuItem>
+                    </>
+                )}
                 {onAddToCanvas && (
                     <>
                         <DropdownMenuSeparator />
@@ -42,10 +60,17 @@ export function QuestionActionsMenu({
                         </DropdownMenuItem>
                     </>
                 )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive" onClick={() => onRemove(question)}>
-                    Remove
-                </DropdownMenuItem>
+                {canEdit && (
+                    <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => onRemove(question)}
+                        >
+                            Remove
+                        </DropdownMenuItem>
+                    </>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
     );

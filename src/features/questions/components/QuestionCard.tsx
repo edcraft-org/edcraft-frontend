@@ -3,6 +3,7 @@ import type { QuestionResponse } from "@/types/frontend.types";
 import { getOptions, getCorrectIndices, getAnswerText } from "@/shared/utils/questionUtils";
 import { QuestionActionsMenu } from "./QuestionActionsMenu";
 import { QuestionContent } from "@/components/QuestionContent";
+import { LinkMenu } from "@/shared/components";
 
 interface QuestionCardProps {
     question: QuestionResponse;
@@ -10,8 +11,11 @@ interface QuestionCardProps {
     onEdit: (question: QuestionResponse) => void;
     onDuplicate: (question: QuestionResponse) => void;
     onRemove: (question: QuestionResponse) => void;
-    onAddToCanvas?: (question: QuestionResponse) => void;
-    showActions?: boolean;
+    onAddToCanvas: (question: QuestionResponse) => void;
+    onSync: (question: QuestionResponse) => void;
+    onUnlink: (question: QuestionResponse) => void;
+    onGoToSource: (question: QuestionResponse) => void;
+    canEdit: boolean;
 }
 
 export function QuestionCard({
@@ -21,9 +25,12 @@ export function QuestionCard({
     onDuplicate,
     onRemove,
     onAddToCanvas,
-    showActions = true,
+    onSync,
+    onUnlink,
+    onGoToSource,
+    canEdit = true,
 }: QuestionCardProps) {
-    const { question_text, question_type } = question;
+    const { question_text, question_type, linked_from_question_id } = question;
 
     const options = getOptions(question);
     const correctIndices = getCorrectIndices(question);
@@ -41,16 +48,23 @@ export function QuestionCard({
                     <span className="text-xs px-2 py-1 bg-muted rounded">
                         {question_type.toUpperCase()}
                     </span>
+                    {linked_from_question_id && (
+                        <LinkMenu
+                            question={question}
+                            onSync={onSync}
+                            onUnlink={onUnlink}
+                            onGoToSource={onGoToSource}
+                        />
+                    )}
                 </div>
-                {showActions && (
-                    <QuestionActionsMenu
-                        question={question}
-                        onEdit={onEdit}
-                        onDuplicate={onDuplicate}
-                        onRemove={onRemove}
-                        onAddToCanvas={onAddToCanvas}
-                    />
-                )}
+                <QuestionActionsMenu
+                    question={question}
+                    onEdit={onEdit}
+                    onDuplicate={onDuplicate}
+                    onRemove={onRemove}
+                    onAddToCanvas={onAddToCanvas}
+                    canEdit={canEdit}
+                />
             </CardHeader>
             <CardContent>
                 <QuestionContent

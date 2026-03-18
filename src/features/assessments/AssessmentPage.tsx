@@ -13,6 +13,8 @@ import {
     useAssessment,
     useAddQuestionToAssessment,
     useLinkQuestionToAssessment,
+    useSyncQuestionInAssessment,
+    useUnlinkQuestionInAssessment,
     useRemoveQuestionFromAssessment,
     useReorderQuestions,
 } from "./useAssessments";
@@ -23,6 +25,7 @@ import {
     LinkOrDuplicateModal,
     useUpdateQuestion,
 } from "@/features/questions";
+import { getQuestion } from "@/features/questions/question.service";
 import type { QuestionResponse, QuestionEditorData } from "@/types/frontend.types";
 import type { CreateMCQRequest, CreateMRQRequest, CreateShortAnswerRequest } from "@/api/models";
 import { questionResponseToRequestData } from "@/shared/utils/questionUtils";
@@ -59,12 +62,14 @@ function AssessmentPage() {
 
     const addQuestion = useAddQuestionToAssessment();
     const linkQuestion = useLinkQuestionToAssessment();
+    const syncQuestion = useSyncQuestionInAssessment();
+    const unlinkQuestion = useUnlinkQuestionInAssessment();
     const removeQuestion = useRemoveQuestionFromAssessment();
     const updateQuestion = useUpdateQuestion();
     const reorderMutation = useReorderQuestions();
 
     const sortedQuestions = useMemo(
-        () => [...(assessment?.questions ?? [])].sort((a, b) => a.order - b.order),
+        () => [...(assessment?.questions ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
         [assessment?.questions],
     );
 
@@ -241,6 +246,50 @@ function AssessmentPage() {
         });
     };
 
+    const handleSyncQuestion = (question: QuestionResponse) => {
+        if (syncQuestion.isPending) return;
+        const session = validateSession();
+        if (!session) return;
+        syncQuestion.mutate(
+            { assessmentId: session.assessmentId, questionId: question.id },
+            {
+                onSuccess: () => toast.success("Question synced from source"),
+                onError: (error) => handleMutationError(error, "sync question"),
+            },
+        );
+    };
+
+    const handleUnlinkQuestion = (question: QuestionResponse) => {
+        if (unlinkQuestion.isPending) return;
+        const session = validateSession();
+        if (!session) return;
+        unlinkQuestion.mutate(
+            { assessmentId: session.assessmentId, questionId: question.id },
+            {
+                onSuccess: () => toast.success("Question unlinked"),
+                onError: (error) => handleMutationError(error, "unlink question"),
+            },
+        );
+    };
+
+    const handleGoToSource = async (question: QuestionResponse) => {
+        if (!question.linked_from_question_id) {
+            toast.error("This question is not linked to any source");
+            return;
+        }
+
+        try {
+            const source = await getQuestion(question.linked_from_question_id);
+            if (source.assessment_id) {
+                navigate(`/assessments/${source.assessment_id}`);
+            } else if (source.question_bank_id) {
+                navigate(`/question-banks/${source.question_bank_id}`);
+            }
+        } catch {
+            toast.error("Failed to navigate to source");
+        }
+    };
+
     // Handle editing a question
     const handleEditQuestion = (question: QuestionResponse) => {
         setSelectedQuestion(question);
@@ -399,9 +448,12 @@ function AssessmentPage() {
                     setShowRemoveDialog(true);
                 }}
                 onAddToCanvas={handleAddToCanvas}
+                onSync={handleSyncQuestion}
+                onUnlink={handleUnlinkQuestion}
+                onGoToSource={handleGoToSource}
                 isReorderMode={isReorderMode}
                 onReorder={handleReorder}
-                isOwner={canEdit}
+                canEdit={canEdit}
             />
 
             {user && (
@@ -425,17 +477,13 @@ function AssessmentPage() {
                 isLoading={updateQuestion.isPending}
             />
 
-            {user && (
-                <LinkOrDuplicateModal
-                    open={showLinkOrDuplicateModal}
-                    onOpenChange={setShowLinkOrDuplicateModal}
-                    question={selectedQuestion}
-                    ownerId={user.id}
-                    onLink={handleLinkQuestion}
-                    onDuplicate={handleDuplicateQuestion}
-                    isLoading={linkQuestion.isPending || addQuestion.isPending}
-                />
-            )}
+            <LinkOrDuplicateModal
+                open={showLinkOrDuplicateModal}
+                onOpenChange={setShowLinkOrDuplicateModal}
+                onLink={handleLinkQuestion}
+                onDuplicate={handleDuplicateQuestion}
+                isLoading={linkQuestion.isPending || addQuestion.isPending}
+            />
 
             <RemoveQuestionDialog
                 open={showRemoveDialog}

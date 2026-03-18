@@ -1,4 +1,5 @@
 export { CollaborationModal } from "./CollaborationModal";
+export { LinkMenu } from "./LinkMenu";
 export { ErrorBoundary } from "./ErrorBoundary";
 export { ErrorFallback } from "./ErrorFallback";
 export {

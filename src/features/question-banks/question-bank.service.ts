@@ -91,3 +91,29 @@ export async function removeQuestionFromQuestionBank(
         );
     return response.data;
 }
+
+// Sync a linked question's content from its source
+export async function syncQuestionInQuestionBank(
+    questionBankId: string,
+    questionId: string,
+): Promise<QuestionBankWithQuestionsResponse> {
+    const response =
+        await api.syncQuestionInQuestionBankQuestionBanksQuestionBankIdQuestionsQuestionIdSyncPost(
+            questionBankId,
+            questionId,
+        );
+    return response.data;
+}
+
+// Unlink a question from its source (make it independent)
+export async function unlinkQuestionInQuestionBank(
+    questionBankId: string,
+    questionId: string,
+): Promise<QuestionBankWithQuestionsResponse> {
+    const response =
+        await api.unlinkQuestionInQuestionBankQuestionBanksQuestionBankIdQuestionsQuestionIdUnlinkPost(
+            questionBankId,
+            questionId,
+        );
+    return response.data;
+}

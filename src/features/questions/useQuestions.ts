@@ -7,7 +7,6 @@ import {
     getQuestion,
     updateQuestion,
     deleteQuestion,
-    getQuestionUsage,
 } from "./question.service";
 import type { UpdateQuestionRequest } from "@/api/models/updateQuestionRequest";
 
@@ -26,15 +25,6 @@ export function useQuestion(questionId: string | undefined) {
         queryKey: queryKeys.questions.detail(questionId ?? ""),
         queryFn: () => getQuestion(questionId!),
         enabled: !!questionId,
-    });
-}
-
-// Hook to fetch usage information for a question
-export function useQuestionUsage(questionId: string | undefined, ownerId: string | undefined) {
-    return useQuery({
-        queryKey: queryKeys.questions.usage(questionId ?? ""),
-        queryFn: () => getQuestionUsage(questionId!),
-        enabled: !!questionId && !!ownerId,
     });
 }
 

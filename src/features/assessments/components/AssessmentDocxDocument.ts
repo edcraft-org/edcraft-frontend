@@ -28,7 +28,9 @@ function formatQuestionType(type: string): string {
 
 export function buildAssessmentDocx(options: ExportOptions): Document {
     const { assessment, mode } = options;
-    const sortedQuestions = [...(assessment.questions ?? [])].sort((a, b) => a.order - b.order);
+    const sortedQuestions = [...(assessment.questions ?? [])].sort(
+        (a, b) => (a.order ?? 0) - (b.order ?? 0),
+    );
     const modeLabel = mode === "answer-sheet" ? "Answer Sheet" : "Assessment";
     const includeAnswers = mode === "answer-sheet";
 

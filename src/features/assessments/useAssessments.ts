@@ -10,6 +10,8 @@ import {
     deleteAssessment,
     addQuestionToAssessment,
     linkQuestionToAssessment,
+    syncQuestionInAssessment,
+    unlinkQuestionInAssessment,
     removeQuestionFromAssessment,
     reorderQuestions,
     getSharedAssessments,
@@ -151,6 +153,38 @@ export function useLinkQuestionToAssessment() {
             assessmentId: string;
             data: LinkQuestionToAssessmentRequest;
         }) => linkQuestionToAssessment(assessmentId, data),
+        onSuccess: (updatedAssessment) => {
+            queryClient.setQueryData(
+                queryKeys.assessments.detail(updatedAssessment.id),
+                updatedAssessment,
+            );
+        },
+    });
+}
+
+// Hook to sync a linked question's content from its source
+export function useSyncQuestionInAssessment() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ assessmentId, questionId }: { assessmentId: string; questionId: string }) =>
+            syncQuestionInAssessment(assessmentId, questionId),
+        onSuccess: (updatedAssessment) => {
+            queryClient.setQueryData(
+                queryKeys.assessments.detail(updatedAssessment.id),
+                updatedAssessment,
+            );
+        },
+    });
+}
+
+// Hook to sever the source link on a question (making it fully independent)
+export function useUnlinkQuestionInAssessment() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ assessmentId, questionId }: { assessmentId: string; questionId: string }) =>
+            unlinkQuestionInAssessment(assessmentId, questionId),
         onSuccess: (updatedAssessment) => {
             queryClient.setQueryData(
                 queryKeys.assessments.detail(updatedAssessment.id),
