@@ -7,7 +7,6 @@ import {
     getQuestionTemplate,
     updateQuestionTemplate,
     deleteQuestionTemplate,
-    getQuestionTemplateUsage,
     generateFromTemplate,
 } from "./question-template.service";
 import type {
@@ -30,18 +29,6 @@ export function useQuestionTemplate(templateId: string | undefined) {
         queryKey: queryKeys.questionTemplates.detail(templateId ?? ""),
         queryFn: () => getQuestionTemplate(templateId!),
         enabled: !!templateId,
-    });
-}
-
-// Hook to fetch usage information for a question template
-export function useQuestionTemplateUsage(
-    templateId: string | undefined,
-    ownerId: string | undefined,
-) {
-    return useQuery({
-        queryKey: queryKeys.questionTemplates.usage(templateId ?? ""),
-        queryFn: () => getQuestionTemplateUsage(templateId!),
-        enabled: !!templateId && !!ownerId,
     });
 }
 

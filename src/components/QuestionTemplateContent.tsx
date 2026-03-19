@@ -2,17 +2,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Code } from "lucide-react";
 import type { QuestionTemplateResponse } from "@/api/models";
 import type { ReactNode } from "react";
+import { LinkMenu } from "@/shared/components";
 
 interface QuestionTemplateContentProps {
     template: QuestionTemplateResponse;
     index: number;
     actions?: ReactNode;
+    onSync?: (template: QuestionTemplateResponse) => void;
+    onGoToSource?: (template: QuestionTemplateResponse) => void;
+    onUnlink?: (template: QuestionTemplateResponse) => void;
 }
 
 export function QuestionTemplateContent({
     template,
     index,
     actions,
+    onSync,
+    onGoToSource,
+    onUnlink,
 }: QuestionTemplateContentProps) {
     return (
         <Card className="group">
@@ -27,9 +34,21 @@ export function QuestionTemplateContent({
                                 {template.question_type.toUpperCase()}
                             </span>
                         </div>
-                        <CardTitle className="text-base whitespace-pre-wrap">{template.question_text_template}</CardTitle>
+                        <CardTitle className="text-base whitespace-pre-wrap">
+                            {template.question_text_template}
+                        </CardTitle>
                     </div>
-                    {actions}
+                    <div className="flex items-center gap-1">
+                        {template.linked_from_template_id && onSync && onGoToSource && onUnlink && (
+                            <LinkMenu
+                                item={template}
+                                onSync={onSync}
+                                onGoToSource={onGoToSource}
+                                onUnlink={onUnlink}
+                            />
+                        )}
+                        {actions}
+                    </div>
                 </div>
             </CardHeader>
             <CardContent>
@@ -50,21 +69,15 @@ export function QuestionTemplateContent({
                         </div>
                         <div>
                             <span className="text-muted-foreground">Output Type:</span>
-                            <span className="ml-1">
-                                {template.output_type}
-                            </span>
+                            <span className="ml-1">{template.output_type}</span>
                         </div>
                         <div>
                             <span className="text-muted-foreground">Question Type:</span>
-                            <span className="ml-1">
-                                {template.question_type}
-                            </span>
+                            <span className="ml-1">{template.question_type}</span>
                         </div>
                         <div>
                             <span className="text-muted-foreground">Distractors:</span>
-                            <span className="ml-1">
-                                {template.num_distractors}
-                            </span>
+                            <span className="ml-1">{template.num_distractors}</span>
                         </div>
                     </div>
                 </div>

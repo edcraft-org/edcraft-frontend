@@ -9,6 +9,9 @@ interface QuestionTemplateCardProps {
     onEdit: (template: QuestionTemplateResponse) => void;
     onDuplicate: (template: QuestionTemplateResponse) => void;
     onRemove: (template: QuestionTemplateResponse) => void;
+    onSync: (template: QuestionTemplateResponse) => void;
+    onGoToSource: (template: QuestionTemplateResponse) => void;
+    onUnlink: (template: QuestionTemplateResponse) => void;
 }
 
 export function QuestionTemplateCard({
@@ -18,6 +21,9 @@ export function QuestionTemplateCard({
     onEdit,
     onDuplicate,
     onRemove,
+    onSync,
+    onGoToSource,
+    onUnlink,
 }: QuestionTemplateCardProps) {
     return (
         <QuestionTemplateContent
@@ -32,6 +38,9 @@ export function QuestionTemplateCard({
                     onRemove={onRemove}
                 />
             }
+            onSync={onSync}
+            onGoToSource={onGoToSource}
+            onUnlink={onUnlink}
         />
     );
 }

@@ -110,6 +110,32 @@ export async function reorderQuestionTemplatesInAssessmentTemplate(
     return response.data;
 }
 
+// Sync a linked question template's content from its source
+export async function syncQuestionTemplateInAssessmentTemplate(
+    templateId: string,
+    questionTemplateId: string,
+): Promise<AssessmentTemplateWithQuestionTemplatesResponse> {
+    const response =
+        await api.syncQuestionTemplateInAssessmentTemplateAssessmentTemplatesTemplateIdQuestionTemplatesQuestionTemplateIdSyncPost(
+            templateId,
+            questionTemplateId,
+        );
+    return response.data;
+}
+
+// Sever the source link on a question template (making it fully independent)
+export async function unlinkQuestionTemplateInAssessmentTemplate(
+    templateId: string,
+    questionTemplateId: string,
+): Promise<AssessmentTemplateWithQuestionTemplatesResponse> {
+    const response =
+        await api.unlinkQuestionTemplateInAssessmentTemplateAssessmentTemplatesTemplateIdQuestionTemplatesQuestionTemplateIdUnlinkPost(
+            templateId,
+            questionTemplateId,
+        );
+    return response.data;
+}
+
 // Generate an assessment from a template
 export async function generateAssessmentFromTemplate(
     templateId: string,

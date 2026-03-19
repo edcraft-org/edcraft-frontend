@@ -10,5 +10,4 @@ export {
     useQuestionTemplate,
     useUpdateQuestionTemplate,
     useDeleteQuestionTemplate,
-    useQuestionTemplateUsage,
 } from "./useQuestionTemplates";

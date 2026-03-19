@@ -4,6 +4,7 @@ import { ChevronRight, Code } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { QuestionTemplateResponse } from "@/api/models";
 import { QuestionTemplateActionsMenu } from "@/features/question-templates/components/QuestionTemplateActionsMenu";
+import { LinkMenu } from "@/shared/components";
 
 interface QuestionTemplateCardProps {
     template: QuestionTemplateResponse;
@@ -11,6 +12,9 @@ interface QuestionTemplateCardProps {
     onEdit: (template: QuestionTemplateResponse) => void;
     onDuplicate: (template: QuestionTemplateResponse) => void;
     onRemove: (template: QuestionTemplateResponse) => void;
+    onSync: (template: QuestionTemplateResponse) => void;
+    onGoToSource: (template: QuestionTemplateResponse) => void;
+    onUnlink: (template: QuestionTemplateResponse) => void;
 }
 
 export function QuestionTemplateCard({
@@ -19,6 +23,9 @@ export function QuestionTemplateCard({
     onEdit,
     onDuplicate,
     onRemove,
+    onSync,
+    onGoToSource,
+    onUnlink,
 }: QuestionTemplateCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -45,13 +52,23 @@ export function QuestionTemplateCard({
                         </span>
                     </p>
                 </div>
-                <QuestionTemplateActionsMenu
-                    template={template}
-                    onCreateQuestion={onCreateQuestion}
-                    onEdit={onEdit}
-                    onDuplicate={onDuplicate}
-                    onRemove={onRemove}
-                />
+                <div className="flex items-center gap-1">
+                    {template.linked_from_template_id && (
+                        <LinkMenu
+                            item={template}
+                            onSync={onSync}
+                            onGoToSource={onGoToSource}
+                            onUnlink={onUnlink}
+                        />
+                    )}
+                    <QuestionTemplateActionsMenu
+                        template={template}
+                        onCreateQuestion={onCreateQuestion}
+                        onEdit={onEdit}
+                        onDuplicate={onDuplicate}
+                        onRemove={onRemove}
+                    />
+                </div>
             </CardHeader>
             {isExpanded && (
                 <CardContent>

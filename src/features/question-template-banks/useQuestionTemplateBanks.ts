@@ -11,6 +11,8 @@ import {
     insertQuestionTemplateIntoBank,
     linkQuestionTemplateToBank,
     removeQuestionTemplateFromBank,
+    syncQuestionTemplateInBank,
+    unlinkQuestionTemplateInBank,
 } from "./question-template-bank.service";
 import type {
     CreateQuestionTemplateBankRequest,
@@ -143,6 +145,48 @@ export function useLinkQuestionTemplateToBank() {
             templateBankId: string;
             data: LinkQuestionTemplateToQuestionTemplateBankRequest;
         }) => linkQuestionTemplateToBank(templateBankId, data),
+        onSuccess: (updatedTemplateBank) => {
+            queryClient.setQueryData(
+                queryKeys.questionTemplateBanks.detail(updatedTemplateBank.id),
+                updatedTemplateBank,
+            );
+        },
+    });
+}
+
+// Hook to sync a linked question template's content from its source
+export function useSyncQuestionTemplateInBank() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            templateBankId,
+            questionTemplateId,
+        }: {
+            templateBankId: string;
+            questionTemplateId: string;
+        }) => syncQuestionTemplateInBank(templateBankId, questionTemplateId),
+        onSuccess: (updatedTemplateBank) => {
+            queryClient.setQueryData(
+                queryKeys.questionTemplateBanks.detail(updatedTemplateBank.id),
+                updatedTemplateBank,
+            );
+        },
+    });
+}
+
+// Hook to sever the source link on a question template (making it fully independent)
+export function useUnlinkQuestionTemplateInBank() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            templateBankId,
+            questionTemplateId,
+        }: {
+            templateBankId: string;
+            questionTemplateId: string;
+        }) => unlinkQuestionTemplateInBank(templateBankId, questionTemplateId),
         onSuccess: (updatedTemplateBank) => {
             queryClient.setQueryData(
                 queryKeys.questionTemplateBanks.detail(updatedTemplateBank.id),

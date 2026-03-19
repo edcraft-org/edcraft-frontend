@@ -6,7 +6,6 @@ import type {
     Question,
     QuestionTemplateResponse,
     QuestionTemplateSummaryResponse,
-    QuestionTemplateUsageResponse,
     UpdateQuestionTemplateRequest,
 } from "@/api/models";
 
@@ -38,15 +37,6 @@ export async function updateQuestionTemplate(
 export async function deleteQuestionTemplate(templateId: string): Promise<void> {
     const response =
         await api.softDeleteQuestionTemplateQuestionTemplatesTemplateIdDelete(templateId);
-    return response.data;
-}
-
-// Get usage information for a question template
-export async function getQuestionTemplateUsage(
-    templateId: string,
-): Promise<QuestionTemplateUsageResponse> {
-    const response =
-        await api.getQuestionTemplateUsageQuestionTemplatesQuestionTemplateIdUsageGet(templateId);
     return response.data;
 }
 

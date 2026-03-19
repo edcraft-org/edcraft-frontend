@@ -50,7 +50,7 @@ export function QuestionCard({
                     </span>
                     {linked_from_question_id && (
                         <LinkMenu
-                            question={question}
+                            item={question}
                             onSync={onSync}
                             onUnlink={onUnlink}
                             onGoToSource={onGoToSource}

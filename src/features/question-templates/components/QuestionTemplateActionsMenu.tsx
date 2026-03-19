@@ -3,9 +3,11 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical, Play } from "lucide-react";
+import { toast } from "sonner";
 import type { QuestionTemplateResponse } from "@/api/models";
 
 interface QuestionTemplateActionsMenuProps {
@@ -23,6 +25,11 @@ export function QuestionTemplateActionsMenu({
     onDuplicate,
     onRemove,
 }: QuestionTemplateActionsMenuProps) {
+    const handleCopyId = () => {
+        navigator.clipboard.writeText(template.id);
+        toast.success("Question Template ID copied");
+    };
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -34,6 +41,10 @@ export function QuestionTemplateActionsMenu({
                 <DropdownMenuItem onClick={() => onCreateQuestion(template)}>
                     <Play className="h-4 w-4 mr-2" />
                     Create Question
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleCopyId}>
+                    Copy Question Template ID
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onEdit(template)}>Edit</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onDuplicate(template)}>Duplicate</DropdownMenuItem>

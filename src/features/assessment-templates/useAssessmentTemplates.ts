@@ -13,6 +13,8 @@ import {
     removeQuestionTemplateFromAssessmentTemplate,
     reorderQuestionTemplatesInAssessmentTemplate,
     generateAssessmentFromTemplate,
+    syncQuestionTemplateInAssessmentTemplate,
+    unlinkQuestionTemplateInAssessmentTemplate,
 } from "./assessment-template.service";
 import type {
     CreateAssessmentTemplateRequest,
@@ -183,6 +185,48 @@ export function useReorderQuestionTemplatesInAssessmentTemplate() {
             templateId: string;
             data: ReorderQuestionTemplatesInAssessmentTemplateRequest;
         }) => reorderQuestionTemplatesInAssessmentTemplate(templateId, data),
+        onSuccess: (updatedTemplate) => {
+            queryClient.setQueryData(
+                queryKeys.assessmentTemplates.detail(updatedTemplate.id),
+                updatedTemplate,
+            );
+        },
+    });
+}
+
+// Hook to sync a linked question template's content from its source
+export function useSyncQuestionTemplateInAssessmentTemplate() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            templateId,
+            questionTemplateId,
+        }: {
+            templateId: string;
+            questionTemplateId: string;
+        }) => syncQuestionTemplateInAssessmentTemplate(templateId, questionTemplateId),
+        onSuccess: (updatedTemplate) => {
+            queryClient.setQueryData(
+                queryKeys.assessmentTemplates.detail(updatedTemplate.id),
+                updatedTemplate,
+            );
+        },
+    });
+}
+
+// Hook to sever the source link on a question template (making it fully independent)
+export function useUnlinkQuestionTemplateInAssessmentTemplate() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            templateId,
+            questionTemplateId,
+        }: {
+            templateId: string;
+            questionTemplateId: string;
+        }) => unlinkQuestionTemplateInAssessmentTemplate(templateId, questionTemplateId),
         onSuccess: (updatedTemplate) => {
             queryClient.setQueryData(
                 queryKeys.assessmentTemplates.detail(updatedTemplate.id),

@@ -7,18 +7,15 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link2, RefreshCw, ExternalLink, Unlink } from "lucide-react";
-import type { QuestionResponse } from "@/types/frontend.types";
 
-interface LinkMenuProps {
-    question: QuestionResponse;
-    onSync: (question: QuestionResponse) => void;
-    onGoToSource: (question: QuestionResponse) => void;
-    onUnlink: (question: QuestionResponse) => void;
+interface LinkMenuProps<T> {
+    item: T;
+    onSync: (item: T) => void;
+    onGoToSource: (item: T) => void;
+    onUnlink: (item: T) => void;
 }
 
-export function LinkMenu({ question, onSync, onGoToSource, onUnlink }: LinkMenuProps) {
-    if (!question.linked_from_question_id) return null;
-
+export function LinkMenu<T>({ item, onSync, onGoToSource, onUnlink }: LinkMenuProps<T>) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -31,16 +28,16 @@ export function LinkMenu({ question, onSync, onGoToSource, onUnlink }: LinkMenuP
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => onSync(question)}>
+                <DropdownMenuItem onClick={() => onSync(item)}>
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Sync from source
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onGoToSource(question)}>
+                <DropdownMenuItem onClick={() => onGoToSource(item)}>
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Go to source
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive" onClick={() => onUnlink(question)}>
+                <DropdownMenuItem className="text-destructive" onClick={() => onUnlink(item)}>
                     <Unlink className="h-4 w-4 mr-2" />
                     Unlink
                 </DropdownMenuItem>

@@ -63,7 +63,7 @@ export function QuestionCard({
                 <div className="flex items-center gap-1">
                     {linked_from_question_id && (
                         <LinkMenu
-                            question={question}
+                            item={question}
                             onSync={onSync}
                             onGoToSource={onGoToSource}
                             onUnlink={onUnlink}

@@ -27,9 +27,9 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { InputDataCard } from "@/shared/components";
-import type { AssessmentTemplateQuestionTemplateResponse } from "@/api/models";
 import { useUpdateQuestionTemplate } from "@/features/question-templates/useQuestionTemplates";
 import { QuestionTemplateContent } from "@/components/QuestionTemplateContent";
+import type { QuestionTemplateResponse } from "@/api/models/questionTemplateResponse";
 
 // Schema for metadata step
 const metadataFormSchema = z.object({
@@ -43,7 +43,7 @@ interface InstantiateAssessmentModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     assessmentTemplateTitle: string;
-    questionTemplates: AssessmentTemplateQuestionTemplateResponse[];
+    questionTemplates: QuestionTemplateResponse[];
     onInstantiate: (
         title: string,
         description: string | undefined,

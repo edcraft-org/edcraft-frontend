@@ -23,6 +23,9 @@ export function QuestionTemplateBrowser({
     onBack,
 }: QuestionTemplateBrowserProps) {
     const [searchQuery, setSearchQuery] = useState("");
+    const [templateIdInput, setTemplateIdInput] = useState("");
+    const [idFetchError, setIdFetchError] = useState<string | null>(null);
+    const [isFetchingById, setIsFetchingById] = useState(false);
     const [loadingTemplateId, setLoadingTemplateId] = useState<string | null>(null);
     const { data: templates, isLoading } = useQuestionTemplates(ownerId);
 
@@ -32,6 +35,20 @@ export function QuestionTemplateBrowser({
                 t.question_text_template.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 t.description?.toLowerCase().includes(searchQuery.toLowerCase()),
         ) || [];
+
+    const handleSelectById = async () => {
+        if (!templateIdInput.trim()) return;
+        setIdFetchError(null);
+        setIsFetchingById(true);
+        try {
+            const template = await getQuestionTemplate(templateIdInput.trim());
+            onSelectTemplate(template);
+        } catch {
+            setIdFetchError("Template not found or you don't have access to it.");
+        } finally {
+            setIsFetchingById(false);
+        }
+    };
 
     const handleSelectTemplate = async (templateId: string) => {
         setLoadingTemplateId(templateId);
@@ -52,6 +69,36 @@ export function QuestionTemplateBrowser({
                 <Button variant="ghost" size="sm" onClick={onBack}>
                     ← Back
                 </Button>
+            </div>
+
+            <div className="space-y-1">
+                <p className="text-xs text-muted-foreground font-medium">Select by Template ID</p>
+                <div className="flex gap-2">
+                    <Input
+                        placeholder="Paste template ID..."
+                        value={templateIdInput}
+                        onChange={(e) => {
+                            setTemplateIdInput(e.target.value);
+                            setIdFetchError(null);
+                        }}
+                        onKeyDown={(e) => e.key === "Enter" && handleSelectById()}
+                    />
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSelectById}
+                        disabled={!templateIdInput.trim() || isFetchingById}
+                    >
+                        {isFetchingById ? <Loader2 className="h-4 w-4 animate-spin" /> : "Select"}
+                    </Button>
+                </div>
+                {idFetchError && <p className="text-xs text-destructive">{idFetchError}</p>}
+            </div>
+
+            <div className="relative flex items-center">
+                <div className="flex-1 border-t border-border" />
+                <span className="px-2 text-xs text-muted-foreground">or</span>
+                <div className="flex-1 border-t border-border" />
             </div>
 
             <Input

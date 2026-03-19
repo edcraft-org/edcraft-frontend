@@ -8,11 +8,14 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
 import { ROUTES } from "@/router/paths";
+import { getQuestionTemplate } from "@/features/question-templates/question-template.service";
 import {
     useQuestionTemplateBank,
     useInsertQuestionTemplateIntoBank,
     useLinkQuestionTemplateToBank,
     useRemoveQuestionTemplateFromBank,
+    useSyncQuestionTemplateInBank,
+    useUnlinkQuestionTemplateInBank,
 } from "./useQuestionTemplateBanks";
 import { RemoveTemplateDialog } from "@/features/assessment-templates/components";
 import { QuestionTemplateCard } from "./components";
@@ -39,11 +42,13 @@ function QuestionTemplateBankPage() {
     const insertTemplate = useInsertQuestionTemplateIntoBank();
     const linkTemplate = useLinkQuestionTemplateToBank();
     const removeTemplate = useRemoveQuestionTemplateFromBank();
+    const syncTemplate = useSyncQuestionTemplateInBank();
+    const unlinkTemplate = useUnlinkQuestionTemplateInBank();
 
     const sortedTemplates = useMemo(
         () =>
             [...(templateBank?.question_templates ?? [])].sort(
-                (a, b) => new Date(a.added_at).getTime() - new Date(b.added_at).getTime(),
+                (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
             ),
         [templateBank?.question_templates],
     );
@@ -211,6 +216,51 @@ function QuestionTemplateBankPage() {
         );
     };
 
+    const handleSyncTemplate = (template: QuestionTemplateResponse) => {
+        if (syncTemplate.isPending) return;
+        const session = validateSession();
+        if (!session) return;
+        syncTemplate.mutate(
+            { templateBankId: session.templateBankId, questionTemplateId: template.id },
+            {
+                onSuccess: () => toast.success("Question template synced from source"),
+                onError: (error) => handleMutationError(error, "sync template"),
+            },
+        );
+    };
+
+    const handleUnlinkTemplate = (template: QuestionTemplateResponse) => {
+        if (unlinkTemplate.isPending) return;
+        const session = validateSession();
+        if (!session) return;
+        unlinkTemplate.mutate(
+            { templateBankId: session.templateBankId, questionTemplateId: template.id },
+            {
+                onSuccess: () => toast.success("Question template unlinked"),
+                onError: (error) => handleMutationError(error, "unlink template"),
+            },
+        );
+    };
+
+    const handleGoToTemplateSource = async (template: QuestionTemplateResponse) => {
+        if (!template.linked_from_template_id) {
+            toast.error("This template is not linked to any source");
+            return;
+        }
+        try {
+            const source = await getQuestionTemplate(template.linked_from_template_id);
+            if (source.assessment_template_id) {
+                navigate(ROUTES.ASSESSMENT_TEMPLATE(source.assessment_template_id));
+            } else if (source.question_template_bank_id) {
+                navigate(ROUTES.QUESTION_TEMPLATE_BANK(source.question_template_bank_id));
+            } else {
+                toast.error("Source template location not found");
+            }
+        } catch {
+            toast.error("Failed to find source template");
+        }
+    };
+
     const handleRemoveTemplate = () => {
         if (removeTemplate.isPending) return;
 
@@ -279,6 +329,9 @@ function QuestionTemplateBankPage() {
                                 setSelectedTemplate(template);
                                 setShowRemoveDialog(true);
                             }}
+                            onSync={handleSyncTemplate}
+                            onGoToSource={handleGoToTemplateSource}
+                            onUnlink={handleUnlinkTemplate}
                         />
                     ))
                 )}
@@ -300,17 +353,13 @@ function QuestionTemplateBankPage() {
                 template={selectedTemplate}
             />
 
-            {user && (
-                <LinkOrDuplicateTemplateModal
-                    open={showLinkOrDuplicateModal}
-                    onOpenChange={setShowLinkOrDuplicateModal}
-                    template={selectedTemplate}
-                    ownerId={user.id}
-                    onLink={handleLinkTemplate}
-                    onDuplicate={handleDuplicateTemplate}
-                    isLoading={linkTemplate.isPending || insertTemplate.isPending}
-                />
-            )}
+            <LinkOrDuplicateTemplateModal
+                open={showLinkOrDuplicateModal}
+                onOpenChange={setShowLinkOrDuplicateModal}
+                onLink={handleLinkTemplate}
+                onDuplicate={handleDuplicateTemplate}
+                isLoading={linkTemplate.isPending || insertTemplate.isPending}
+            />
 
             <RemoveTemplateDialog
                 open={showRemoveDialog}

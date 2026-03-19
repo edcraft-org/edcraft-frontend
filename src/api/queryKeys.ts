@@ -53,7 +53,6 @@ export const queryKeys = {
     questionTemplates: {
         all: (ownerId: string) => ["question-templates", ownerId] as const,
         detail: (id: string) => ["question-templates", "detail", id] as const,
-        usage: (templateId: string) => ["question-templates", "usage", templateId] as const,
     },
 
     // Question template bank queries

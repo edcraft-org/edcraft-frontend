@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ROUTES } from "@/router";
+import { getQuestionTemplate } from "@/features/question-templates/question-template.service";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, Plus, GripVertical } from "lucide-react";
@@ -26,6 +27,8 @@ import {
     useAssessmentTemplate,
     useGenerateAssessmentFromTemplate,
     useReorderQuestionTemplatesInAssessmentTemplate,
+    useSyncQuestionTemplateInAssessmentTemplate,
+    useUnlinkQuestionTemplateInAssessmentTemplate,
 } from "./useAssessmentTemplates";
 import type { QuestionTemplateResponse } from "@/api/models";
 import { CreateFromTemplateModal } from "../question-templates/components";
@@ -51,9 +54,14 @@ function AssessmentTemplatePage() {
     const removeQuestionTemplate = useRemoveQuestionTemplateFromAssessmentTemplate();
     const generateAssessment = useGenerateAssessmentFromTemplate();
     const reorderMutation = useReorderQuestionTemplatesInAssessmentTemplate();
+    const syncQuestionTemplate = useSyncQuestionTemplateInAssessmentTemplate();
+    const unlinkQuestionTemplate = useUnlinkQuestionTemplateInAssessmentTemplate();
 
     const sortedTemplates = useMemo(
-        () => [...(assessmentTemplate?.question_templates ?? [])].sort((a, b) => a.order - b.order),
+        () =>
+            [...(assessmentTemplate?.question_templates ?? [])].sort(
+                (a, b) => (a.order ?? 0) - (b.order ?? 0),
+            ),
         [assessmentTemplate?.question_templates],
     );
 
@@ -174,9 +182,7 @@ function AssessmentTemplatePage() {
 
     const handleEditTemplate = (template: QuestionTemplateResponse) => {
         setSelectedTemplate(template);
-        navigate(
-            `${ROUTES.TEMPLATE_BUILDER}?templateId=${template.id}`,
-        );
+        navigate(`${ROUTES.TEMPLATE_BUILDER}?templateId=${template.id}`);
     };
 
     const handleSelectExisting = (template: QuestionTemplateResponse) => {
@@ -251,6 +257,51 @@ function AssessmentTemplatePage() {
             setShowRemoveDialog(false);
             setSelectedTemplate(null);
         });
+    };
+
+    const handleSyncTemplate = (template: QuestionTemplateResponse) => {
+        if (syncQuestionTemplate.isPending) return;
+        const session = validateSession();
+        if (!session) return;
+        syncQuestionTemplate.mutate(
+            { templateId: session.templateId, questionTemplateId: template.id },
+            {
+                onSuccess: () => toast.success("Question template synced from source"),
+                onError: (error) => handleMutationError(error, "sync template"),
+            },
+        );
+    };
+
+    const handleUnlinkTemplate = (template: QuestionTemplateResponse) => {
+        if (unlinkQuestionTemplate.isPending) return;
+        const session = validateSession();
+        if (!session) return;
+        unlinkQuestionTemplate.mutate(
+            { templateId: session.templateId, questionTemplateId: template.id },
+            {
+                onSuccess: () => toast.success("Question template unlinked"),
+                onError: (error) => handleMutationError(error, "unlink template"),
+            },
+        );
+    };
+
+    const handleGoToTemplateSource = async (template: QuestionTemplateResponse) => {
+        if (!template.linked_from_template_id) {
+            toast.error("This template is not linked to any source");
+            return;
+        }
+        try {
+            const source = await getQuestionTemplate(template.linked_from_template_id);
+            if (source.assessment_template_id) {
+                navigate(ROUTES.ASSESSMENT_TEMPLATE(source.assessment_template_id));
+            } else if (source.question_template_bank_id) {
+                navigate(ROUTES.QUESTION_TEMPLATE_BANK(source.question_template_bank_id));
+            } else {
+                toast.error("Source template location not found");
+            }
+        } catch {
+            toast.error("Failed to find source template");
+        }
     };
 
     const handleInstantiate = async (
@@ -403,6 +454,9 @@ function AssessmentTemplatePage() {
                 }}
                 isReorderMode={isReorderMode}
                 onReorder={handleReorder}
+                onSync={handleSyncTemplate}
+                onGoToSource={handleGoToTemplateSource}
+                onUnlink={handleUnlinkTemplate}
             />
 
             {/* Add Question Template Modal */}
@@ -424,17 +478,13 @@ function AssessmentTemplatePage() {
             />
 
             {/* Link or Duplicate Template Modal */}
-            {user && (
-                <LinkOrDuplicateTemplateModal
-                    open={showLinkOrDuplicateModal}
-                    onOpenChange={setShowLinkOrDuplicateModal}
-                    template={selectedTemplate}
-                    ownerId={user.id}
-                    onLink={handleLinkTemplate}
-                    onDuplicate={handleDuplicateTemplate}
-                    isLoading={linkQuestionTemplate.isPending || addQuestionTemplate.isPending}
-                />
-            )}
+            <LinkOrDuplicateTemplateModal
+                open={showLinkOrDuplicateModal}
+                onOpenChange={setShowLinkOrDuplicateModal}
+                onLink={handleLinkTemplate}
+                onDuplicate={handleDuplicateTemplate}
+                isLoading={linkQuestionTemplate.isPending || addQuestionTemplate.isPending}
+            />
 
             {/* Instantiate Assessment Modal */}
             <InstantiateAssessmentModal

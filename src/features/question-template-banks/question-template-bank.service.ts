@@ -87,6 +87,32 @@ export async function linkQuestionTemplateToBank(
     return response.data;
 }
 
+// Sync a linked question template's content from its source
+export async function syncQuestionTemplateInBank(
+    templateBankId: string,
+    questionTemplateId: string,
+): Promise<QuestionTemplateBankWithTemplatesResponse> {
+    const response =
+        await api.syncQuestionTemplateInBankQuestionTemplateBanksQuestionTemplateBankIdQuestionTemplatesQuestionTemplateIdSyncPost(
+            templateBankId,
+            questionTemplateId,
+        );
+    return response.data;
+}
+
+// Sever the source link on a question template (making it fully independent)
+export async function unlinkQuestionTemplateInBank(
+    templateBankId: string,
+    questionTemplateId: string,
+): Promise<QuestionTemplateBankWithTemplatesResponse> {
+    const response =
+        await api.unlinkQuestionTemplateInBankQuestionTemplateBanksQuestionTemplateBankIdQuestionTemplatesQuestionTemplateIdUnlinkPost(
+            templateBankId,
+            questionTemplateId,
+        );
+    return response.data;
+}
+
 // Remove (unlink) a question template from a template bank
 export async function removeQuestionTemplateFromBank(
     templateBankId: string,

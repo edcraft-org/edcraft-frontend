@@ -25,6 +25,9 @@ interface QuestionTemplatesListProps {
     onRemove: (template: QuestionTemplateResponse) => void;
     isReorderMode?: boolean;
     onReorder?: (newOrder: QuestionTemplateResponse[]) => void;
+    onSync: (template: QuestionTemplateResponse) => void;
+    onGoToSource: (template: QuestionTemplateResponse) => void;
+    onUnlink: (template: QuestionTemplateResponse) => void;
 }
 
 export function QuestionTemplatesList({
@@ -35,6 +38,9 @@ export function QuestionTemplatesList({
     onRemove,
     isReorderMode = false,
     onReorder,
+    onSync,
+    onGoToSource,
+    onUnlink,
 }: QuestionTemplatesListProps) {
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -84,6 +90,9 @@ export function QuestionTemplatesList({
                                 onEdit={onEdit}
                                 onDuplicate={onDuplicate}
                                 onRemove={onRemove}
+                                onSync={onSync}
+                                onGoToSource={onGoToSource}
+                                onUnlink={onUnlink}
                             />
                         </SortableItem>
                     ))}
