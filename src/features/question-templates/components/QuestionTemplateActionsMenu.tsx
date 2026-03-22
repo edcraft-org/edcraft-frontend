@@ -16,6 +16,7 @@ interface QuestionTemplateActionsMenuProps {
     onEdit: (template: QuestionTemplateResponse) => void;
     onDuplicate: (template: QuestionTemplateResponse) => void;
     onRemove: (template: QuestionTemplateResponse) => void;
+    canEdit: boolean;
 }
 
 export function QuestionTemplateActionsMenu({
@@ -24,6 +25,7 @@ export function QuestionTemplateActionsMenu({
     onEdit,
     onDuplicate,
     onRemove,
+    canEdit,
 }: QuestionTemplateActionsMenuProps) {
     const handleCopyId = () => {
         navigator.clipboard.writeText(template.id);
@@ -46,11 +48,20 @@ export function QuestionTemplateActionsMenu({
                 <DropdownMenuItem onClick={handleCopyId}>
                     Copy Question Template ID
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEdit(template)}>Edit</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onDuplicate(template)}>Duplicate</DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive" onClick={() => onRemove(template)}>
-                    Remove
-                </DropdownMenuItem>
+                {canEdit && (
+                    <>
+                        <DropdownMenuItem onClick={() => onEdit(template)}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onDuplicate(template)}>
+                            Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => onRemove(template)}
+                        >
+                            Remove
+                        </DropdownMenuItem>
+                    </>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
     );

@@ -29,6 +29,7 @@ export function QuestionCard({
     onSync,
     onUnlink,
     onGoToSource,
+    canEdit
 }: QuestionCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -61,7 +62,7 @@ export function QuestionCard({
                     </p>
                 </div>
                 <div className="flex items-center gap-1">
-                    {linked_from_question_id && (
+                    {linked_from_question_id && canEdit && (
                         <LinkMenu
                             item={question}
                             onSync={onSync}
@@ -75,7 +76,7 @@ export function QuestionCard({
                         onDuplicate={onDuplicate}
                         onRemove={onRemove}
                         onAddToCanvas={onAddToCanvas}
-                        canEdit={true}
+                        canEdit={canEdit}
                     />
                 </div>
             </CardHeader>

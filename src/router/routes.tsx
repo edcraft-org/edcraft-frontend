@@ -71,6 +71,18 @@ export const router = createBrowserRouter([
                 path: "assessments/:assessmentId",
                 element: lazyRoute(AssessmentPage),
             },
+            {
+                path: "assessment-templates/:templateId",
+                element: lazyRoute(AssessmentTemplatePage),
+            },
+            {
+                path: "question-banks/:questionBankId",
+                element: lazyRoute(QuestionBankPage),
+            },
+            {
+                path: "question-template-banks/:templateBankId",
+                element: lazyRoute(QuestionTemplateBankPage),
+            },
             // Protected routes
             {
                 element: <ProtectedRoute />,
@@ -78,18 +90,6 @@ export const router = createBrowserRouter([
                     {
                         path: "folders/:folderId",
                         element: lazyRoute(FolderPage),
-                    },
-                    {
-                        path: "assessment-templates/:templateId",
-                        element: lazyRoute(AssessmentTemplatePage),
-                    },
-                    {
-                        path: "question-banks/:questionBankId",
-                        element: lazyRoute(QuestionBankPage),
-                    },
-                    {
-                        path: "question-template-banks/:templateBankId",
-                        element: lazyRoute(QuestionTemplateBankPage),
                     },
                 ],
             },

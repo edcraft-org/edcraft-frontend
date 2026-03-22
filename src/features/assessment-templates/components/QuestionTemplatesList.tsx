@@ -28,6 +28,7 @@ interface QuestionTemplatesListProps {
     onSync: (template: QuestionTemplateResponse) => void;
     onGoToSource: (template: QuestionTemplateResponse) => void;
     onUnlink: (template: QuestionTemplateResponse) => void;
+    canEdit: boolean;
 }
 
 export function QuestionTemplatesList({
@@ -41,6 +42,7 @@ export function QuestionTemplatesList({
     onSync,
     onGoToSource,
     onUnlink,
+    canEdit,
 }: QuestionTemplatesListProps) {
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -93,6 +95,7 @@ export function QuestionTemplatesList({
                                 onSync={onSync}
                                 onGoToSource={onGoToSource}
                                 onUnlink={onUnlink}
+                                canEdit={canEdit}
                             />
                         </SortableItem>
                     ))}

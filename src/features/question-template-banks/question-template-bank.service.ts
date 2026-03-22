@@ -20,6 +20,14 @@ export async function getQuestionTemplateBanks(
     return response.data;
 }
 
+// Get question template banks shared with the current user (non-owner role)
+export async function getSharedQuestionTemplateBanks(): Promise<QuestionTemplateBankResponse[]> {
+    const response = await api.listQuestionTemplateBanksQuestionTemplateBanksGet({
+        collab_filter: "shared",
+    });
+    return response.data;
+}
+
 // Get a single question template bank with all templates
 export async function getQuestionTemplateBank(
     templateBankId: string,

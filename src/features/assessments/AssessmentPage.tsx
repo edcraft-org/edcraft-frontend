@@ -7,8 +7,9 @@ import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus, GripVertical, Upload, Users } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
-import { CollaboratorRole } from "@/api/models";
+import { CollaboratorRole, ResourcePath } from "@/api/models";
 import { CollaborationModal } from "@/shared/components";
+import { queryKeys } from "@/api";
 import {
     useAssessment,
     useAddQuestionToAssessment,
@@ -17,6 +18,7 @@ import {
     useUnlinkQuestionInAssessment,
     useRemoveQuestionFromAssessment,
     useReorderQuestions,
+    useUpdateAssessment,
 } from "./useAssessments";
 import { QuestionsList, RemoveQuestionDialog, ExportButton } from "./components";
 import {
@@ -67,6 +69,7 @@ function AssessmentPage() {
     const removeQuestion = useRemoveQuestionFromAssessment();
     const updateQuestion = useUpdateQuestion();
     const reorderMutation = useReorderQuestions();
+    const updateAssessment = useUpdateAssessment();
 
     const sortedQuestions = useMemo(
         () => [...(assessment?.questions ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
@@ -494,12 +497,21 @@ function AssessmentPage() {
 
             {myRole && (
                 <CollaborationModal
+                    resourcePath={ResourcePath.assessments}
                     resourceId={assessmentId}
                     isOpen={showCollabModal}
                     onOpenChange={setShowCollabModal}
                     myRole={myRole}
                     currentVisibility={assessment.visibility}
-                    folderId={assessment.folder_id}
+                    onVisibilityChange={(visibility) =>
+                        updateAssessment.mutate({
+                            assessmentId,
+                            data: { visibility },
+                            oldFolderId: assessment.folder_id,
+                        })
+                    }
+                    isVisibilityUpdating={updateAssessment.isPending}
+                    resourceDetailQueryKey={queryKeys.assessments.detail(assessmentId)}
                 />
             )}
 

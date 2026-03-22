@@ -13,6 +13,7 @@ import {
     removeQuestionTemplateFromBank,
     syncQuestionTemplateInBank,
     unlinkQuestionTemplateInBank,
+    getSharedQuestionTemplateBanks,
 } from "./question-template-bank.service";
 import type {
     CreateQuestionTemplateBankRequest,
@@ -213,5 +214,14 @@ export function useRemoveQuestionTemplateFromBank() {
                 queryKey: queryKeys.questionTemplateBanks.detail(templateBankId),
             });
         },
+    });
+}
+
+// Hook to fetch question template banks shared with the current user
+export function useSharedQuestionTemplateBanks(enabled = true) {
+    return useQuery({
+        queryKey: queryKeys.sharedResources.byResourcePath("question-template-banks"),
+        queryFn: getSharedQuestionTemplateBanks,
+        enabled,
     });
 }

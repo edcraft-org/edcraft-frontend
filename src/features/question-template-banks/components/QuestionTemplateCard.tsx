@@ -15,6 +15,7 @@ interface QuestionTemplateCardProps {
     onSync: (template: QuestionTemplateResponse) => void;
     onGoToSource: (template: QuestionTemplateResponse) => void;
     onUnlink: (template: QuestionTemplateResponse) => void;
+    canEdit: boolean;
 }
 
 export function QuestionTemplateCard({
@@ -26,6 +27,7 @@ export function QuestionTemplateCard({
     onSync,
     onGoToSource,
     onUnlink,
+    canEdit,
 }: QuestionTemplateCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -53,7 +55,7 @@ export function QuestionTemplateCard({
                     </p>
                 </div>
                 <div className="flex items-center gap-1">
-                    {template.linked_from_template_id && (
+                    {template.linked_from_template_id && canEdit && (
                         <LinkMenu
                             item={template}
                             onSync={onSync}
@@ -67,6 +69,7 @@ export function QuestionTemplateCard({
                         onEdit={onEdit}
                         onDuplicate={onDuplicate}
                         onRemove={onRemove}
+                        canEdit={canEdit}
                     />
                 </div>
             </CardHeader>

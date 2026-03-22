@@ -11,6 +11,7 @@ interface QuestionTemplateContentProps {
     onSync?: (template: QuestionTemplateResponse) => void;
     onGoToSource?: (template: QuestionTemplateResponse) => void;
     onUnlink?: (template: QuestionTemplateResponse) => void;
+    canEdit?: boolean;
 }
 
 export function QuestionTemplateContent({
@@ -20,6 +21,7 @@ export function QuestionTemplateContent({
     onSync,
     onGoToSource,
     onUnlink,
+    canEdit,
 }: QuestionTemplateContentProps) {
     return (
         <Card className="group">
@@ -39,7 +41,7 @@ export function QuestionTemplateContent({
                         </CardTitle>
                     </div>
                     <div className="flex items-center gap-1">
-                        {template.linked_from_template_id && onSync && onGoToSource && onUnlink && (
+                        {template.linked_from_template_id && onSync && onGoToSource && onUnlink && canEdit && (
                             <LinkMenu
                                 item={template}
                                 onSync={onSync}

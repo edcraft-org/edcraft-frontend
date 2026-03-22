@@ -18,6 +18,12 @@ export async function getQuestionBanks(folderId?: string): Promise<QuestionBankR
     return response.data;
 }
 
+// Get question banks shared with the current user (non-owner role)
+export async function getSharedQuestionBanks(): Promise<QuestionBankResponse[]> {
+    const response = await api.listQuestionBanksQuestionBanksGet({ collab_filter: "shared" });
+    return response.data;
+}
+
 // Get a single question bank with all questions
 export async function getQuestionBank(
     questionBankId: string,

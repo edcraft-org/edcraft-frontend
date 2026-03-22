@@ -5,8 +5,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Users } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
+import { CollaboratorRole, ResourcePath } from "@/api/models";
+import { CollaborationModal } from "@/shared/components";
+import { queryKeys } from "@/api";
 import {
     useQuestionBank,
     useAddQuestionToQuestionBank,
@@ -14,6 +17,7 @@ import {
     useRemoveQuestionFromQuestionBank,
     useSyncQuestionInQuestionBank,
     useUnlinkQuestionInQuestionBank,
+    useUpdateQuestionBank,
 } from "./useQuestionBanks";
 import { RemoveQuestionDialog } from "@/features/assessments/components";
 import { QuestionCard } from "./components";
@@ -45,8 +49,12 @@ function QuestionBankPage() {
     const [selectedQuestion, setSelectedQuestion] = useState<QuestionResponse | null>(null);
     const [showCanvasExport, setShowCanvasExport] = useState(false);
     const [canvasQuestions, setCanvasQuestions] = useState<QuestionResponse[]>([]);
+    const [showCollabModal, setShowCollabModal] = useState(false);
 
     const { data: questionBank, isLoading } = useQuestionBank(questionBankId || "");
+
+    const myRole = questionBank?.my_role ?? null;
+    const canEdit = myRole === CollaboratorRole.owner || myRole === CollaboratorRole.editor;
 
     const addQuestion = useAddQuestionToQuestionBank();
     const linkQuestion = useLinkQuestionToQuestionBank();
@@ -54,6 +62,7 @@ function QuestionBankPage() {
     const syncQuestion = useSyncQuestionInQuestionBank();
     const unlinkQuestion = useUnlinkQuestionInQuestionBank();
     const updateQuestion = useUpdateQuestion();
+    const updateQuestionBank = useUpdateQuestionBank();
 
     const sortedQuestions = useMemo(
         () =>
@@ -339,6 +348,12 @@ function QuestionBankPage() {
                         <p className="text-muted-foreground mt-1">{questionBank.description}</p>
                     )}
                 </div>
+                {canEdit && (
+                    <Button variant="outline" onClick={() => setShowCollabModal(true)}>
+                        <Users className="h-4 w-4 mr-2" />
+                        Share
+                    </Button>
+                )}
                 <Button onClick={() => setShowAddModal(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Question
@@ -366,7 +381,7 @@ function QuestionBankPage() {
                             onSync={handleSyncQuestion}
                             onUnlink={handleUnlinkQuestion}
                             onGoToSource={handleGoToSource}
-                            canEdit={true}
+                            canEdit={canEdit}
                         />
                     ))
                 )}
@@ -416,6 +431,26 @@ function QuestionBankPage() {
                     mode="question"
                 />
             </Suspense>
+
+            {myRole && (
+                <CollaborationModal
+                    resourcePath={ResourcePath["question-banks"]}
+                    resourceId={questionBankId}
+                    isOpen={showCollabModal}
+                    onOpenChange={setShowCollabModal}
+                    myRole={myRole}
+                    currentVisibility={questionBank.visibility}
+                    onVisibilityChange={(visibility) =>
+                        updateQuestionBank.mutate({
+                            questionBankId,
+                            data: { visibility },
+                            oldFolderId: questionBank.folder_id,
+                        })
+                    }
+                    isVisibilityUpdating={updateQuestionBank.isPending}
+                    resourceDetailQueryKey={queryKeys.questionBanks.detail(questionBankId)}
+                />
+            )}
         </div>
     );
 }

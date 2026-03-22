@@ -23,6 +23,14 @@ export async function getAssessmentTemplates(
     return response.data;
 }
 
+// Get assessment templates shared with the current user (non-owner role)
+export async function getSharedAssessmentTemplates(): Promise<AssessmentTemplateResponse[]> {
+    const response = await api.listAssessmentTemplatesAssessmentTemplatesGet({
+        collab_filter: "shared",
+    });
+    return response.data;
+}
+
 // Get a single assessment template with all question templates
 export async function getAssessmentTemplate(
     templateId: string,

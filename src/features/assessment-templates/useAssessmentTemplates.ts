@@ -15,6 +15,7 @@ import {
     generateAssessmentFromTemplate,
     syncQuestionTemplateInAssessmentTemplate,
     unlinkQuestionTemplateInAssessmentTemplate,
+    getSharedAssessmentTemplates,
 } from "./assessment-template.service";
 import type {
     CreateAssessmentTemplateRequest,
@@ -256,5 +257,14 @@ export function useGenerateAssessmentFromTemplate() {
                 queryKey: queryKeys.folders.contents(newAssessment.folder_id),
             });
         },
+    });
+}
+
+// Hook to fetch assessment templates shared with the current user
+export function useSharedAssessmentTemplates(enabled: boolean = true) {
+    return useQuery({
+        queryKey: queryKeys.sharedResources.byResourcePath("assessment-templates"),
+        queryFn: getSharedAssessmentTemplates,
+        enabled,
     });
 }

@@ -7,8 +7,11 @@ import { ROUTES } from "@/router";
 import { getQuestionTemplate } from "@/features/question-templates/question-template.service";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, Plus, GripVertical } from "lucide-react";
+import { ArrowLeft, Play, Plus, GripVertical, Users } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
+import { CollaboratorRole, ResourcePath } from "@/api/models";
+import { CollaborationModal } from "@/shared/components";
+import { queryKeys } from "@/api";
 import {
     AddQuestionTemplateModal,
     LinkOrDuplicateTemplateModal,
@@ -29,6 +32,7 @@ import {
     useReorderQuestionTemplatesInAssessmentTemplate,
     useSyncQuestionTemplateInAssessmentTemplate,
     useUnlinkQuestionTemplateInAssessmentTemplate,
+    useUpdateAssessmentTemplate,
 } from "./useAssessmentTemplates";
 import type { QuestionTemplateResponse } from "@/api/models";
 import { CreateFromTemplateModal } from "../question-templates/components";
@@ -46,8 +50,12 @@ function AssessmentTemplatePage() {
     const [showInstantiateDialog, setShowInstantiateDialog] = useState(false);
     const [isReorderMode, setIsReorderMode] = useState(false);
     const [reorderedTemplates, setReorderedTemplates] = useState<QuestionTemplateResponse[]>([]);
+    const [showCollabModal, setShowCollabModal] = useState(false);
 
     const { data: assessmentTemplate, isLoading } = useAssessmentTemplate(templateId || "");
+
+    const myRole = assessmentTemplate?.my_role ?? null;
+    const canEdit = myRole === CollaboratorRole.owner || myRole === CollaboratorRole.editor;
 
     const addQuestionTemplate = useAddQuestionTemplateToAssessmentTemplate();
     const linkQuestionTemplate = useLinkQuestionTemplateToAssessmentTemplate();
@@ -56,6 +64,7 @@ function AssessmentTemplatePage() {
     const reorderMutation = useReorderQuestionTemplatesInAssessmentTemplate();
     const syncQuestionTemplate = useSyncQuestionTemplateInAssessmentTemplate();
     const unlinkQuestionTemplate = useUnlinkQuestionTemplateInAssessmentTemplate();
+    const updateTemplate = useUpdateAssessmentTemplate();
 
     const sortedTemplates = useMemo(
         () =>
@@ -406,6 +415,12 @@ function AssessmentTemplatePage() {
                             <Play className="h-4 w-4 mr-2" />
                             Instantiate Assessment
                         </Button>
+                        {canEdit && (
+                            <Button variant="outline" onClick={() => setShowCollabModal(true)}>
+                                <Users className="h-4 w-4 mr-2" />
+                                Share
+                            </Button>
+                        )}
                         <Button
                             variant="outline"
                             onClick={() => {
@@ -457,10 +472,11 @@ function AssessmentTemplatePage() {
                 onSync={handleSyncTemplate}
                 onGoToSource={handleGoToTemplateSource}
                 onUnlink={handleUnlinkTemplate}
+                canEdit={canEdit}
             />
 
             {/* Add Question Template Modal */}
-            {user && templateId && (
+            {user && (
                 <AddQuestionTemplateModal
                     open={showAddTemplateModal}
                     onOpenChange={setShowAddTemplateModal}
@@ -503,6 +519,26 @@ function AssessmentTemplatePage() {
                 onConfirm={handleRemoveTemplate}
                 isLoading={removeQuestionTemplate.isPending}
             />
+
+            {myRole && (
+                <CollaborationModal
+                    resourcePath={ResourcePath["assessment-templates"]}
+                    resourceId={templateId}
+                    isOpen={showCollabModal}
+                    onOpenChange={setShowCollabModal}
+                    myRole={myRole}
+                    currentVisibility={assessmentTemplate.visibility}
+                    onVisibilityChange={(visibility) =>
+                        updateTemplate.mutate({
+                            templateId,
+                            data: { visibility },
+                            oldFolderId: assessmentTemplate.folder_id,
+                        })
+                    }
+                    isVisibilityUpdating={updateTemplate.isPending}
+                    resourceDetailQueryKey={queryKeys.assessmentTemplates.detail(templateId)}
+                />
+            )}
         </div>
     );
 }

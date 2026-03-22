@@ -48,7 +48,9 @@ export function QuestionCard({
                     <span className="text-xs px-2 py-1 bg-muted rounded">
                         {question_type.toUpperCase()}
                     </span>
-                    {linked_from_question_id && (
+                </div>
+                <div>
+                    {linked_from_question_id && canEdit && (
                         <LinkMenu
                             item={question}
                             onSync={onSync}
@@ -56,15 +58,15 @@ export function QuestionCard({
                             onGoToSource={onGoToSource}
                         />
                     )}
+                    <QuestionActionsMenu
+                        question={question}
+                        onEdit={onEdit}
+                        onDuplicate={onDuplicate}
+                        onRemove={onRemove}
+                        onAddToCanvas={onAddToCanvas}
+                        canEdit={canEdit}
+                    />
                 </div>
-                <QuestionActionsMenu
-                    question={question}
-                    onEdit={onEdit}
-                    onDuplicate={onDuplicate}
-                    onRemove={onRemove}
-                    onAddToCanvas={onAddToCanvas}
-                    canEdit={canEdit}
-                />
             </CardHeader>
             <CardContent>
                 <QuestionContent

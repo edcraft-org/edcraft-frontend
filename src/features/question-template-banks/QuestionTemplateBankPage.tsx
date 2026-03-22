@@ -5,8 +5,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Users } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
+import { CollaboratorRole, ResourcePath } from "@/api/models";
+import { CollaborationModal } from "@/shared/components";
+import { queryKeys } from "@/api";
 import { ROUTES } from "@/router/paths";
 import { getQuestionTemplate } from "@/features/question-templates/question-template.service";
 import {
@@ -16,6 +19,7 @@ import {
     useRemoveQuestionTemplateFromBank,
     useSyncQuestionTemplateInBank,
     useUnlinkQuestionTemplateInBank,
+    useUpdateQuestionTemplateBank,
 } from "./useQuestionTemplateBanks";
 import { RemoveTemplateDialog } from "@/features/assessment-templates/components";
 import { QuestionTemplateCard } from "./components";
@@ -36,14 +40,19 @@ function QuestionTemplateBankPage() {
     const [showRemoveDialog, setShowRemoveDialog] = useState(false);
     const [selectedTemplate, setSelectedTemplate] = useState<QuestionTemplateResponse | null>(null);
     const [showCreateFromTemplate, setShowCreateFromTemplate] = useState(false);
+    const [showCollabModal, setShowCollabModal] = useState(false);
 
     const { data: templateBank, isLoading } = useQuestionTemplateBank(templateBankId || "");
+
+    const myRole = templateBank?.my_role ?? null;
+    const canEdit = myRole === CollaboratorRole.owner || myRole === CollaboratorRole.editor;
 
     const insertTemplate = useInsertQuestionTemplateIntoBank();
     const linkTemplate = useLinkQuestionTemplateToBank();
     const removeTemplate = useRemoveQuestionTemplateFromBank();
     const syncTemplate = useSyncQuestionTemplateInBank();
     const unlinkTemplate = useUnlinkQuestionTemplateInBank();
+    const updateTemplateBank = useUpdateQuestionTemplateBank();
 
     const sortedTemplates = useMemo(
         () =>
@@ -305,6 +314,12 @@ function QuestionTemplateBankPage() {
                         <p className="text-muted-foreground mt-1">{templateBank.description}</p>
                     )}
                 </div>
+                {canEdit && (
+                    <Button variant="outline" onClick={() => setShowCollabModal(true)}>
+                        <Users className="h-4 w-4 mr-2" />
+                        Share
+                    </Button>
+                )}
                 <Button onClick={() => setShowAddModal(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Template
@@ -332,6 +347,7 @@ function QuestionTemplateBankPage() {
                             onSync={handleSyncTemplate}
                             onGoToSource={handleGoToTemplateSource}
                             onUnlink={handleUnlinkTemplate}
+                            canEdit={canEdit}
                         />
                     ))
                 )}
@@ -367,6 +383,26 @@ function QuestionTemplateBankPage() {
                 onConfirm={handleRemoveTemplate}
                 isLoading={removeTemplate.isPending}
             />
+
+            {myRole && (
+                <CollaborationModal
+                    resourcePath={ResourcePath["question-template-banks"]}
+                    resourceId={templateBankId}
+                    isOpen={showCollabModal}
+                    onOpenChange={setShowCollabModal}
+                    myRole={myRole}
+                    currentVisibility={templateBank.visibility}
+                    onVisibilityChange={(visibility) =>
+                        updateTemplateBank.mutate({
+                            templateBankId,
+                            data: { visibility },
+                            oldFolderId: templateBank.folder_id,
+                        })
+                    }
+                    isVisibilityUpdating={updateTemplateBank.isPending}
+                    resourceDetailQueryKey={queryKeys.questionTemplateBanks.detail(templateBankId)}
+                />
+            )}
         </div>
     );
 }

@@ -1,6 +1,7 @@
 // CollaborationModal - Manage collaborators for a resource (assessment, etc.)
 
 import { useState } from "react";
+import type { QueryKey } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -31,14 +32,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CollaboratorRole, ResourceVisibility } from "@/api/models";
-import type { CollaboratorResponse } from "@/api/models";
+import type { CollaboratorResponse, ResourcePath } from "@/api/models";
 import {
     useCollaborators,
     useAddCollaborator,
     useUpdateCollaboratorRole,
     useRemoveCollaborator,
-    useUpdateAssessment,
-} from "@/features/assessments/useAssessments";
+} from "@/shared/hooks/useCollaborators";
 
 const addCollaboratorSchema = z.object({
     email: z.email("Enter a valid email address"),
@@ -48,12 +48,15 @@ const addCollaboratorSchema = z.object({
 type AddCollaboratorValues = z.infer<typeof addCollaboratorSchema>;
 
 interface CollaborationModalProps {
+    resourcePath: ResourcePath;
     resourceId: string;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     myRole: CollaboratorRole;
-    currentVisibility?: ResourceVisibility;
-    folderId?: string;
+    currentVisibility: ResourceVisibility;
+    onVisibilityChange: (visibility: ResourceVisibility) => void;
+    isVisibilityUpdating: boolean;
+    resourceDetailQueryKey: QueryKey;
 }
 
 const ROLE_LABELS: Record<CollaboratorRole, string> = {
@@ -84,21 +87,23 @@ const RoleBadge = ({ role }: { role: CollaboratorRole }) => {
 };
 
 export function CollaborationModal({
+    resourcePath,
     resourceId,
     isOpen,
     onOpenChange,
     myRole,
     currentVisibility,
-    folderId,
+    onVisibilityChange,
+    isVisibilityUpdating,
+    resourceDetailQueryKey,
 }: CollaborationModalProps) {
     const canManage = myRole === CollaboratorRole.owner || myRole === CollaboratorRole.editor;
     const isOwner = myRole === CollaboratorRole.owner;
 
-    const { data: collaborators, isLoading } = useCollaborators(resourceId, canManage);
-    const addCollaborator = useAddCollaborator();
-    const updateRole = useUpdateCollaboratorRole();
-    const removeCollaborator = useRemoveCollaborator();
-    const updateAssessment = useUpdateAssessment();
+    const { data: collaborators, isLoading } = useCollaborators(resourcePath, resourceId, canManage);
+    const addCollaborator = useAddCollaborator(resourcePath);
+    const updateRole = useUpdateCollaboratorRole(resourcePath, resourceDetailQueryKey);
+    const removeCollaborator = useRemoveCollaborator(resourcePath);
 
     const addForm = useForm<AddCollaboratorValues>({
         resolver: zodResolver(addCollaboratorSchema),
@@ -113,7 +118,7 @@ export function CollaborationModal({
 
     const handleAdd = (values: AddCollaboratorValues) => {
         addCollaborator.mutate(
-            { assessmentId: resourceId, email: values.email, role: values.role },
+            { resourceId, email: values.email, role: values.role },
             {
                 onSuccess: () => {
                     addForm.reset();
@@ -139,7 +144,7 @@ export function CollaborationModal({
             return;
         }
         updateRole.mutate(
-            { assessmentId: resourceId, collaboratorId: collab.id, role: newRole },
+            { resourceId, collaboratorId: collab.id, role: newRole },
             { onError: () => toast.error("Failed to update role") },
         );
     };
@@ -148,7 +153,7 @@ export function CollaborationModal({
         if (!pendingTransfer) return;
         updateRole.mutate(
             {
-                assessmentId: resourceId,
+                resourceId,
                 collaboratorId: pendingTransfer.collaboratorId,
                 role: CollaboratorRole.owner,
             },
@@ -167,29 +172,14 @@ export function CollaborationModal({
 
     const handleRemove = (collab: CollaboratorResponse) => {
         removeCollaborator.mutate(
-            { assessmentId: resourceId, collaboratorId: collab.id },
+            { resourceId, collaboratorId: collab.id },
             { onError: () => toast.error("Failed to remove collaborator") },
         );
     };
 
     const handleVisibilityChange = (value: string) => {
-        if (!folderId || value === currentVisibility) return;
-        updateAssessment.mutate(
-            {
-                assessmentId: resourceId,
-                data: { visibility: value as ResourceVisibility },
-                oldFolderId: folderId,
-            },
-            {
-                onSuccess: () =>
-                    toast.success(
-                        value === ResourceVisibility.public
-                            ? "Assessment is now public"
-                            : "Assessment is now restricted",
-                    ),
-                onError: (err) => toast.error(`Failed to update visibility: ${err.message}`),
-            },
-        );
+        if (!onVisibilityChange || value === currentVisibility) return;
+        onVisibilityChange(value as ResourceVisibility);
     };
 
     const assignableRoles: CollaboratorRole[] = isOwner
@@ -281,13 +271,13 @@ export function CollaborationModal({
                     </div>
 
                     {/* Visibility section — owner only */}
-                    {canManage && currentVisibility !== undefined && (
+                    {canManage && (
                         <div className="border-t pt-4 space-y-2">
                             <p className="text-sm font-medium">Visibility</p>
                             <RadioGroup
                                 value={currentVisibility}
                                 onValueChange={handleVisibilityChange}
-                                disabled={updateAssessment.isPending}
+                                disabled={isVisibilityUpdating}
                                 className="space-y-1"
                             >
                                 <label className="flex items-center gap-3 rounded-md border px-3 py-2 cursor-pointer hover:bg-accent/50 transition-colors">

@@ -13,6 +13,7 @@ import {
     removeQuestionFromQuestionBank,
     syncQuestionInQuestionBank,
     unlinkQuestionInQuestionBank,
+    getSharedQuestionBanks,
 } from "./question-bank.service";
 import type {
     CreateQuestionBankRequest,
@@ -213,5 +214,15 @@ export function useUnlinkQuestionInQuestionBank() {
                 updatedQuestionBank,
             );
         },
+    });
+}
+
+
+// Hook to fetch question banks shared with the current user
+export function useSharedQuestionBanks(enabled = true) {
+    return useQuery({
+        queryKey: queryKeys.sharedResources.byResourcePath("question-banks"),
+        queryFn: getSharedQuestionBanks,
+        enabled,
     });
 }

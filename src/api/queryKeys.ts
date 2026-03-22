@@ -66,12 +66,13 @@ export const queryKeys = {
 
     // Collaborator queries
     collaborators: {
-        byAssessment: (assessmentId: string) => ["collaborators", assessmentId] as const,
+        byResource: (resourcePath: string, resourceId: string) =>
+            ["collaborators", resourcePath, resourceId] as const,
     },
 
     // Shared resources queries
     sharedResources: {
-        all: () => ["shared-resources"] as const,
+        byResourcePath: (resourcePath: string) => ["shared-resources", resourcePath] as const,
     },
 
     // Canvas queries
