@@ -37,12 +37,16 @@ interface InputDataCardProps {
     onInputDataConfigChange?: (config: Record<string, Record<string, unknown>>) => void;
     onSave?: () => void;
     isSaving?: boolean;
+    optional?: boolean;
 }
 
-const createInputDataSchema = (fixedParamNames: string[]) =>
+const createInputDataSchema = (fixedParamNames: string[], optional: boolean) =>
     z
         .object({
-            fixedParams: z.record(z.string(), z.string().min(1, "Value is required")),
+            fixedParams: z.record(
+                z.string(),
+                optional ? z.string() : z.string().min(1, "Value is required"),
+            ),
             varArgs: z
                 .array(
                     z.object({
@@ -104,6 +108,7 @@ export function InputDataCard({
     onInputDataConfigChange,
     onSave,
     isSaving,
+    optional = false,
 }: InputDataCardProps) {
     const generateInputs = useGenerateInputs();
 
@@ -150,6 +155,7 @@ export function InputDataCard({
         const merged: Record<string, unknown> = {};
 
         Object.entries(fixedParams).forEach(([key, value]) => {
+            if (optional && value === "") return;
             try {
                 merged[key] = JSON.parse(value);
             } catch {
@@ -158,6 +164,7 @@ export function InputDataCard({
         });
 
         varArgs?.forEach(({ key, value }) => {
+            if (optional && value === "") return;
             try {
                 merged[key] = JSON.parse(value);
             } catch {
@@ -182,7 +189,7 @@ export function InputDataCard({
     );
 
     const internalForm = useForm<InputDataFormValues>({
-        resolver: zodResolver(createInputDataSchema(fixedParamNames)),
+        resolver: zodResolver(createInputDataSchema(fixedParamNames, optional)),
         defaultValues: {
             fixedParams: defaultFixedParams,
             varArgs: [],

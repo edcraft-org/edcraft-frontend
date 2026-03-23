@@ -2,8 +2,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Code2, FileQuestion, CheckCircle2 } from "lucide-react";
+import { Code2, FileQuestion } from "lucide-react";
 import type { TemplatePreviewResponse } from "@/api/models";
+import { QuestionDisplay } from "@/features/question-builder/components";
 
 interface TemplatePreviewProps {
     preview: TemplatePreviewResponse;
@@ -29,49 +30,7 @@ export function TemplatePreview({ preview }: TemplatePreviewProps) {
             </Card>
 
             {/* Sample Question Preview */}
-            <Card>
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4" />
-                        Sample Question Preview
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                    <p className="text-sm">{preview_question.text}</p>
-
-                    {preview_question.options && preview_question.options.length > 0 && (
-                        <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground">Options:</p>
-                            <ul className="space-y-1">
-                                {preview_question.options.map((option, index) => (
-                                    <li
-                                        key={index}
-                                        className={`text-sm p-2 rounded border ${
-                                            preview_question.correct_indices?.includes(index)
-                                                ? "border-green-500 bg-green-50 dark:bg-green-950/20"
-                                                : "border-border"
-                                        }`}
-                                    >
-                                        {preview_question.correct_indices?.includes(index) && (
-                                            <CheckCircle2 className="h-3 w-3 inline mr-2 text-green-500" />
-                                        )}
-                                        {option as string}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-
-                    {
-                        <div>
-                            <p className="text-xs text-muted-foreground">Answer:</p>
-                            <p className="text-sm font-mono bg-muted p-2 rounded mt-1">
-                                {preview_question.answer as string}
-                            </p>
-                        </div>
-                    }
-                </CardContent>
-            </Card>
+            <QuestionDisplay question={preview_question} questionType={question_type} />
 
             {/* Template Config Summary */}
             <Card>

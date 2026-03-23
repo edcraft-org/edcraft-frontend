@@ -41,7 +41,7 @@ import {
     CodeInputCard,
     TargetSelectionCard,
     QuestionConfigCard,
-    InputDataConfigCard,
+    InputDataCard,
 } from "@/shared/components";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { SaveTemplateModal, QuestionTextTemplateCard } from "./components";
@@ -98,6 +98,9 @@ function TemplateBuilderPage() {
     const [inputDataConfig, setInputDataConfig] = useState<Record<string, Record<string, unknown>>>(
         {},
     );
+
+    // Preview input data state
+    const [previewInputData, setPreviewInputData] = useState<Record<string, unknown>>({});
 
     // Ref for scrolling to preview
     const previewRef = useRef<HTMLDivElement>(null);
@@ -243,6 +246,7 @@ function TemplateBuilderPage() {
             setTargetSelection(null);
             form.setValue("entryFunction", "");
             setPreview(null);
+            setPreviewInputData({});
         }
     };
 
@@ -266,10 +270,15 @@ function TemplateBuilderPage() {
             return;
         }
 
+        const hasPreviewInputData = Object.keys(previewInputData).length > 0;
+
         generatePreview.mutate(
             {
                 code: values.code,
-                entry_function: values.entryFunction,
+                execution_spec: {
+                    entry_function: values.entryFunction,
+                    ...(hasPreviewInputData && { input_data: previewInputData }),
+                },
                 question_spec: {
                     target: flattenTarget(targetSelection),
                     output_type: values.outputType,
@@ -649,12 +658,15 @@ function TemplateBuilderPage() {
                             />
                         )}
 
-                        {/* Input Data Config - Only show after entry function is selected */}
+                        {/* Input Data */}
                         {entryFunctionParams && (
-                            <InputDataConfigCard
+                            <InputDataCard
                                 entryFunctionParams={entryFunctionParams}
-                                initialConfig={inputDataConfig}
-                                onConfigChange={setInputDataConfig}
+                                title="Input Data and Config (Optional)"
+                                inputDataConfig={inputDataConfig}
+                                onInputDataConfigChange={setInputDataConfig}
+                                onInputDataChange={setPreviewInputData}
+                                optional
                             />
                         )}
 
