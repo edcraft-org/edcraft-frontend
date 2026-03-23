@@ -29,7 +29,7 @@ export function QuestionCard({
     onSync,
     onUnlink,
     onGoToSource,
-    canEdit
+    canEdit,
 }: QuestionCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -54,7 +54,12 @@ export function QuestionCard({
                             isExpanded && "rotate-90",
                         )}
                     />
-                    <p className="text-base font-normal flex-1 whitespace-pre-wrap">
+                    <p
+                        className={cn(
+                            "text-base font-normal flex-1 whitespace-pre-wrap",
+                            !isExpanded && "line-clamp-2",
+                        )}
+                    >
                         <span className="text-xs px-2 py-1 bg-muted rounded flex-shrink-0">
                             {question_type.toUpperCase()}
                         </span>{" "}

@@ -287,7 +287,7 @@ export function CreateFromTemplateModal({
                             </Card>
 
                             {/* Input Data */}
-                            {!generatedQuestion && (
+                            <div className={generatedQuestion ? "hidden" : ""}>
                                 <InputDataCard
                                     entryFunctionParams={template.entry_function_params}
                                     inputDataConfig={currentInputDataConfig}
@@ -299,7 +299,7 @@ export function CreateFromTemplateModal({
                                     onSave={handleSaveConfig}
                                     isSaving={updateQuestionTemplate.isPending}
                                 />
-                            )}
+                            </div>
 
                             {/* Generated Question Preview */}
                             {generatedQuestion && (

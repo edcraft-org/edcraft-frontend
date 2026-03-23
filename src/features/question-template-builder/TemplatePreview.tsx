@@ -24,7 +24,7 @@ export function TemplatePreview({ preview }: TemplatePreviewProps) {
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-sm">{question_text_template}</p>
+                    <p className="text-sm whitespace-pre-wrap">{question_text_template}</p>
                     <Badge variant="secondary">{question_type.toUpperCase()}</Badge>
                 </CardContent>
             </Card>

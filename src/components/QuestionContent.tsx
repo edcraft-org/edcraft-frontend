@@ -52,7 +52,7 @@ export function QuestionContent({
     const hasOptions = isMCQOrMRQ && options && Array.isArray(options) && options.length > 0;
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 whitespace-pre-wrap">
             {/* Question Text */}
             {questionText && <div className="text-base font-normal whitespace-pre-wrap">{questionText}</div>}
 

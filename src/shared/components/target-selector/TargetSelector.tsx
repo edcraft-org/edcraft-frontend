@@ -109,9 +109,12 @@ export default function TargetSelector({
                 selectedLineNumbers = initialSelection.element_id;
                 elementId = -1;
             } else {
-                // Single function selected - find its index in the current tree
-                const funcIndex = currentTree.function_indices.indexOf(initialSelection.element_id);
-                elementId = funcIndex >= 0 ? funcIndex + 1 : 0; // +1 because UI uses 1-based indexing
+                // Single function selected - find its 1-based index within same-name functions
+                const matchingIds = currentTree.function_indices.filter(
+                    (id) => codeInfo.functions[id].name === initialSelection.name,
+                );
+                const matchIndex = matchingIds.indexOf(initialSelection.element_id as number);
+                elementId = matchIndex >= 0 ? matchIndex + 1 : 0;
             }
         } else if (initialSelection.type === ElementType.Variable) {
             // Variables can be multi-selected (comma-separated names)
@@ -253,71 +256,74 @@ export default function TargetSelector({
     // Handle function line selection
     const handleFunctionLineSelect = useCallback(
         (index: number) => {
-            const functionIds = selectionState.currentTree.function_indices;
+            setSelectionState((prev) => {
+                const functionIds = prev.currentTree.function_indices;
 
-            if (index === -1) {
-                // "All" selected
-                const allIds = functionIds.filter(
-                    (id) => codeInfo.functions[id].name === selectionState.functionNameSelected,
-                );
+                if (index === -1) {
+                    // "All" selected
+                    const allIds = functionIds.filter(
+                        (id) => codeInfo.functions[id].name === prev.functionNameSelected,
+                    );
 
-                if (allIds.length === 0) {
-                    console.error("No matching functions found");
-                    return;
-                }
+                    if (allIds.length === 0) {
+                        console.error("No matching functions found");
+                        return prev;
+                    }
 
-                const target: TargetSelection = {
-                    type: ElementType.Function,
-                    element_id: allIds,
-                    name: selectionState.functionNameSelected || undefined,
-                    scope_path: selectionState.scopePath,
-                };
+                    const target: TargetSelection = {
+                        type: ElementType.Function,
+                        element_id: allIds,
+                        name: prev.functionNameSelected || undefined,
+                        scope_path: prev.scopePath,
+                    };
 
-                setSelectionState({
-                    ...selectionState,
-                    selectedLineNumbers: allIds,
-                    elementId: -1,
-                    selectedElementData: {
-                        name: selectionState.functionNameSelected || undefined,
-                    },
-                });
+                    onTargetChange(target);
 
-                onTargetChange(target);
-            } else {
-                // Specific line selected (index is 1-based, adjust to 0-based)
-                const matchingFunctions = functionIds
-                    .map((id) => ({ ...codeInfo.functions[id], globalId: id }))
-                    .filter((f) => f.name === selectionState.functionNameSelected);
+                    return {
+                        ...prev,
+                        selectedLineNumbers: allIds,
+                        elementId: -1,
+                        selectedElementData: {
+                            name: prev.functionNameSelected || undefined,
+                        },
+                    };
+                } else {
+                    // Specific line selected (index is 1-based, adjust to 0-based)
+                    const matchingFunctions = functionIds
+                        .map((id) => ({ ...codeInfo.functions[id], globalId: id }))
+                        .filter((f) => f.name === prev.functionNameSelected);
 
-                const actualIndex = index - 1;
-                if (actualIndex < 0 || actualIndex >= matchingFunctions.length) {
-                    console.error("Invalid function index");
-                    return;
-                }
+                    const actualIndex = index - 1;
+                    if (actualIndex < 0 || actualIndex >= matchingFunctions.length) {
+                        console.error("Invalid function index");
+                        return prev;
+                    }
 
-                const selectedFunc = matchingFunctions[actualIndex];
-                const target: TargetSelection = {
-                    type: ElementType.Function,
-                    element_id: selectedFunc.globalId,
-                    name: selectedFunc.name,
-                    line_number: selectedFunc.line_number,
-                    scope_path: selectionState.scopePath,
-                };
+                    const selectedFunc = matchingFunctions[actualIndex];
 
-                setSelectionState({
-                    ...selectionState,
-                    elementId: index,
-                    selectedElementData: {
-                        globalId: selectedFunc.globalId,
+                    const target: TargetSelection = {
+                        type: ElementType.Function,
+                        element_id: selectedFunc.globalId,
                         name: selectedFunc.name,
                         line_number: selectedFunc.line_number,
-                    },
-                });
+                        scope_path: prev.scopePath,
+                    };
 
-                onTargetChange(target);
-            }
+                    onTargetChange(target);
+
+                    return {
+                        ...prev,
+                        elementId: index,
+                        selectedElementData: {
+                            globalId: selectedFunc.globalId,
+                            name: selectedFunc.name,
+                            line_number: selectedFunc.line_number,
+                        },
+                    };
+                }
+            });
         },
-        [selectionState, codeInfo, onTargetChange],
+        [codeInfo, onTargetChange],
     );
 
     // Handle variable toggle (multi-select)

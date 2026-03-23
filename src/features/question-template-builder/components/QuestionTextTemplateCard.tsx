@@ -62,7 +62,7 @@ function getValueFromEditor(el: HTMLDivElement): string {
             }
         }
     }
-    el.childNodes.forEach((child) => walk(child, true));
+    el.childNodes.forEach((child, i) => walk(child, i === 0));
     // Trim trailing newlines that browsers may insert when clearing content
     return parts.join("").replace(/\n+$/, "");
 }
@@ -240,7 +240,7 @@ export function QuestionTextTemplateCard({
                         className="rounded-l-none border-l"
                         onClick={() => onModeChange("mustache")}
                     >
-                        Mustache
+                        Advanced
                     </Button>
                 </div>
 
@@ -255,7 +255,7 @@ export function QuestionTextTemplateCard({
                             onKeyDown={handleKeyDown}
                             onPaste={handlePaste}
                             onBlur={handleEditorBlur}
-                            className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono whitespace-pre-wrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         />
                         {value === "" && (
                             <p className="pointer-events-none absolute left-3 top-2 text-sm font-mono text-muted-foreground">

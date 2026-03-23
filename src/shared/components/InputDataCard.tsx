@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
     FormControl,
@@ -40,18 +41,41 @@ interface InputDataCardProps {
     optional?: boolean;
 }
 
+const isValidJson = (value: string) => {
+    try {
+        JSON.parse(value);
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+const jsonValueSchema = (optional: boolean) =>
+    optional
+        ? z.string().refine((v) => v === "" || isValidJson(v), {
+              message: 'Invalid JSON — use double quotes for strings (e.g. "hello"), not single quotes',
+          })
+        : z
+              .string()
+              .min(1, "Value is required")
+              .refine(isValidJson, {
+                  message: 'Invalid JSON — use double quotes for strings (e.g. "hello"), not single quotes',
+              });
+
 const createInputDataSchema = (fixedParamNames: string[], optional: boolean) =>
     z
         .object({
-            fixedParams: z.record(
-                z.string(),
-                optional ? z.string() : z.string().min(1, "Value is required"),
-            ),
+            fixedParams: z.record(z.string(), jsonValueSchema(optional)),
             varArgs: z
                 .array(
                     z.object({
                         key: z.string().min(1, "Key is required"),
-                        value: z.string().min(1, "Value is required"),
+                        value: z
+                            .string()
+                            .min(1, "Value is required")
+                            .refine(isValidJson, {
+                                message: 'Invalid JSON — use double quotes for strings (e.g. "hello"), not single quotes',
+                            }),
                     }),
                 )
                 .optional(),
@@ -437,10 +461,10 @@ export function InputDataCard({
                                                                 {paramName}
                                                             </FormLabel>
                                                             <FormControl>
-                                                                <Input
+                                                                <Textarea
                                                                     id={`param-${paramName}`}
                                                                     placeholder='e.g., [1, 2, 3] or "hello"'
-                                                                    className="font-mono text-sm flex-1"
+                                                                    className="font-mono text-sm flex-1 min-h-9"
                                                                     {...field}
                                                                 />
                                                             </FormControl>
@@ -538,9 +562,9 @@ export function InputDataCard({
                                                                 render={({ field }) => (
                                                                     <FormItem className="space-y-0">
                                                                         <FormControl>
-                                                                            <Input
+                                                                            <Textarea
                                                                                 placeholder="value"
-                                                                                className="font-mono text-sm h-9"
+                                                                                className="font-mono text-sm min-h-9"
                                                                                 {...field}
                                                                             />
                                                                         </FormControl>
