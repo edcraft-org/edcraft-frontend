@@ -1,6 +1,8 @@
 // Assessment Template hooks using TanStack Query
 
+import { useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { isAbortError } from "@/api/pollJob";
 import { queryKeys } from "@/api";
 import {
     getAssessmentTemplates,
@@ -240,15 +242,21 @@ export function useUnlinkQuestionTemplateInAssessmentTemplate() {
 // Hook to generate an assessment from a template
 export function useGenerateAssessmentFromTemplate() {
     const queryClient = useQueryClient();
-
-    return useMutation({
+    const controllerRef = useRef<AbortController | null>(null);
+    const mutation = useMutation({
         mutationFn: ({
             templateId,
             data,
         }: {
             templateId: string;
             data: GenerateAssessmentFromTemplateRequest;
-        }) => generateAssessmentFromTemplate(templateId, data),
+        }) => {
+            controllerRef.current?.abort();
+            const controller = new AbortController();
+            controllerRef.current = controller;
+            return generateAssessmentFromTemplate(templateId, data, controller.signal);
+        },
+        onError: (error) => { if (isAbortError(error)) return; },
         onSuccess: (newAssessment) => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.assessments.all(newAssessment.owner_id),
@@ -258,6 +266,8 @@ export function useGenerateAssessmentFromTemplate() {
             });
         },
     });
+    const cancel = useCallback(() => controllerRef.current?.abort(), []);
+    return { ...mutation, cancel };
 }
 
 // Hook to fetch assessment templates shared with the current user

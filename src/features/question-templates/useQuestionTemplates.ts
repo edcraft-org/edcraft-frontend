@@ -1,6 +1,8 @@
 // Question Template hooks
 
+import { useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { isAbortError } from "@/api/pollJob";
 import { queryKeys } from "@/api";
 import {
     getQuestionTemplates,
@@ -98,13 +100,22 @@ export function useDeleteQuestionTemplate() {
 
 // Hook to generate a question from a template
 export function useGenerateFromTemplate() {
-    return useMutation({
+    const controllerRef = useRef<AbortController | null>(null);
+    const mutation = useMutation({
         mutationFn: ({
             templateId,
             data,
         }: {
             templateId: string;
             data: GenerateQuestionFromTemplateRequest;
-        }) => generateFromTemplate(templateId, data),
+        }) => {
+            controllerRef.current?.abort();
+            const controller = new AbortController();
+            controllerRef.current = controller;
+            return generateFromTemplate(templateId, data, controller.signal);
+        },
+        onError: (error) => { if (isAbortError(error)) return; },
     });
+    const cancel = useCallback(() => controllerRef.current?.abort(), []);
+    return { ...mutation, cancel };
 }

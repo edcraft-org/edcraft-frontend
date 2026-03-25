@@ -149,11 +149,12 @@ export async function unlinkQuestionTemplateInAssessmentTemplate(
 export async function generateAssessmentFromTemplate(
     templateId: string,
     data: GenerateAssessmentFromTemplateRequest,
+    signal?: AbortSignal,
 ): Promise<AssessmentWithQuestionsResponse> {
     const response =
         await api.generateAssessmentFromTemplateQuestionGenerationAssessmentFromTemplateTemplateIdPost(
             templateId,
             data,
         );
-    return pollJob<AssessmentWithQuestionsResponse>(response.data.job_id);
+    return pollJob<AssessmentWithQuestionsResponse>(response.data.job_id, { signal });
 }

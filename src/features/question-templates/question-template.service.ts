@@ -45,11 +45,12 @@ export async function deleteQuestionTemplate(templateId: string): Promise<void> 
 export async function generateFromTemplate(
     templateId: string,
     data: GenerateQuestionFromTemplateRequest,
+    signal?: AbortSignal,
 ): Promise<Question> {
     const response =
         await api.generateQuestionFromTemplateQuestionGenerationFromTemplateTemplateIdPost(
             templateId,
             data,
         );
-    return pollJob<Question>(response.data.job_id);
+    return pollJob<Question>(response.data.job_id, { signal });
 }

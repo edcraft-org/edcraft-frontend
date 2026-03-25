@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, ChevronRight, ChevronLeft, Check } from "lucide-react";
+import { Loader2, ChevronRight, ChevronLeft, Check, X } from "lucide-react";
 import {
     Form,
     FormControl,
@@ -49,6 +49,7 @@ interface InstantiateAssessmentModalProps {
         description: string | undefined,
         questionInputs: Array<Record<string, unknown>>,
     ) => Promise<void>;
+    onCancelGeneration?: () => void;
     isLoading?: boolean;
 }
 
@@ -58,6 +59,7 @@ export function InstantiateAssessmentModal({
     assessmentTemplateTitle,
     questionTemplates,
     onInstantiate,
+    onCancelGeneration,
     isLoading,
 }: InstantiateAssessmentModalProps) {
     const totalSteps = questionTemplates.length + 1;
@@ -203,6 +205,17 @@ export function InstantiateAssessmentModal({
                         <div className="flex flex-col items-center justify-center gap-3 py-8 text-muted-foreground">
                             <Loader2 className="h-8 w-8 animate-spin" />
                             <p className="text-sm">Generating assessment, please wait...</p>
+                            {onCancelGeneration && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={onCancelGeneration}
+                                >
+                                    <X className="h-4 w-4 mr-2" />
+                                    Cancel
+                                </Button>
+                            )}
                         </div>
                     )}
 
@@ -298,8 +311,10 @@ export function InstantiateAssessmentModal({
                     <div className="flex gap-2">
                         <Button
                             variant="outline"
-                            onClick={handleClose}
-                            disabled={isLoading}
+                            onClick={() => {
+                                onCancelGeneration?.();
+                                handleClose();
+                            }}
                             aria-label="Cancel and close modal"
                         >
                             Cancel

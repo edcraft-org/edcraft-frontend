@@ -11,7 +11,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Loader2, Code2, Search } from "lucide-react";
+import { Loader2, Code2, Search, X } from "lucide-react";
 import { useState } from "react";
 import type { Control, FieldValues, Path } from "react-hook-form";
 import CodeMirror from "@uiw/react-codemirror";
@@ -33,6 +33,7 @@ interface CodeInputCardProps<T extends FieldValues = FieldValues> {
     code: string;
     onCodeChange: (code: string) => void;
     onAnalyseCode: () => void;
+    onCancelAnalysis?: () => void;
     isAnalysing: boolean;
     analysisError?: string | null;
     hasExistingSelection?: boolean;
@@ -43,6 +44,7 @@ export function CodeInputCard<T extends FieldValues = FieldValues>({
     code,
     onCodeChange,
     onAnalyseCode,
+    onCancelAnalysis,
     isAnalysing,
     analysisError,
     hasExistingSelection = false,
@@ -96,24 +98,35 @@ export function CodeInputCard<T extends FieldValues = FieldValues>({
                         <p className="text-sm text-destructive">{analysisError}</p>
                     </div>
                 )}
-                <Button
-                    className="w-full"
-                    variant="secondary"
-                    onClick={handleAnalyseClick}
-                    disabled={isAnalysing || !code.trim()}
-                >
-                    {isAnalysing ? (
-                        <>
+                {isAnalysing ? (
+                    <div className="flex gap-2">
+                        <Button className="flex-1" variant="secondary" disabled>
                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
                             Analysing Code...
-                        </>
-                    ) : (
-                        <>
-                            <Search className="h-4 w-4 mr-2" />
-                            Analyse Code
-                        </>
-                    )}
-                </Button>
+                        </Button>
+                        {onCancelAnalysis && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={onCancelAnalysis}
+                                aria-label="Cancel analysis"
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        )}
+                    </div>
+                ) : (
+                    <Button
+                        className="w-full"
+                        variant="secondary"
+                        onClick={handleAnalyseClick}
+                        disabled={!code.trim()}
+                    >
+                        <Search className="h-4 w-4 mr-2" />
+                        Analyse Code
+                    </Button>
+                )}
             </CardContent>
             <AlertDialog open={showOverwriteWarning} onOpenChange={setShowOverwriteWarning}>
                 <AlertDialogContent>

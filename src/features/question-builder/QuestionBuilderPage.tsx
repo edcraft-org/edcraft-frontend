@@ -1,6 +1,6 @@
 // QuestionBuilderPage - Generate questions from code
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +10,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
-import { Loader2, Wand2, Save, ArrowLeft } from "lucide-react";
+import { Loader2, Wand2, Save, ArrowLeft, X } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
 import { useAuthDialogStore } from "@/shared/stores/auth-dialog.store";
 import {
@@ -23,7 +23,7 @@ import {
 } from "@/features/question-banks/useQuestionBanks";
 import { useAnalyseCode } from "@/shared/hooks/useCodeAnalysis";
 import { api } from "@/api/client";
-import { pollJob } from "@/api/pollJob";
+import { pollJob, isAbortError } from "@/api/pollJob";
 import type { TargetSelection } from "@/types/frontend.types";
 import {
     CodeInputCard,
@@ -66,13 +66,21 @@ function QuestionBuilderPage() {
     const [isInputDataValid, setIsInputDataValid] = useState(true);
 
     // Question generation mutation
+    const generateControllerRef = useRef<AbortController | null>(null);
     const generateQuestionMutation = useMutation({
         mutationFn: async (request: QuestionGenerationRequest) => {
+            generateControllerRef.current?.abort();
+            const controller = new AbortController();
+            generateControllerRef.current = controller;
             const response =
                 await api.generateQuestionQuestionGenerationGenerateQuestionPost(request);
-            return pollJob<Question>(response.data.job_id);
+            return pollJob<Question>(response.data.job_id, { signal: controller.signal });
+        },
+        onError: (error) => {
+            if (isAbortError(error)) return;
         },
     });
+    const cancelGenerate = useCallback(() => generateControllerRef.current?.abort(), []);
 
     const [generatedQuestion, setGeneratedQuestion] = useState<Question | null>(null);
 
@@ -81,6 +89,14 @@ function QuestionBuilderPage() {
 
     // Ref for scrolling to preview
     const previewRef = useRef<HTMLDivElement>(null);
+
+    // Cancel in-flight jobs on unmount
+    useEffect(() => {
+        return () => {
+            analyseCode.cancel();
+            generateControllerRef.current?.abort();
+        };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Mutations
     const addQuestion = useAddQuestionToAssessment();
@@ -151,6 +167,7 @@ function QuestionBuilderPage() {
                     }
                 },
                 onError: (error) => {
+                    if (isAbortError(error)) return;
                     toast.error(`Code analysis failed: ${error.message}`);
                 },
             },
@@ -202,6 +219,7 @@ function QuestionBuilderPage() {
                 previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
             },
             onError: (error) => {
+                if (isAbortError(error)) return;
                 toast.error(`Failed to generate question: ${error.message}`);
             },
         });
@@ -340,6 +358,7 @@ function QuestionBuilderPage() {
                             code={code}
                             onCodeChange={handleCodeChange}
                             onAnalyseCode={handleAnalyseCode}
+                            onCancelAnalysis={analyseCode.cancel}
                             isAnalysing={analyseCode.isPending}
                             hasExistingSelection={targetSelection !== null}
                             analysisError={
@@ -379,30 +398,35 @@ function QuestionBuilderPage() {
                         )}
 
                         {/* Generate Button - Only show after configuration */}
-                        {codeInfo && (
-                            <Button
-                                className="w-full"
-                                onClick={handleGenerateQuestion}
-                                disabled={
-                                    generateQuestionMutation.isPending ||
-                                    !targetSelection ||
-                                    !entryFunction ||
-                                    !isInputDataValid
-                                }
-                            >
-                                {generateQuestionMutation.isPending ? (
-                                    <>
+                        {codeInfo &&
+                            (generateQuestionMutation.isPending ? (
+                                <div className="flex gap-2">
+                                    <Button className="flex-1" disabled>
                                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                         Generating Question...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Wand2 className="h-4 w-4 mr-2" />
-                                        Generate Question
-                                    </>
-                                )}
-                            </Button>
-                        )}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={cancelGenerate}
+                                        aria-label="Cancel generation"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button
+                                    className="w-full"
+                                    onClick={handleGenerateQuestion}
+                                    disabled={
+                                        !targetSelection || !entryFunction || !isInputDataValid
+                                    }
+                                >
+                                    <Wand2 className="h-4 w-4 mr-2" />
+                                    Generate Question
+                                </Button>
+                            ))}
                     </div>
 
                     {/* Preview */}

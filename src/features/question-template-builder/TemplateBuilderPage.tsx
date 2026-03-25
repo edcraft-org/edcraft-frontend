@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { ROUTES } from "@/router/paths";
+import { isAbortError } from "@/api/pollJob";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,7 +19,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
-import { Loader2, Wand2, Save, ArrowLeft } from "lucide-react";
+import { Loader2, Wand2, Save, ArrowLeft, X } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
 import { useAuthDialogStore } from "@/shared/stores/auth-dialog.store";
 import { useFolderStore } from "@/shared/stores/folder.store";
@@ -104,6 +105,14 @@ function TemplateBuilderPage() {
 
     // Ref for scrolling to preview
     const previewRef = useRef<HTMLDivElement>(null);
+
+    // Cancel in-flight jobs on unmount
+    useEffect(() => {
+        return () => {
+            analyseCode.cancel();
+            generatePreview.cancel();
+        };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Mutations
     const generatePreview = useGenerateTemplatePreview();
@@ -237,6 +246,7 @@ function TemplateBuilderPage() {
                     }
                 },
                 onError: (error) => {
+                    if (isAbortError(error)) return;
                     toast.error(`Code analysis failed: ${error.message}`);
                 },
             },
@@ -296,6 +306,7 @@ function TemplateBuilderPage() {
                     previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
                 },
                 onError: (error) => {
+                    if (isAbortError(error)) return;
                     toast.error(`Failed to generate preview: ${error.message}`);
                 },
             },
@@ -603,6 +614,7 @@ function TemplateBuilderPage() {
                             code={code}
                             onCodeChange={handleCodeChange}
                             onAnalyseCode={handleAnalyseCode}
+                            onCancelAnalysis={analyseCode.cancel}
                             isAnalysing={analyseCode.isPending}
                             hasExistingSelection={targetSelection !== null}
                             analysisError={
@@ -669,27 +681,33 @@ function TemplateBuilderPage() {
                         )}
 
                         {/* Generate Button - Only show after configuration */}
-                        {codeInfo && (
-                            <Button
-                                className="w-full"
-                                onClick={handleGeneratePreview}
-                                disabled={
-                                    generatePreview.isPending || !targetSelection || !entryFunction
-                                }
-                            >
-                                {generatePreview.isPending ? (
-                                    <>
+                        {codeInfo &&
+                            (generatePreview.isPending ? (
+                                <div className="flex gap-2">
+                                    <Button className="flex-1" disabled>
                                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                         Generating Preview...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Wand2 className="h-4 w-4 mr-2" />
-                                        Generate Template Preview
-                                    </>
-                                )}
-                            </Button>
-                        )}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={generatePreview.cancel}
+                                        aria-label="Cancel generation"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button
+                                    className="w-full"
+                                    onClick={handleGeneratePreview}
+                                    disabled={!targetSelection || !entryFunction}
+                                >
+                                    <Wand2 className="h-4 w-4 mr-2" />
+                                    Generate Template Preview
+                                </Button>
+                            ))}
                     </div>
 
                     {/* Preview */}

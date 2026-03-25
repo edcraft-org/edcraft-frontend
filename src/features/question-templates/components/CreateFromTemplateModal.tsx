@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Wand2 } from "lucide-react";
+import { Loader2, Wand2, X } from "lucide-react";
+import { isAbortError } from "@/api/pollJob";
 import { Form } from "@/components/ui/form";
 import { useGenerateFromTemplate, useUpdateQuestionTemplate } from "../useQuestionTemplates";
 import { QuestionDisplay } from "@/features/question-builder/components/QuestionDisplay";
@@ -85,6 +86,7 @@ export function CreateFromTemplateModal({
     });
 
     const handleClose = () => {
+        generateQuestion.cancel();
         onOpenChange(false);
         form.reset();
         setGeneratedQuestion(null);
@@ -131,6 +133,7 @@ export function CreateFromTemplateModal({
                     toast.success("Question generated successfully");
                 },
                 onError: (error) => {
+                    if (isAbortError(error)) return;
                     toast.error(`Failed to generate question: ${error.message}`);
                 },
             },
@@ -320,22 +323,28 @@ export function CreateFromTemplateModal({
                             Cancel
                         </Button>
                         {!generatedQuestion ? (
-                            <Button
-                                onClick={handleGenerate}
-                                disabled={generateQuestion.isPending || !isInputDataValid}
-                            >
-                                {generateQuestion.isPending ? (
-                                    <>
+                            generateQuestion.isPending ? (
+                                <>
+                                    <Button disabled>
                                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                         Generating...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Wand2 className="h-4 w-4 mr-2" />
-                                        Generate Question
-                                    </>
-                                )}
-                            </Button>
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => generateQuestion.cancel()}
+                                        aria-label="Cancel generation"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </>
+                            ) : (
+                                <Button onClick={handleGenerate} disabled={!isInputDataValid}>
+                                    <Wand2 className="h-4 w-4 mr-2" />
+                                    Generate Question
+                                </Button>
+                            )
                         ) : (
                             <>
                                 <Button

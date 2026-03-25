@@ -8,6 +8,7 @@ import { getQuestionTemplate } from "@/features/question-templates/question-temp
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, Plus, GripVertical, Users } from "lucide-react";
+import { isAbortError } from "@/api/pollJob";
 import { useUserStore } from "@/shared/stores/user.store";
 import { CollaboratorRole, ResourcePath } from "@/api/models";
 import { CollaborationModal } from "@/shared/components";
@@ -317,21 +318,25 @@ function AssessmentTemplatePage() {
     ) => {
         if (!user || !assessmentTemplate) return;
 
-        const newAssessment = await generateAssessment.mutateAsync({
-            templateId: assessmentTemplate.id,
-            data: {
-                assessment_metadata: {
-                    owner_id: user.id,
-                    folder_id: assessmentTemplate.folder_id,
-                    title,
-                    description,
+        try {
+            const newAssessment = await generateAssessment.mutateAsync({
+                templateId: assessmentTemplate.id,
+                data: {
+                    assessment_metadata: {
+                        owner_id: user.id,
+                        folder_id: assessmentTemplate.folder_id,
+                        title,
+                        description,
+                    },
+                    question_inputs: questionInputs,
                 },
-                question_inputs: questionInputs,
-            },
-        });
-
-        toast.success("Assessment created successfully");
-        navigate(`/assessments/${newAssessment.id}`);
+            });
+            toast.success("Assessment created successfully");
+            navigate(`/assessments/${newAssessment.id}`);
+        } catch (error) {
+            if (isAbortError(error)) return;
+            throw error;
+        }
     };
 
     // Handle reordering templates
@@ -494,6 +499,7 @@ function AssessmentTemplatePage() {
                 assessmentTemplateTitle={assessmentTemplate.title}
                 questionTemplates={assessmentTemplate.question_templates ?? []}
                 onInstantiate={handleInstantiate}
+                onCancelGeneration={generateAssessment.cancel}
                 isLoading={generateAssessment.isPending}
             />
 

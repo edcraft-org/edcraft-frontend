@@ -14,7 +14,7 @@ import {
     FormMessage,
     Form,
 } from "@/components/ui/form";
-import { Database, Plus, Trash2, HelpCircle, Wand2, Loader2, Save } from "lucide-react";
+import { Database, Plus, Trash2, HelpCircle, Wand2, Loader2, Save, X } from "lucide-react";
 import type { EntryFunctionParams } from "@/api/models";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import { ParamTypeConfig } from "./param-type-config";
 import { useGenerateInputs } from "@/features/input-generator/useInputGenerator";
+import { isAbortError } from "@/api/pollJob";
 
 interface InputDataCardProps {
     onInputDataChange: (data: Record<string, unknown>) => void;
@@ -53,14 +54,13 @@ const isValidJson = (value: string) => {
 const jsonValueSchema = (optional: boolean) =>
     optional
         ? z.string().refine((v) => v === "" || isValidJson(v), {
-              message: 'Invalid JSON — use double quotes for strings (e.g. "hello"), not single quotes',
+              message:
+                  'Invalid JSON — use double quotes for strings (e.g. "hello"), not single quotes',
           })
-        : z
-              .string()
-              .min(1, "Value is required")
-              .refine(isValidJson, {
-                  message: 'Invalid JSON — use double quotes for strings (e.g. "hello"), not single quotes',
-              });
+        : z.string().min(1, "Value is required").refine(isValidJson, {
+              message:
+                  'Invalid JSON — use double quotes for strings (e.g. "hello"), not single quotes',
+          });
 
 const createInputDataSchema = (fixedParamNames: string[], optional: boolean) =>
     z
@@ -70,12 +70,10 @@ const createInputDataSchema = (fixedParamNames: string[], optional: boolean) =>
                 .array(
                     z.object({
                         key: z.string().min(1, "Key is required"),
-                        value: z
-                            .string()
-                            .min(1, "Value is required")
-                            .refine(isValidJson, {
-                                message: 'Invalid JSON — use double quotes for strings (e.g. "hello"), not single quotes',
-                            }),
+                        value: z.string().min(1, "Value is required").refine(isValidJson, {
+                            message:
+                                'Invalid JSON — use double quotes for strings (e.g. "hello"), not single quotes',
+                        }),
                     }),
                 )
                 .optional(),
@@ -299,6 +297,7 @@ export function InputDataCard({
                     toast.success(`Generated value for "${paramName}"`);
                 },
                 onError: (err) => {
+                    if (isAbortError(err)) return;
                     toast.error(`Generation failed: ${err.message}`);
                 },
                 onSettled: () => setGeneratingParam(null),
@@ -326,6 +325,7 @@ export function InputDataCard({
                 toast.success(`Generated values for ${configuredParams.length} parameter(s)`);
             },
             onError: (err) => {
+                if (isAbortError(err)) return;
                 toast.error(`Generation failed: ${err.message}`);
             },
             onSettled: () => setGeneratingAll(false),
@@ -417,23 +417,43 @@ export function InputDataCard({
                             </Button>
                         )}
                         {/* Generate All button — only visible when at least one param has a type */}
-                        {hasConfiguredParams && (
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                className="h-7 text-xs gap-1.5"
-                                onClick={handleGenerateAll}
-                                disabled={generatingAll || generatingParam !== null}
-                            >
-                                {generatingAll ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                ) : (
+                        {hasConfiguredParams &&
+                            (generatingAll ? (
+                                <>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 text-xs gap-1.5"
+                                        disabled
+                                    >
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                        Generate All
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 w-7 p-0"
+                                        onClick={() => generateInputs.cancel()}
+                                        aria-label="Cancel generation"
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </Button>
+                                </>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs gap-1.5"
+                                    onClick={handleGenerateAll}
+                                    disabled={generatingParam !== null}
+                                >
                                     <Wand2 className="h-3 w-3" />
-                                )}
-                                Generate All
-                            </Button>
-                        )}
+                                    Generate All
+                                </Button>
+                            ))}
                     </div>
                 </div>
             </CardHeader>
@@ -482,25 +502,43 @@ export function InputDataCard({
                                                         updateParamConfig(paramName, cfg)
                                                     }
                                                 />
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-7 text-xs gap-1"
-                                                    onClick={() => handleGenerateOne(paramName)}
-                                                    disabled={
-                                                        generatingParam === paramName ||
-                                                        generatingAll
-                                                    }
-                                                    title={`Generate value for ${paramName}`}
-                                                >
-                                                    {generatingParam === paramName ? (
-                                                        <Loader2 className="h-3 w-3 animate-spin" />
-                                                    ) : (
+                                                {generatingParam === paramName ? (
+                                                    <>
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-7 text-xs gap-1"
+                                                            disabled
+                                                        >
+                                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                                            Generate
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="h-7 w-7 p-0"
+                                                            onClick={() => generateInputs.cancel()}
+                                                            aria-label={`Cancel generation for ${paramName}`}
+                                                        >
+                                                            <X className="h-3 w-3" />
+                                                        </Button>
+                                                    </>
+                                                ) : (
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-7 text-xs gap-1"
+                                                        onClick={() => handleGenerateOne(paramName)}
+                                                        disabled={generatingAll}
+                                                        title={`Generate value for ${paramName}`}
+                                                    >
                                                         <Wand2 className="h-3 w-3" />
-                                                    )}
-                                                    Generate
-                                                </Button>
+                                                        Generate
+                                                    </Button>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
