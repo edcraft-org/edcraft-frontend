@@ -1,6 +1,7 @@
 // CreateFromTemplateModal - Modal for generating a question from a question template
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -65,6 +66,7 @@ export function CreateFromTemplateModal({
         );
     }, [template]);
 
+    const navigate = useNavigate();
     const user = useUserStore((state) => state.user);
     const rootFolderId = useUserStore((state) => state.rootFolderId);
     const generateQuestion = useGenerateFromTemplate();
@@ -174,6 +176,7 @@ export function CreateFromTemplateModal({
                     toast.success("Question added to assessment");
                     setShowSaveModal(false);
                     handleClose();
+                    navigate(`/assessments/${assessmentId}`);
                 },
                 onError: (error) => {
                     toast.error(`Failed to add question: ${error.message}`);
@@ -221,6 +224,7 @@ export function CreateFromTemplateModal({
                     toast.success("Question added to question bank");
                     setShowSaveModal(false);
                     handleClose();
+                    navigate(`/question-banks/${questionBankId}`);
                 },
                 onError: (error) => {
                     toast.error(`Failed to add question: ${error.message}`);

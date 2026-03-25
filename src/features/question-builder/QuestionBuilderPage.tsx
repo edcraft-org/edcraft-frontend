@@ -278,6 +278,20 @@ function QuestionBuilderPage() {
         );
     };
 
+    const handleSaveQuestionButton = () => {
+        if (!user) {
+            openAuthDialog(true);
+            return;
+        }
+        if (destinationAssessmentId) {
+            handleSaveToExistingAssessment(destinationAssessmentId);
+        } else if (destinationQuestionBankId) {
+            handleSaveToExistingQuestionBank(destinationQuestionBankId);
+        } else {
+            setShowSaveModal(true);
+        }
+    };
+
     const handleSaveToExistingAssessment = (assessmentId: string) => {
         if (!generatedQuestion || !user) return;
 
@@ -411,13 +425,7 @@ function QuestionBuilderPage() {
                                 )}
                                 <Button
                                     className="w-full"
-                                    onClick={() => {
-                                        if (!user) {
-                                            openAuthDialog(true);
-                                            return;
-                                        }
-                                        setShowSaveModal(true);
-                                    }}
+                                    onClick={handleSaveQuestionButton}
                                     disabled={
                                         createAssessment.isPending ||
                                         addQuestion.isPending ||

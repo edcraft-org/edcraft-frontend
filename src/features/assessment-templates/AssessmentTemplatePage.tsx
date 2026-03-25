@@ -18,10 +18,7 @@ import {
 } from "@/features/question-templates";
 import type { CreateTargetElementRequest } from "@/api/models";
 import { TextTemplateType } from "@/api/models";
-import {
-    InstantiateAssessmentModal,
-    QuestionTemplatesList,
-} from "./components";
+import { InstantiateAssessmentModal, QuestionTemplatesList } from "./components";
 import { DeleteConfirmationDialog } from "@/shared/components";
 import {
     useAddQuestionTemplateToAssessmentTemplate,
@@ -214,13 +211,13 @@ function AssessmentTemplatePage() {
         });
     };
 
-    const handleDuplicateTemplate = () => {
+    const handleDuplicateTemplate = (templateParam?: QuestionTemplateResponse) => {
         if (addQuestionTemplate.isPending) return;
 
         const session = validateSession();
         if (!session) return;
 
-        const template = validateTemplateSelected(selectedTemplate);
+        const template = templateParam || validateTemplateSelected(selectedTemplate);
         if (!template) return;
 
         // Convert target_elements: TargetElementResponse[] → CreateTargetElementRequest[]
@@ -450,10 +447,7 @@ function AssessmentTemplatePage() {
                 templates={isReorderMode ? reorderedTemplates : sortedTemplates}
                 onCreateQuestion={handleCreateQuestion}
                 onEdit={handleEditTemplate}
-                onDuplicate={(template) => {
-                    setSelectedTemplate(template);
-                    setShowLinkOrDuplicateModal(true);
-                }}
+                onDuplicate={handleDuplicateTemplate}
                 onRemove={(template) => {
                     setSelectedTemplate(template);
                     setShowRemoveDialog(true);

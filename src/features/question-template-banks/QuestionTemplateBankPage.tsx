@@ -192,13 +192,13 @@ function QuestionTemplateBankPage() {
         });
     };
 
-    const handleDuplicateTemplate = () => {
+    const handleDuplicateTemplate = (templateParam?: QuestionTemplateResponse) => {
         if (insertTemplate.isPending) return;
 
         const session = validateSession();
         if (!session) return;
 
-        const template = validateTemplateSelected(selectedTemplate);
+        const template = templateParam || validateTemplateSelected(selectedTemplate);
         if (!template) return;
 
         // Create a new template with the same data
