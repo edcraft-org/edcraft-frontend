@@ -56,6 +56,10 @@ export function flattenTarget(selection: TargetSelection): TargetElement[] {
         finalElement.modifier = selection.modifier;
     }
 
+    if (selection.argument_keys !== undefined) {
+        finalElement.argument_keys = selection.argument_keys;
+    }
+
     result.push(finalElement);
 
     return result;
@@ -108,5 +112,6 @@ export function unflattenTarget(elements: TargetElement[]): TargetSelection {
         line_number: finalElement.line_number ?? undefined,
         scope_path: scopePath,
         modifier: finalElement.modifier ?? undefined,
+        argument_keys: finalElement.argument_keys ?? undefined,
     };
 }

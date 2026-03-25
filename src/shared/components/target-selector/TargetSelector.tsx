@@ -7,6 +7,7 @@ import {
     getLoopInIterationScope,
 } from "./utils/codeTreeUtils";
 import { createScopePathItem } from "./utils/scopePathUtils";
+import { ArgumentSelector } from "./components/ArgumentSelector";
 import { BreadcrumbNavigation } from "./components/BreadcrumbNavigation";
 import { ElementTypeSelector } from "./components/ElementTypeSelector";
 import { FunctionSelector } from "./components/FunctionSelector";
@@ -39,6 +40,9 @@ interface SelectionState {
     // Variable multi-selection
     selectedVariableNames: string[];
 
+    // Argument sub-selection (when modifier = "arguments")
+    argumentKeys: string[] | null;
+
     // Store selected element metadata to avoid stale lookups
     selectedElementData: {
         globalId?: number;
@@ -64,6 +68,7 @@ export default function TargetSelector({
         selectedLineNumbers: [],
         currentLoopInIterationScope: null,
         selectedVariableNames: [],
+        argumentKeys: null,
         selectedElementData: null,
     });
 
@@ -134,6 +139,7 @@ export default function TargetSelector({
                 selectedLineNumbers: [],
                 currentLoopInIterationScope,
                 selectedVariableNames,
+                argumentKeys: null,
                 selectedElementData,
             });
             return;
@@ -159,6 +165,7 @@ export default function TargetSelector({
             selectedLineNumbers,
             currentLoopInIterationScope,
             selectedVariableNames: [],
+            argumentKeys: initialSelection.argument_keys ?? null,
             selectedElementData,
         });
 
@@ -230,6 +237,7 @@ export default function TargetSelector({
                 functionLineStage: false,
                 selectedLineNumbers: [],
                 selectedVariableNames: [],
+                argumentKeys: null,
                 selectedElementData: null,
             });
             onTargetChange(null);
@@ -246,6 +254,7 @@ export default function TargetSelector({
                 functionLineStage: true,
                 elementId: null,
                 modifier: null,
+                argumentKeys: null,
                 selectedElementData: null,
             });
             onTargetChange(null);
@@ -283,6 +292,7 @@ export default function TargetSelector({
                         ...prev,
                         selectedLineNumbers: allIds,
                         elementId: -1,
+                        argumentKeys: null,
                         selectedElementData: {
                             name: prev.functionNameSelected || undefined,
                         },
@@ -314,6 +324,7 @@ export default function TargetSelector({
                     return {
                         ...prev,
                         elementId: index,
+                        argumentKeys: null,
                         selectedElementData: {
                             globalId: selectedFunc.globalId,
                             name: selectedFunc.name,
@@ -414,9 +425,13 @@ export default function TargetSelector({
             const newModifier =
                 selectionState.modifier === modifier ? null : (modifier as Modifier);
 
+            // Reset argument_keys when modifier changes away from "arguments"
+            const newArgumentKeys = newModifier === "arguments" ? selectionState.argumentKeys : null;
+
             setSelectionState({
                 ...selectionState,
                 modifier: newModifier,
+                argumentKeys: newArgumentKeys,
             });
 
             // Update target with modifier
@@ -433,6 +448,30 @@ export default function TargetSelector({
                     modifier: newModifier || undefined,
                 };
 
+                onTargetChange(target);
+            }
+        },
+        [selectionState, onTargetChange],
+    );
+
+    // Handle argument key sub-selection
+    const handleArgumentKeysChange = useCallback(
+        (keys: string[] | null) => {
+            setSelectionState((prev) => ({ ...prev, argumentKeys: keys }));
+
+            if (selectionState.type && selectionState.selectedElementData) {
+                const target: TargetSelection = {
+                    type: selectionState.type,
+                    element_id:
+                        selectionState.selectedElementData.globalId !== undefined
+                            ? selectionState.selectedElementData.globalId
+                            : selectionState.elementId!,
+                    name: selectionState.selectedElementData.name,
+                    line_number: selectionState.selectedElementData.line_number,
+                    scope_path: selectionState.scopePath,
+                    modifier: selectionState.modifier || undefined,
+                    argument_keys: keys ?? undefined,
+                };
                 onTargetChange(target);
             }
         },
@@ -486,6 +525,7 @@ export default function TargetSelector({
             selectedLineNumbers: [],
             currentLoopInIterationScope: newLoopInIterationScope,
             selectedVariableNames: [],
+            argumentKeys: null,
             selectedElementData: null,
         });
 
@@ -510,6 +550,7 @@ export default function TargetSelector({
                 selectedLineNumbers: [],
                 currentLoopInIterationScope,
                 selectedVariableNames: [],
+                argumentKeys: null,
                 selectedElementData: null,
             });
 
@@ -517,6 +558,26 @@ export default function TargetSelector({
         },
         [selectionState, codeInfo, onTargetChange],
     );
+
+    // Functions matching current selection (for ArgumentSelector)
+    const selectedFunctionsForArgSelector = useMemo(() => {
+        if (
+            selectionState.type !== ElementType.Function ||
+            !selectionState.functionNameSelected ||
+            selectionState.elementId === null
+        ) {
+            return [];
+        }
+
+        const allMatching = selectionState.currentTree.function_indices
+            .filter((id) => codeInfo.functions[id].name === selectionState.functionNameSelected)
+            .map((id) => codeInfo.functions[id]);
+
+        if (selectionState.elementId === -1) return allMatching;
+
+        const idx = selectionState.elementId - 1;
+        return allMatching[idx] ? [allMatching[idx]] : [];
+    }, [selectionState.type, selectionState.functionNameSelected, selectionState.elementId, selectionState.currentTree, codeInfo]);
 
     // Determine if navigation into scope is possible
     const canNavigateInto = useMemo(() => {
@@ -582,6 +643,16 @@ export default function TargetSelector({
                 selectedModifier={selectionState.modifier}
                 onModifierSelect={handleModifierSelect}
             />
+
+            {selectionState.modifier === "arguments" &&
+                selectionState.elementId !== null &&
+                selectedFunctionsForArgSelector.length > 0 && (
+                    <ArgumentSelector
+                        selectedFunctions={selectedFunctionsForArgSelector}
+                        argumentKeys={selectionState.argumentKeys}
+                        onArgumentKeysChange={handleArgumentKeysChange}
+                    />
+                )}
 
             <NavigationButton
                 canNavigateInto={canNavigateInto}

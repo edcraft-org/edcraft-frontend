@@ -53,4 +53,5 @@ export interface TargetSelection {
     line_number?: number;
     scope_path: ScopePathItem[];
     modifier?: Modifier | null;
+    argument_keys?: string[] | null;
 }
