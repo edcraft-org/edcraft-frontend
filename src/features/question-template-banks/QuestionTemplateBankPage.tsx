@@ -21,7 +21,7 @@ import {
     useUnlinkQuestionTemplateInBank,
     useUpdateQuestionTemplateBank,
 } from "./useQuestionTemplateBanks";
-import { RemoveTemplateDialog } from "@/features/assessment-templates/components";
+import { DeleteConfirmationDialog } from "@/shared/components";
 import { QuestionTemplateCard } from "./components";
 import {
     AddQuestionTemplateModal,
@@ -377,11 +377,12 @@ function QuestionTemplateBankPage() {
                 isLoading={linkTemplate.isPending || insertTemplate.isPending}
             />
 
-            <RemoveTemplateDialog
+            <DeleteConfirmationDialog
                 open={showRemoveDialog}
                 onOpenChange={setShowRemoveDialog}
                 onConfirm={handleRemoveTemplate}
                 isLoading={removeTemplate.isPending}
+                resourceName="question template"
             />
 
             {myRole && (

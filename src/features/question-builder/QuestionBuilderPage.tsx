@@ -142,8 +142,13 @@ function QuestionBuilderPage() {
                 onSuccess: (data) => {
                     toast.success("Code analysed successfully");
                     setCodeInfo(data.code_info);
-                    setTargetSelection(null);
-                    form.setValue("entryFunction", "");
+                    const currentEntryFunction = form.getValues("entryFunction");
+                    const stillExists = data.code_info.functions.some(
+                        (f) => f.name === currentEntryFunction && f.is_definition,
+                    );
+                    if (!stillExists) {
+                        form.setValue("entryFunction", "");
+                    }
                 },
                 onError: (error) => {
                     toast.error(`Code analysis failed: ${error.message}`);
@@ -154,13 +159,6 @@ function QuestionBuilderPage() {
 
     const handleCodeChange = (newCode: string) => {
         form.setValue("code", newCode);
-        // Reset analysis when code changes
-        if (codeInfo) {
-            setCodeInfo(undefined);
-            setTargetSelection(null);
-            form.setValue("entryFunction", "");
-            setGeneratedQuestion(null);
-        }
     };
 
     const handleGenerateQuestion = () => {
@@ -329,6 +327,7 @@ function QuestionBuilderPage() {
                             onCodeChange={handleCodeChange}
                             onAnalyseCode={handleAnalyseCode}
                             isAnalysing={analyseCode.isPending}
+                            hasExistingSelection={targetSelection !== null}
                             analysisError={
                                 analyseCode.isError
                                     ? analyseCode.error?.message || "Code analysis failed"

@@ -76,101 +76,117 @@ export default function TargetSelector({
     useEffect(() => {
         if (!initialSelection) return;
 
-        // Reconstruct the tree at the current scope level
-        const currentTree = reconstructTreeFromPath(
-            codeInfo.code_tree,
-            initialSelection.scope_path,
-        );
-        const currentLoopInIterationScope = getLoopInIterationScope(initialSelection.scope_path);
-
-        // For branches, if initialSelection has a name, use it as the condition too
-        let condition: string | undefined;
-        if (initialSelection.type === ElementType.Branch && initialSelection.name) {
-            condition = initialSelection.name;
+        // Reconstruct scope path step by step, stopping at the first invalid item
+        let currentTree = codeInfo.code_tree;
+        const validScopePath: ScopePathItem[] = [];
+        for (const scopeItem of initialSelection.scope_path) {
+            const subtree = findSubtreeInCodeTree(currentTree, scopeItem.type, scopeItem.id);
+            if (!subtree) break;
+            validScopePath.push(scopeItem);
+            currentTree = subtree;
         }
+        const scopeTruncated = validScopePath.length < initialSelection.scope_path.length;
+        const scopePath = scopeTruncated ? validScopePath : initialSelection.scope_path;
+        const currentLoopInIterationScope = getLoopInIterationScope(validScopePath);
 
-        // Initialize selectedElementData
-        const selectedElementData: SelectionState["selectedElementData"] = {
-            globalId: Array.isArray(initialSelection.element_id)
-                ? undefined
-                : initialSelection.element_id,
-            name: initialSelection.name,
-            line_number: initialSelection.line_number,
-            condition,
+        // Resets state to a partial level with no element selected, notifies parent
+        const stopAt = (overrides: Partial<SelectionState> = {}) => {
+            setSelectionState({
+                type: null, elementId: null, scopePath, modifier: null, currentTree,
+                functionNameSelected: null, functionLineStage: false, selectedLineNumbers: [],
+                currentLoopInIterationScope, selectedVariableNames: [], argumentKeys: null,
+                selectedElementData: null,
+                ...overrides,
+            });
+            onTargetChange(null);
         };
 
-        // For functions, need to determine if it's a multi-line selection or specific line
-        let functionNameSelected: string | null = null;
-        let functionLineStage = false;
-        let selectedLineNumbers: number[] = [];
-        let elementId: number | null = null;
+        if (scopeTruncated) { stopAt(); return; }
 
         if (initialSelection.type === ElementType.Function) {
-            functionNameSelected = initialSelection.name || null;
-            functionLineStage = true;
+            const functionNameSelected = initialSelection.name || null;
+            const nameStillExists = currentTree.function_indices.some(
+                (id) => codeInfo.functions[id]?.name === functionNameSelected,
+            );
+            if (!nameStillExists) { stopAt({ type: ElementType.Function }); return; }
 
             if (Array.isArray(initialSelection.element_id)) {
-                // Multiple functions selected (All)
-                selectedLineNumbers = initialSelection.element_id;
-                elementId = -1;
-            } else {
-                // Single function selected - find its 1-based index within same-name functions
-                const matchingIds = currentTree.function_indices.filter(
-                    (id) => codeInfo.functions[id].name === initialSelection.name,
+                const validIds = initialSelection.element_id.filter((id) => codeInfo.functions[id]);
+                if (validIds.length === 0) {
+                    stopAt({ type: ElementType.Function, functionNameSelected, functionLineStage: true });
+                    return;
+                }
+                // Preserve element_id reference if nothing was filtered — prevents infinite re-trigger
+                const elementId = validIds.length === initialSelection.element_id.length
+                    ? (initialSelection.element_id as number[])
+                    : validIds;
+                setSelectionState({
+                    type: ElementType.Function, elementId: -1, scopePath,
+                    modifier: initialSelection.modifier || null, currentTree, functionNameSelected,
+                    functionLineStage: true, selectedLineNumbers: elementId, currentLoopInIterationScope,
+                    selectedVariableNames: [], argumentKeys: initialSelection.argument_keys ?? null,
+                    selectedElementData: { name: functionNameSelected || undefined },
+                });
+                onTargetChange(
+                    elementId === initialSelection.element_id
+                        ? initialSelection
+                        : { ...initialSelection, element_id: elementId },
                 );
-                const matchIndex = matchingIds.indexOf(initialSelection.element_id as number);
-                elementId = matchIndex >= 0 ? matchIndex + 1 : 0;
+            } else {
+                const globalId = initialSelection.element_id as number;
+                const matchingIds = currentTree.function_indices.filter(
+                    (id) => codeInfo.functions[id]?.name === functionNameSelected,
+                );
+                const matchIndex = matchingIds.indexOf(globalId);
+                if (matchIndex === -1) {
+                    stopAt({ type: ElementType.Function, functionNameSelected, functionLineStage: true });
+                    return;
+                }
+                const fn = codeInfo.functions[globalId];
+                setSelectionState({
+                    type: ElementType.Function, elementId: matchIndex + 1, scopePath,
+                    modifier: initialSelection.modifier || null, currentTree, functionNameSelected,
+                    functionLineStage: true, selectedLineNumbers: [], currentLoopInIterationScope,
+                    selectedVariableNames: [], argumentKeys: initialSelection.argument_keys ?? null,
+                    selectedElementData: { globalId, name: fn.name, line_number: fn.line_number },
+                });
+                onTargetChange(initialSelection);
             }
         } else if (initialSelection.type === ElementType.Variable) {
-            // Variables can be multi-selected (comma-separated names)
-            const selectedVariableNames = initialSelection.name
-                ? initialSelection.name.split(",")
-                : [];
-            elementId = selectedVariableNames.length > 0 ? 0 : null;
+            const allNames = initialSelection.name ? initialSelection.name.split(",") : [];
+            const validNames = allNames.filter((name) => currentTree.variables.includes(name));
+            if (validNames.length === 0) { stopAt({ type: ElementType.Variable }); return; }
+            const validName = validNames.join(",");
+            setSelectionState({
+                type: ElementType.Variable, elementId: 0, scopePath,
+                modifier: initialSelection.modifier || null, currentTree,
+                functionNameSelected: null, functionLineStage: false, selectedLineNumbers: [],
+                currentLoopInIterationScope, selectedVariableNames: validNames,
+                argumentKeys: null, selectedElementData: { name: validName },
+            });
+            onTargetChange(validName === initialSelection.name ? initialSelection : { ...initialSelection, name: validName });
+        } else {
+            // Loop or Branch
+            const globalId = initialSelection.element_id as number;
+            const isLoop = initialSelection.type === ElementType.Loop;
+            const elementId = isLoop
+                ? currentTree.loop_indices.indexOf(globalId)
+                : currentTree.branch_indices.indexOf(globalId);
+            if (elementId === -1) { stopAt({ type: initialSelection.type }); return; }
+
+            const selectedElementData: SelectionState["selectedElementData"] = isLoop
+                ? { globalId, line_number: codeInfo.loops[globalId].line_number }
+                : (() => { const b = codeInfo.branches[globalId]; return { globalId, line_number: b.line_number, condition: b.condition, name: b.condition }; })();
 
             setSelectionState({
-                type: initialSelection.type,
-                elementId,
-                scopePath: initialSelection.scope_path,
-                modifier: initialSelection.modifier || null,
-                currentTree,
-                functionNameSelected: null,
-                functionLineStage: false,
-                selectedLineNumbers: [],
-                currentLoopInIterationScope,
-                selectedVariableNames,
-                argumentKeys: null,
-                selectedElementData,
+                type: initialSelection.type, elementId, scopePath,
+                modifier: initialSelection.modifier || null, currentTree,
+                functionNameSelected: null, functionLineStage: false, selectedLineNumbers: [],
+                currentLoopInIterationScope, selectedVariableNames: [],
+                argumentKeys: initialSelection.argument_keys ?? null, selectedElementData,
             });
-            return;
-        } else {
-            // For loop/branch, find the local index in the current tree
-            const globalId = initialSelection.element_id as number;
-
-            if (initialSelection.type === ElementType.Loop) {
-                elementId = currentTree.loop_indices.indexOf(globalId);
-            } else if (initialSelection.type === ElementType.Branch) {
-                elementId = currentTree.branch_indices.indexOf(globalId);
-            }
+            onTargetChange(initialSelection);
         }
-
-        setSelectionState({
-            type: initialSelection.type,
-            elementId,
-            scopePath: initialSelection.scope_path,
-            modifier: initialSelection.modifier || null,
-            currentTree,
-            functionNameSelected,
-            functionLineStage,
-            selectedLineNumbers,
-            currentLoopInIterationScope,
-            selectedVariableNames: [],
-            argumentKeys: initialSelection.argument_keys ?? null,
-            selectedElementData,
-        });
-
-        // Notify parent of the initialized selection
-        onTargetChange(initialSelection);
     }, [initialSelection, codeInfo]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Get available element types at current scope

@@ -16,11 +16,11 @@ import {
     CreateQuestionTemplateBankModal,
     RenameModal,
     MoveModal,
-    DeleteConfirmationDialog,
     FolderBreadcrumbs,
     NewResourceDropdown,
     ResourceCard,
 } from "./components";
+import { DeleteConfirmationDialog } from "@/shared/components";
 import {
     useCreateFolder,
     useUpdateFolder,
@@ -629,6 +629,7 @@ function FolderPage() {
                 open={activeModal === "delete"}
                 onOpenChange={(open) => !open && closeActionModal()}
                 onConfirm={handleDelete}
+                resourceName={selectedResource ? getResourceDisplayName(selectedResource) : ""}
                 isLoading={
                     deleteFolder.isPending ||
                     deleteAssessment.isPending ||
@@ -636,8 +637,6 @@ function FolderPage() {
                     deleteQuestionBank.isPending ||
                     deleteQuestionTemplateBank.isPending
                 }
-                resourceType={selectedResource?.resourceType ?? "folder"}
-                resourceName={selectedResource ? getResourceDisplayName(selectedResource) : ""}
             />
         </div>
     );

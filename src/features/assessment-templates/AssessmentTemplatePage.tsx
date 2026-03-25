@@ -21,8 +21,8 @@ import { TextTemplateType } from "@/api/models";
 import {
     InstantiateAssessmentModal,
     QuestionTemplatesList,
-    RemoveTemplateDialog,
 } from "./components";
+import { DeleteConfirmationDialog } from "@/shared/components";
 import {
     useAddQuestionTemplateToAssessmentTemplate,
     useLinkQuestionTemplateToAssessmentTemplate,
@@ -504,11 +504,12 @@ function AssessmentTemplatePage() {
             />
 
             {/* Remove Template Confirmation */}
-            <RemoveTemplateDialog
+            <DeleteConfirmationDialog
                 open={showRemoveDialog}
                 onOpenChange={setShowRemoveDialog}
                 onConfirm={handleRemoveTemplate}
                 isLoading={removeQuestionTemplate.isPending}
+                resourceName="question template"
             />
 
             {myRole && (

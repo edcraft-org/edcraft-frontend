@@ -1,5 +1,3 @@
-// RemoveQuestionDialog - Confirmation dialog for removing a question from an assessment
-
 import {
     AlertDialog,
     AlertDialogAction,
@@ -12,27 +10,28 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Loader2 } from "lucide-react";
 
-interface RemoveQuestionDialogProps {
+interface DeleteConfirmationDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onConfirm: () => void;
     isLoading?: boolean;
+    resourceName: string;
 }
 
-export function RemoveQuestionDialog({
+export function DeleteConfirmationDialog({
     open,
     onOpenChange,
     onConfirm,
     isLoading,
-}: RemoveQuestionDialogProps) {
+    resourceName,
+}: DeleteConfirmationDialogProps) {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Remove Question?</AlertDialogTitle>
+                    <AlertDialogTitle>Remove {resourceName}?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This will remove the question from this assessment. The question itself
-                        will not be deleted and can still be found in your question bank.
+                        This will permanently remove the resource. This action cannot be undone.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -46,7 +45,7 @@ export function RemoveQuestionDialog({
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                         {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                        Remove
+                        Delete
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

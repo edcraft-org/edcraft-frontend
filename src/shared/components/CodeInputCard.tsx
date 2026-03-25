@@ -1,12 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-    FormControl,
-    FormField,
-    FormItem,
-    FormMessage,
-} from "@/components/ui/form";
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Loader2, Code2, Search } from "lucide-react";
+import { useState } from "react";
 import type { Control, FieldValues, Path } from "react-hook-form";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
@@ -29,6 +35,7 @@ interface CodeInputCardProps<T extends FieldValues = FieldValues> {
     onAnalyseCode: () => void;
     isAnalysing: boolean;
     analysisError?: string | null;
+    hasExistingSelection?: boolean;
 }
 
 export function CodeInputCard<T extends FieldValues = FieldValues>({
@@ -38,7 +45,18 @@ export function CodeInputCard<T extends FieldValues = FieldValues>({
     onAnalyseCode,
     isAnalysing,
     analysisError,
+    hasExistingSelection = false,
 }: CodeInputCardProps<T>) {
+    const [showOverwriteWarning, setShowOverwriteWarning] = useState(false);
+
+    const handleAnalyseClick = () => {
+        if (hasExistingSelection) {
+            setShowOverwriteWarning(true);
+        } else {
+            onAnalyseCode();
+        }
+    };
+
     return (
         <Card>
             <CardHeader>
@@ -81,7 +99,7 @@ export function CodeInputCard<T extends FieldValues = FieldValues>({
                 <Button
                     className="w-full"
                     variant="secondary"
-                    onClick={onAnalyseCode}
+                    onClick={handleAnalyseClick}
                     disabled={isAnalysing || !code.trim()}
                 >
                     {isAnalysing ? (
@@ -97,6 +115,28 @@ export function CodeInputCard<T extends FieldValues = FieldValues>({
                     )}
                 </Button>
             </CardContent>
+            <AlertDialog open={showOverwriteWarning} onOpenChange={setShowOverwriteWarning}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Analyse code?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Re-analysing the code may overwrite your current target selections and
+                            input configurations.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                setShowOverwriteWarning(false);
+                                onAnalyseCode();
+                            }}
+                        >
+                            Continue
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Card>
     );
 }

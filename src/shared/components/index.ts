@@ -14,3 +14,4 @@ export { TargetSelectionCard } from "./target-selector/TargetSelectionCard";
 export { QuestionConfigCard } from "./QuestionConfigCard";
 export { InputDataCard } from "./InputDataCard";
 export { InputDataConfigCard } from "./InputDataConfigCard";
+export { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";

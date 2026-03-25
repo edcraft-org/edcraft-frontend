@@ -19,7 +19,7 @@ import {
     useUnlinkQuestionInQuestionBank,
     useUpdateQuestionBank,
 } from "./useQuestionBanks";
-import { RemoveQuestionDialog } from "@/features/assessments/components";
+import { DeleteConfirmationDialog } from "@/shared/components";
 import { QuestionCard } from "./components";
 import {
     EditQuestionModal,
@@ -416,11 +416,12 @@ function QuestionBankPage() {
                 isLoading={linkQuestion.isPending || addQuestion.isPending}
             />
 
-            <RemoveQuestionDialog
+            <DeleteConfirmationDialog
                 open={showRemoveDialog}
                 onOpenChange={setShowRemoveDialog}
                 onConfirm={handleRemoveQuestion}
                 isLoading={removeQuestion.isPending}
+                resourceName="question"
             />
 
             <Suspense>

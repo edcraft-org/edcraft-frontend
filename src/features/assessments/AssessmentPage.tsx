@@ -20,7 +20,8 @@ import {
     useReorderQuestions,
     useUpdateAssessment,
 } from "./useAssessments";
-import { QuestionsList, RemoveQuestionDialog, ExportButton } from "./components";
+import { QuestionsList, ExportButton } from "./components";
+import { DeleteConfirmationDialog } from "@/shared/components";
 import {
     EditQuestionModal,
     AddQuestionModal,
@@ -488,11 +489,12 @@ function AssessmentPage() {
                 isLoading={linkQuestion.isPending || addQuestion.isPending}
             />
 
-            <RemoveQuestionDialog
+            <DeleteConfirmationDialog
                 open={showRemoveDialog}
                 onOpenChange={setShowRemoveDialog}
                 onConfirm={handleRemoveQuestion}
                 isLoading={removeQuestion.isPending}
+                resourceName="question"
             />
 
             {myRole && (
