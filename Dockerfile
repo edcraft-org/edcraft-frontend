@@ -8,6 +8,9 @@ RUN npm ci
 
 COPY . .
 
+ARG VITE_CANVAS_PROXY_URL
+ENV VITE_CANVAS_PROXY_URL=${VITE_CANVAS_PROXY_URL}
+
 RUN npm run build
 
 FROM nginx:alpine
