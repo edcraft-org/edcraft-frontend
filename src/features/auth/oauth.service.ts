@@ -45,7 +45,7 @@ export function initiateOAuth(provider: OAuthProvider, redirectTo?: string) {
     const state = generateState();
     storeOAuthState(state, redirectTo);
 
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
+    const baseUrl = window.__CONFIG__?.API_URL ?? import.meta.env.VITE_API_BASE_URL ?? "/api";
     const params = new URLSearchParams({ state });
 
     window.location.href = `${baseUrl}/auth/oauth/${provider}/authorize?${params}`;

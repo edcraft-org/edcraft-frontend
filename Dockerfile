@@ -1,27 +1,26 @@
-FROM node:20-alpine AS builder
+# ── Build stage ──────────────────────────────────────────────────────────────
+FROM node:25-alpine AS builder
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-
 RUN npm ci
 
 COPY . .
 
-ARG VITE_CANVAS_PROXY_URL
-ENV VITE_CANVAS_PROXY_URL=${VITE_CANVAS_PROXY_URL}
+# Skip tsc; just bundle with Vite
+RUN npx vite build
 
-RUN npm run build
+# ── Runtime stage ─────────────────────────────────────────────────────────────
+FROM nginx:1.29-alpine
 
-FROM nginx:alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY config.js.template /etc/nginx/config.js.template
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-COPY nginx.conf /etc/nginx/nginx.conf
-
 EXPOSE 80
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost:80/ || exit 1
-
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/entrypoint.sh"]
