@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, ChevronRight, ChevronLeft, Check, X } from "lucide-react";
+import { Loader2, ChevronRight, ChevronLeft, Check, X, Wand2 } from "lucide-react";
 import {
     Form,
     FormControl,
@@ -27,9 +27,14 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { InputDataCard } from "@/shared/components";
-import { useUpdateQuestionTemplate } from "@/features/question-templates/useQuestionTemplates";
+import {
+    useUpdateQuestionTemplate,
+    useGenerateFromTemplate,
+} from "@/features/question-templates/useQuestionTemplates";
 import { QuestionTemplateContent } from "@/components/QuestionTemplateContent";
-import type { QuestionTemplateResponse } from "@/api/models/questionTemplateResponse";
+import { QuestionDisplay } from "@/features/question-builder/components/QuestionDisplay";
+import { isAbortError } from "@/api/pollJob";
+import type { QuestionTemplateResponse, Question } from "@/api/models";
 
 // Schema for metadata step
 const metadataFormSchema = z.object({
@@ -73,24 +78,42 @@ export function InstantiateAssessmentModal({
     >({});
 
     const updateQuestionTemplate = useUpdateQuestionTemplate();
+    const generateFromTemplate = useGenerateFromTemplate();
+    const [generatedQuestion, setGeneratedQuestion] = useState<{
+        question: Question;
+        forStep: number;
+    } | null>(null);
 
-    // Initialize template inputs when modal opens or questionTemplates change
+    // Initialize template inputs when modal opens or questionTemplates change.
+    // Only populates missing indices so existing user data is preserved on re-open.
     useEffect(() => {
         if (open) {
-            setTemplateInputs(Object.fromEntries(questionTemplates.map((_, i) => [i, {}])));
-            setInputValidationStates(
-                Object.fromEntries(questionTemplates.map((_, i) => [i, true])),
-            );
-            setTemplateConfigs(
-                Object.fromEntries(
-                    questionTemplates.map((qt, i) => [
-                        i,
-                        (qt.input_data_config as
-                            | Record<string, Record<string, unknown>>
-                            | undefined) ?? {},
-                    ]),
-                ),
-            );
+            setTemplateInputs((prev) => {
+                const next = { ...prev };
+                questionTemplates.forEach((_, i) => {
+                    if (!(i in next)) next[i] = {};
+                });
+                return next;
+            });
+            setInputValidationStates((prev) => {
+                const next = { ...prev };
+                questionTemplates.forEach((_, i) => {
+                    if (!(i in next)) next[i] = true;
+                });
+                return next;
+            });
+            setTemplateConfigs((prev) => {
+                const next = { ...prev };
+                questionTemplates.forEach((qt, i) => {
+                    if (!(i in next)) {
+                        next[i] =
+                            (qt.input_data_config as
+                                | Record<string, Record<string, unknown>>
+                                | undefined) ?? {};
+                    }
+                });
+                return next;
+            });
         }
     }, [open, questionTemplates]);
 
@@ -103,14 +126,11 @@ export function InstantiateAssessmentModal({
         },
     });
 
-    // Closes the modal and resets all form state
+    // Closes the modal without resetting state
     const handleClose = useCallback(() => {
+        generateFromTemplate.cancel();
         onOpenChange(false);
-        setCurrentStep(0);
-        metadataForm.reset();
-        setTemplateInputs({});
-        setTemplateConfigs({});
-    }, [onOpenChange, metadataForm]);
+    }, [onOpenChange, generateFromTemplate]);
 
     const handleSaveConfigForStep = (idx: number) => {
         const qt = questionTemplates[idx];
@@ -134,12 +154,16 @@ export function InstantiateAssessmentModal({
         if (currentStep === 0) {
             const isValid = await metadataForm.trigger();
             if (isValid) {
+                generateFromTemplate.cancel();
+                setGeneratedQuestion(null);
                 setCurrentStep((prev) => Math.min(prev + 1, totalSteps - 1));
             }
         } else {
             const templateIndex = currentStep - 1;
             const isCurrentStepValid = inputValidationStates[templateIndex] ?? true;
             if (isCurrentStepValid) {
+                generateFromTemplate.cancel();
+                setGeneratedQuestion(null);
                 setCurrentStep((prev) => Math.min(prev + 1, totalSteps - 1));
             }
         }
@@ -147,7 +171,24 @@ export function InstantiateAssessmentModal({
 
     // Handles navigation to the previous step
     const handleBack = () => {
+        generateFromTemplate.cancel();
+        setGeneratedQuestion(null);
         setCurrentStep((prev) => Math.max(prev - 1, 0));
+    };
+
+    const handleGenerateQuestion = () => {
+        const qt = questionTemplates[templateIndex];
+        if (!qt) return;
+        generateFromTemplate.mutate(
+            { templateId: qt.id, data: { input_data: templateInputs[templateIndex] ?? {} } },
+            {
+                onSuccess: (data) => setGeneratedQuestion({ question: data, forStep: currentStep }),
+                onError: (error) => {
+                    if (isAbortError(error)) return;
+                    toast.error(`Failed to generate question: ${error.message}`);
+                },
+            },
+        );
     };
 
     // Completes the wizard and creates the assessment
@@ -167,7 +208,13 @@ export function InstantiateAssessmentModal({
                 metadata.description?.trim() || undefined,
                 questionInputs,
             );
-            handleClose();
+            setCurrentStep(0);
+            metadataForm.reset();
+            setTemplateInputs({});
+            setTemplateConfigs({});
+            setInputValidationStates({});
+            setGeneratedQuestion(null);
+            onOpenChange(false);
         } catch (error) {
             if (error instanceof Error) {
                 toast.error(error.message || "Failed to create assessment");
@@ -272,6 +319,7 @@ export function InstantiateAssessmentModal({
                                 entryFunctionParams={
                                     questionTemplates[templateIndex].entry_function_params
                                 }
+                                initialValues={templateInputs[templateIndex]}
                                 inputDataConfig={templateConfigs[templateIndex] ?? {}}
                                 onInputDataConfigChange={(cfg) =>
                                     setTemplateConfigs((prev) => ({
@@ -294,6 +342,62 @@ export function InstantiateAssessmentModal({
                                 onSave={() => handleSaveConfigForStep(templateIndex)}
                                 isSaving={updateQuestionTemplate.isPending}
                             />
+
+                            {/* Test Generate section */}
+                            {generatedQuestion && generatedQuestion.forStep === currentStep ? (
+                                <div className="space-y-2">
+                                    <QuestionDisplay
+                                        question={generatedQuestion.question}
+                                        questionType={generatedQuestion.question.question_type}
+                                    />
+                                    <div className="flex justify-end">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setGeneratedQuestion(null)}
+                                            aria-label="Dismiss question preview"
+                                        >
+                                            <X className="h-4 w-4 mr-2" />
+                                            Dismiss Preview
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex justify-end items-center gap-2">
+                                    {generateFromTemplate.isPending ? (
+                                        <>
+                                            <Button type="button" disabled size="sm">
+                                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                                Generating...
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => generateFromTemplate.cancel()}
+                                                aria-label="Cancel"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleGenerateQuestion}
+                                            disabled={
+                                                !(inputValidationStates[templateIndex] ?? true)
+                                            }
+                                            aria-label="Generate question"
+                                        >
+                                            <Wand2 className="h-4 w-4 mr-2" />
+                                            Generate Question (Optional)
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

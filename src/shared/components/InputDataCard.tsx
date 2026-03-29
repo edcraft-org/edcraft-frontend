@@ -40,6 +40,7 @@ interface InputDataCardProps {
     onSave?: () => void;
     isSaving?: boolean;
     optional?: boolean;
+    initialValues?: Record<string, unknown>;
 }
 
 const isValidJson = (value: string) => {
@@ -131,6 +132,7 @@ export function InputDataCard({
     onSave,
     isSaving,
     optional = false,
+    initialValues,
 }: InputDataCardProps) {
     const generateInputs = useGenerateInputs();
 
@@ -177,7 +179,7 @@ export function InputDataCard({
         const merged: Record<string, unknown> = {};
 
         Object.entries(fixedParams).forEach(([key, value]) => {
-            if (optional && value === "") return;
+            if (value === "") return;
             try {
                 merged[key] = JSON.parse(value);
             } catch {
@@ -186,7 +188,7 @@ export function InputDataCard({
         });
 
         varArgs?.forEach(({ key, value }) => {
-            if (optional && value === "") return;
+            if (value === "") return;
             try {
                 merged[key] = JSON.parse(value);
             } catch {
@@ -202,19 +204,30 @@ export function InputDataCard({
         [entryFunctionParams?.parameters],
     );
 
-    const defaultFixedParams = fixedParamNames.reduce(
+
+    // Pre-populate form from initialValues if provided
+    const initialFixedParams = fixedParamNames.reduce(
         (acc, param) => {
-            acc[param] = "";
+            const val = initialValues?.[param];
+            acc[param] = val !== undefined ? JSON.stringify(val) : "";
             return acc;
         },
         {} as Record<string, string>,
     );
+    const initialVarArgs: Array<{ key: string; value: string }> = [];
+    if (initialValues && (entryFunctionParams?.has_var_args || entryFunctionParams?.has_var_kwargs)) {
+        Object.entries(initialValues).forEach(([key, value]) => {
+            if (!fixedParamNames.includes(key)) {
+                initialVarArgs.push({ key, value: JSON.stringify(value) });
+            }
+        });
+    }
 
     const internalForm = useForm<InputDataFormValues>({
         resolver: zodResolver(createInputDataSchema(fixedParamNames, optional)),
         defaultValues: {
-            fixedParams: defaultFixedParams,
-            varArgs: [],
+            fixedParams: initialFixedParams,
+            varArgs: initialVarArgs,
         },
         mode: "onChange",
     });
