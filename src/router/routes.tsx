@@ -27,6 +27,9 @@ const VerifyEmailPage = lazy(() => import("@/features/auth/VerifyEmailPage"));
 const HomeRoute = lazy(() => import("./HomeRoute"));
 
 const TutorialPage = lazy(() => import("@/features/landing/TutorialPage"));
+const TemplateBuilderTutorialPage = lazy(
+    () => import("@/features/landing/TemplateBuilderTutorialPage"),
+);
 
 // Helper to wrap lazy loaded components with Suspense
 function lazyRoute(Component: ComponentType) {
@@ -50,7 +53,16 @@ export const router = createBrowserRouter([
             // Public routes
             {
                 path: "tutorial",
-                element: lazyRoute(TutorialPage),
+                children: [
+                    {
+                        index: true,
+                        element: lazyRoute(TutorialPage),
+                    },
+                    {
+                        path: "template-builder",
+                        element: lazyRoute(TemplateBuilderTutorialPage),
+                    },
+                ],
             },
             {
                 path: "question-builder",

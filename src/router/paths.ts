@@ -3,6 +3,7 @@ export const ROUTES = {
   HOME: "/",
   LANDING: "/",
   TUTORIAL: "/tutorial",
+  TUTORIAL_TEMPLATE_BUILDER: "/tutorial/template-builder",
   FOLDER: (id: string) => `/folders/${id}`,
   FOLDER_ROOT: "/folders/root",
   QUESTION_BUILDER: "/question-builder",
