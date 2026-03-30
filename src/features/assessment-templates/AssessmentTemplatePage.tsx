@@ -17,7 +17,7 @@ import {
     AddQuestionTemplateModal,
     LinkOrDuplicateTemplateModal,
 } from "@/features/question-templates";
-import type { CreateTargetElementRequest } from "@/api/models";
+import type { CodeInfoOutput, CreateTargetElementRequest } from "@/api/models";
 import { TextTemplateType } from "@/api/models";
 import { InstantiateAssessmentModal, QuestionTemplatesList } from "./components";
 import { DeleteConfirmationDialog } from "@/shared/components";
@@ -111,6 +111,7 @@ function AssessmentTemplatePage() {
             text_template_type: TextTemplateType;
             description?: string | undefined;
             code: string;
+            code_info: CodeInfoOutput | undefined | null;
             entry_function: string;
             output_type: string;
             num_distractors: number;
@@ -242,6 +243,7 @@ function AssessmentTemplatePage() {
                 output_type: template.output_type,
                 num_distractors: template.num_distractors,
                 target_elements: targetElements,
+                code_info: template.code_info,
             },
             "Question template duplicated successfully",
             () => {

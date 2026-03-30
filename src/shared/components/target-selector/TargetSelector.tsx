@@ -14,10 +14,10 @@ import { FunctionSelector } from "./components/FunctionSelector";
 import { ElementList } from "./components/ElementList";
 import { ModifierSelector } from "./components/ModifierSelector";
 import { NavigationButton } from "./components/NavigationButton";
-import type { CodeInfo, CodeTree, TargetElementType } from "@/api/models";
+import type { CodeInfoOutput, CodeTreeOutput, TargetElementType } from "@/api/models";
 
 interface TargetSelectorProps {
-    codeInfo: CodeInfo;
+    codeInfo: CodeInfoOutput;
     onTargetChange: (target: TargetSelection | null) => void;
     initialSelection?: TargetSelection | null;
 }
@@ -27,7 +27,7 @@ interface SelectionState {
     elementId: number | null;
     scopePath: ScopePathItem[];
     modifier: Modifier | null;
-    currentTree: CodeTree;
+    currentTree: CodeTreeOutput;
 
     // Function selection stages
     functionNameSelected: string | null;

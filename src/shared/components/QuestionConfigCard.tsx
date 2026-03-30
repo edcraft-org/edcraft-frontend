@@ -9,12 +9,12 @@ import {
 } from "@/components/ui/select";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import type { Control, FieldValues, Path } from "react-hook-form";
-import type { CodeInfo } from "@/api/models";
+import type { CodeInfoOutput } from "@/api/models";
 import type { QuestionType } from "@/constants";
 
 interface QuestionConfigCardProps<T extends FieldValues = FieldValues> {
     control: Control<T>;
-    codeInfo: CodeInfo;
+    codeInfo: CodeInfoOutput;
     questionType: QuestionType;
 }
 

@@ -212,6 +212,7 @@ function QuestionTemplateBankPage() {
             num_distractors: template.num_distractors,
             output_type: template.output_type,
             target_elements: template.target_elements,
+            code_info: template.code_info,
         };
 
         handleInsertTemplateMutation(

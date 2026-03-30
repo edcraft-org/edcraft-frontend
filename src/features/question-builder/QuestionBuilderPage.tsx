@@ -34,7 +34,7 @@ import {
 import { SaveQuestionModal, QuestionDisplay } from "./components";
 import { flattenTarget } from "@/shared/components/target-selector/utils/transformTarget";
 import { generatedQuestionToRequestData } from "@/shared/utils/questionUtils";
-import type { CodeInfo, Question, QuestionGenerationRequest } from "@/api/models";
+import type { CodeInfoOutput, Question, QuestionGenerationRequest } from "@/api/models";
 
 // Schema for the question builder form
 const questionBuilderSchema = z.object({
@@ -61,7 +61,7 @@ function QuestionBuilderPage() {
 
     // Code analysis state
     const analyseCode = useAnalyseCode();
-    const [codeInfo, setCodeInfo] = useState<CodeInfo | undefined>(undefined);
+    const [codeInfo, setCodeInfo] = useState<CodeInfoOutput | undefined>(undefined);
     const [targetSelection, setTargetSelection] = useState<TargetSelection | null>(null);
     const [isInputDataValid, setIsInputDataValid] = useState(true);
 

@@ -51,7 +51,7 @@ import {
     flattenTarget,
     unflattenTarget,
 } from "@/shared/components/target-selector/utils/transformTarget";
-import type { CodeInfo, EntryFunctionParams, TemplatePreviewResponse } from "@/api/models";
+import type { CodeInfoOutput, EntryFunctionParams, TemplatePreviewResponse } from "@/api/models";
 
 // Schema for the template builder form
 const templateBuilderSchema = z.object({
@@ -84,7 +84,7 @@ function TemplateBuilderPage() {
 
     // Code analysis state
     const analyseCode = useAnalyseCode();
-    const [codeInfo, setCodeInfo] = useState<CodeInfo | undefined>(undefined);
+    const [codeInfo, setCodeInfo] = useState<CodeInfoOutput | undefined>(undefined);
     const [targetSelection, setTargetSelection] = useState<TargetSelection | null>(null);
 
     // Preview and save state
@@ -187,36 +187,43 @@ function TemplateBuilderPage() {
                     {},
             );
 
-            // Trigger code analysis
-            analyseCode.mutate(
-                { code: existingTemplate.code },
-                {
-                    onSuccess: (data) => {
-                        setCodeInfo(data.code_info);
+            // Use stored code_info if available, otherwise fall back to code analysis
+            const storedCodeInfo = existingTemplate.code_info;
+            const hasStoredCodeInfo = storedCodeInfo && Object.keys(storedCodeInfo).length > 0;
 
-                        // Reconstruct target selection
-                        try {
-                            // Sort by order and convert TargetElementResponse[] to TargetElement[]
-                            const sortedElements = [...existingTemplate.target_elements]
-                                .sort((a, b) => a.order - b.order)
-                                .map(({ order: _, element_type, id_list, ...rest }) => ({
-                                    type: element_type,
-                                    id: id_list,
-                                    ...rest,
-                                }));
+            const reconstructTarget = (template: typeof existingTemplate) => {
+                try {
+                    const sortedElements = [...template.target_elements]
+                        .sort((a, b) => a.order - b.order)
+                        .map(({ order: _, element_type, id_list, ...rest }) => ({
+                            type: element_type,
+                            id: id_list,
+                            ...rest,
+                        }));
+                    setTargetSelection(unflattenTarget(sortedElements));
+                } catch (error) {
+                    console.error("Failed to reconstruct target:", error);
+                    toast.error("Failed to load target selection");
+                }
+            };
 
-                            const reconstructedTarget = unflattenTarget(sortedElements);
-                            setTargetSelection(reconstructedTarget);
-                        } catch (error) {
-                            console.error("Failed to reconstruct target:", error);
-                            toast.error("Failed to load target selection");
-                        }
+            if (hasStoredCodeInfo) {
+                setCodeInfo(storedCodeInfo);
+                reconstructTarget(existingTemplate);
+            } else {
+                analyseCode.mutate(
+                    { code: existingTemplate.code },
+                    {
+                        onSuccess: (data) => {
+                            setCodeInfo(data.code_info);
+                            reconstructTarget(existingTemplate);
+                        },
+                        onError: (error) => {
+                            toast.error(`Failed to analyze code: ${error.message}`);
+                        },
                     },
-                    onError: (error) => {
-                        toast.error(`Failed to analyze code: ${error.message}`);
-                    },
-                },
-            );
+                );
+            }
         }
     }, [isEditMode, existingTemplate]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -317,6 +324,11 @@ function TemplateBuilderPage() {
 
     // Build the core template payload from either preview data or current form/state
     const buildTemplatePayload = () => {
+        if (!codeInfo) {
+            toast.error("Please analyse your code first");
+            return null;
+        }
+
         const values = form.getValues();
 
         if (preview) {
@@ -332,6 +344,7 @@ function TemplateBuilderPage() {
                 target_elements: preview.target_elements.map(
                     ({ element_type, id_list, ...rest }) => ({ element_type, id_list, ...rest }),
                 ),
+                code_info: codeInfo,
             };
         }
 
@@ -358,6 +371,7 @@ function TemplateBuilderPage() {
                 id_list: id,
                 ...rest,
             })),
+            code_info: codeInfo,
         };
     };
 

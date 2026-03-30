@@ -1,4 +1,4 @@
-import type { CodeTree, TargetElementType } from "@/api/models";
+import type { CodeTreeOutput, TargetElementType } from "@/api/models";
 import { Modifier } from "@/constants";
 import type { ScopePathItem } from "@/types/frontend.types";
 
@@ -10,11 +10,11 @@ import type { ScopePathItem } from "@/types/frontend.types";
  * @returns The subtree rooted at the element, or null if not found
  */
 export function findSubtreeInCodeTree(
-    tree: CodeTree,
+    tree: CodeTreeOutput,
     elementType: TargetElementType,
     elementId: number
-): CodeTree | null {
-    const queue: CodeTree[] = [tree];
+): CodeTreeOutput | null {
+    const queue: CodeTreeOutput[] = [tree];
 
     while (queue.length > 0) {
         const current = queue.shift();
@@ -40,9 +40,9 @@ export function findSubtreeInCodeTree(
  * @returns The tree at the current scope level
  */
 export function reconstructTreeFromPath(
-    rootTree: CodeTree,
+    rootTree: CodeTreeOutput,
     scopePath: ScopePathItem[]
-): CodeTree {
+): CodeTreeOutput {
     if (scopePath.length === 0) {
         return rootTree;
     }

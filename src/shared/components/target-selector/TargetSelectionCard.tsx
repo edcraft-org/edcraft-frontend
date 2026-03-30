@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { CodeInfo } from "@/api/models";
+import type { CodeInfoOutput } from "@/api/models";
 import type { TargetSelection } from "@/types/frontend.types";
 import TargetSelector from "./TargetSelector";
 
 interface TargetSelectionCardProps {
-    codeInfo: CodeInfo;
+    codeInfo: CodeInfoOutput;
     onTargetChange: (target: TargetSelection | null) => void;
     initialSelection?: TargetSelection | null;
 }

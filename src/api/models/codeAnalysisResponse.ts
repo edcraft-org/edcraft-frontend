@@ -5,7 +5,7 @@
  * API for EdCraft Backend
  * OpenAPI spec version: 0.1.0
  */
-import type { CodeInfo } from './codeInfo';
+import type { CodeInfoOutput } from './codeInfoOutput';
 import type { FormElement } from './formElement';
 
 /**
@@ -13,7 +13,7 @@ import type { FormElement } from './formElement';
  */
 export interface CodeAnalysisResponse {
   /** Code structure and elements information */
-  code_info: CodeInfo;
+  code_info: CodeInfoOutput;
   /** List of form elements */
   form_elements: FormElement[];
 }

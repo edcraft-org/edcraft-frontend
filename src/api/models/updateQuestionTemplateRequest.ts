@@ -5,6 +5,7 @@
  * API for EdCraft Backend
  * OpenAPI spec version: 0.1.0
  */
+import type { CodeInfoInput } from './codeInfoInput';
 import type { CreateTargetElementRequest } from './createTargetElementRequest';
 import type { TextTemplateType } from './textTemplateType';
 import type { UpdateQuestionTemplateRequestInputDataConfig } from './updateQuestionTemplateRequestInputDataConfig';
@@ -23,4 +24,5 @@ export interface UpdateQuestionTemplateRequest {
   output_type?: string | null;
   target_elements?: CreateTargetElementRequest[] | null;
   input_data_config?: UpdateQuestionTemplateRequestInputDataConfig;
+  code_info?: CodeInfoInput | null;
 }

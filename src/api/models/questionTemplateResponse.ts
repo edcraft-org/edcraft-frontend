@@ -5,6 +5,7 @@
  * API for EdCraft Backend
  * OpenAPI spec version: 0.1.0
  */
+import type { CodeInfoOutput } from './codeInfoOutput';
 import type { EntryFunctionParams } from './entryFunctionParams';
 import type { QuestionTemplateResponseInputDataConfig } from './questionTemplateResponseInputDataConfig';
 import type { TargetElementResponse } from './targetElementResponse';
@@ -26,6 +27,7 @@ export interface QuestionTemplateResponse {
   output_type: string;
   target_elements: TargetElementResponse[];
   input_data_config?: QuestionTemplateResponseInputDataConfig;
+  code_info?: CodeInfoOutput | null;
   entry_function_params?: EntryFunctionParams;
   linked_from_template_id: string | null;
   assessment_template_id: string | null;
