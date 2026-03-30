@@ -409,25 +409,27 @@ function AssessmentTemplatePage() {
                             Instantiate Assessment
                         </Button>
                         {canEdit && (
-                            <Button variant="outline" onClick={() => setShowCollabModal(true)}>
-                                <Users className="h-4 w-4 mr-2" />
-                                Share
-                            </Button>
+                            <>
+                                <Button variant="outline" onClick={() => setShowCollabModal(true)}>
+                                    <Users className="h-4 w-4 mr-2" />
+                                    Share
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setIsReorderMode(true);
+                                        setReorderedTemplates(sortedTemplates);
+                                    }}
+                                >
+                                    <GripVertical className="h-4 w-4 mr-2" />
+                                    Reorder
+                                </Button>
+                                <Button onClick={() => setShowAddTemplateModal(true)}>
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Template
+                                </Button>
+                            </>
                         )}
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setIsReorderMode(true);
-                                setReorderedTemplates(sortedTemplates);
-                            }}
-                        >
-                            <GripVertical className="h-4 w-4 mr-2" />
-                            Reorder
-                        </Button>
-                        <Button onClick={() => setShowAddTemplateModal(true)}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Template
-                        </Button>
                     </>
                 ) : (
                     <div className="flex gap-2">

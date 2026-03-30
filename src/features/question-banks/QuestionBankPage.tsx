@@ -349,15 +349,17 @@ function QuestionBankPage() {
                     )}
                 </div>
                 {canEdit && (
-                    <Button variant="outline" onClick={() => setShowCollabModal(true)}>
-                        <Users className="h-4 w-4 mr-2" />
-                        Share
-                    </Button>
+                    <>
+                        <Button variant="outline" onClick={() => setShowCollabModal(true)}>
+                            <Users className="h-4 w-4 mr-2" />
+                            Share
+                        </Button>
+                        <Button onClick={() => setShowAddModal(true)}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Question
+                        </Button>
+                    </>
                 )}
-                <Button onClick={() => setShowAddModal(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Question
-                </Button>
             </div>
 
             <div className="space-y-4">
