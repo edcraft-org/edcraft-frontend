@@ -299,6 +299,8 @@ function TemplateBuilderPage() {
             {
                 onSuccess: (data) => {
                     setPreview(data);
+                    setQuestionTextTemplate(data.question_text_template);
+                    setTemplateMode(data.text_template_type as "basic" | "mustache");
                     toast.success("Template preview generated");
                     previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
                 },
@@ -322,7 +324,7 @@ function TemplateBuilderPage() {
             ? `Unknown variable${invalidVars.length > 1 ? "s" : ""}: ${invalidVars.map((m) => `{${m[1]}}`).join(", ")}`
             : null;
 
-    // Build the core template payload from either preview data or current form/state
+    // Build the core template payload from current state
     const buildTemplatePayload = () => {
         if (!codeInfo) {
             toast.error("Please analyse your code first");
@@ -330,23 +332,6 @@ function TemplateBuilderPage() {
         }
 
         const values = form.getValues();
-
-        if (preview) {
-            return {
-                question_type: values.questionType,
-                question_text_template: preview.question_text_template,
-                text_template_type: preview.text_template_type,
-                description: values.templateDescription || undefined,
-                code: preview.code,
-                entry_function: preview.entry_function,
-                output_type: preview.output_type,
-                num_distractors: preview.num_distractors,
-                target_elements: preview.target_elements.map(
-                    ({ element_type, id_list, ...rest }) => ({ element_type, id_list, ...rest }),
-                ),
-                code_info: codeInfo,
-            };
-        }
 
         if (!targetSelection) {
             toast.error("Please select a target element");
