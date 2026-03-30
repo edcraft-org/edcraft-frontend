@@ -56,8 +56,8 @@ import type { CodeInfo, EntryFunctionParams, TemplatePreviewResponse } from "@/a
 // Schema for the template builder form
 const templateBuilderSchema = z.object({
     templateDescription: z.string().optional(),
-    code: z.string(),
-    entryFunction: z.string(),
+    code: z.string().min(1, "Please enter some code"),
+    entryFunction: z.string().min(1, "Please select an entry function"),
     outputType: z.enum(["first", "last", "list", "count"]),
     questionType: z.enum(["mcq", "mrq", "short_answer"]),
     numDistractors: z.number().min(1).max(10),
@@ -257,19 +257,9 @@ function TemplateBuilderPage() {
         form.setValue("code", newCode);
     };
 
-    const handleGeneratePreview = () => {
-        const values = form.getValues();
-
-        if (!values.code.trim()) {
-            toast.error("Please analyse your code first");
-            return;
-        }
+    const handleGeneratePreview = form.handleSubmit((values) => {
         if (!targetSelection) {
             toast.error("Please select a target element");
-            return;
-        }
-        if (!values.entryFunction) {
-            toast.error("Please select an entry function");
             return;
         }
         if (basicTemplateError) {
@@ -311,7 +301,7 @@ function TemplateBuilderPage() {
                 },
             },
         );
-    };
+    });
 
     // Check that all {var} tokens in the basic template are valid parameters
     const invalidVars =
@@ -325,20 +315,76 @@ function TemplateBuilderPage() {
             ? `Unknown variable${invalidVars.length > 1 ? "s" : ""}: ${invalidVars.map((m) => `{${m[1]}}`).join(", ")}`
             : null;
 
+    // Build the core template payload from either preview data or current form/state
+    const buildTemplatePayload = () => {
+        const values = form.getValues();
+
+        if (preview) {
+            return {
+                question_type: values.questionType,
+                question_text_template: preview.question_text_template,
+                text_template_type: preview.text_template_type,
+                description: values.templateDescription || undefined,
+                code: preview.code,
+                entry_function: preview.entry_function,
+                output_type: preview.output_type,
+                num_distractors: preview.num_distractors,
+                target_elements: preview.target_elements.map(
+                    ({ element_type, id_list, ...rest }) => ({ element_type, id_list, ...rest }),
+                ),
+            };
+        }
+
+        if (!targetSelection) {
+            toast.error("Please select a target element");
+            return null;
+        }
+        if (!values.entryFunction) {
+            toast.error("Please select an entry function");
+            return null;
+        }
+
+        return {
+            question_type: values.questionType,
+            question_text_template: questionTextTemplate,
+            text_template_type: templateMode,
+            description: values.templateDescription || undefined,
+            code: values.code,
+            entry_function: values.entryFunction,
+            output_type: values.outputType,
+            num_distractors: values.numDistractors,
+            target_elements: flattenTarget(targetSelection).map(({ type, id, ...rest }) => ({
+                element_type: type,
+                id_list: id,
+                ...rest,
+            })),
+        };
+    };
+
     const handleSaveButtonClick = () => {
         if (!user) {
             openAuthDialog(true);
             return;
         }
-        if (isEditMode) {
-            handleUpdateTemplate();
-        } else if (destinationAssessmentTemplateId) {
-            handleSaveToExistingAssessmentTemplate(destinationAssessmentTemplateId);
-        } else if (destinationTemplateBankId) {
-            handleSaveToExistingQuestionTemplateBank(destinationTemplateBankId);
-        } else {
-            setShowSaveModal(true);
+        if (!codeInfo) {
+            toast.error("Please analyse your code first");
+            return;
         }
+        if (!targetSelection) {
+            toast.error("Please select a target element");
+            return;
+        }
+        form.handleSubmit(() => {
+            if (isEditMode) {
+                handleUpdateTemplate();
+            } else if (destinationAssessmentTemplateId) {
+                handleSaveToExistingAssessmentTemplate(destinationAssessmentTemplateId);
+            } else if (destinationTemplateBankId) {
+                handleSaveToExistingQuestionTemplateBank(destinationTemplateBankId);
+            } else {
+                setShowSaveModal(true);
+            }
+        })();
     };
 
     const handleSaveToNewAssessmentTemplate = (
@@ -346,7 +392,7 @@ function TemplateBuilderPage() {
         description: string | undefined,
         folderId: string,
     ) => {
-        if (!preview || !user) return;
+        if (!user) return;
 
         createAssessmentTemplate.mutate(
             {
@@ -366,29 +412,13 @@ function TemplateBuilderPage() {
     };
 
     const handleSaveToExistingAssessmentTemplate = (assessmentTemplateId: string) => {
-        if (!preview || !user) return;
+        if (!user) return;
 
-        const values = form.getValues();
-
-        // Convert preview.target_elements to CreateTargetElementRequest[]
-        const targetElements = preview.target_elements.map(
-            ({ element_type, id_list, ...rest }) => ({
-                element_type,
-                id_list,
-                ...rest,
-            }),
-        );
+        const payload = buildTemplatePayload();
+        if (!payload) return;
 
         const templateData = {
-            question_type: values.questionType,
-            question_text_template: preview.question_text_template,
-            text_template_type: preview.text_template_type,
-            description: values.templateDescription || undefined,
-            code: preview.code,
-            entry_function: preview.entry_function,
-            output_type: preview.output_type,
-            num_distractors: preview.num_distractors,
-            target_elements: targetElements,
+            ...payload,
             input_data_config:
                 Object.keys(inputDataConfig).length > 0 ? inputDataConfig : undefined,
         };
@@ -418,7 +448,7 @@ function TemplateBuilderPage() {
         description: string | undefined,
         folderId: string,
     ) => {
-        if (!preview || !user) return;
+        if (!user) return;
 
         createQuestionTemplateBank.mutate(
             {
@@ -438,29 +468,13 @@ function TemplateBuilderPage() {
     };
 
     const handleSaveToExistingQuestionTemplateBank = (questionTemplateBankId: string) => {
-        if (!preview || !user) return;
+        if (!user) return;
 
-        const values = form.getValues();
-
-        // Convert preview.target_elements to CreateTargetElementRequest[]
-        const targetElements = preview.target_elements.map(
-            ({ element_type, id_list, ...rest }) => ({
-                element_type,
-                id_list,
-                ...rest,
-            }),
-        );
+        const payload = buildTemplatePayload();
+        if (!payload) return;
 
         const templateData = {
-            question_type: values.questionType,
-            question_text_template: preview.question_text_template,
-            text_template_type: preview.text_template_type,
-            description: values.templateDescription || undefined,
-            code: preview.code,
-            entry_function: preview.entry_function,
-            output_type: preview.output_type,
-            num_distractors: preview.num_distractors,
-            target_elements: targetElements,
+            ...payload,
             input_data_config:
                 Object.keys(inputDataConfig).length > 0 ? inputDataConfig : undefined,
         };
@@ -486,32 +500,16 @@ function TemplateBuilderPage() {
     };
 
     const handleUpdateTemplate = () => {
-        if (!preview || !user || !existingTemplate) return;
+        if (!user || !existingTemplate) return;
 
-        const values = form.getValues();
-
-        // Convert preview.target_elements to CreateTargetElementRequest[]
-        const targetElements = preview.target_elements.map(
-            ({ element_type, id_list, ...rest }) => ({
-                element_type,
-                id_list,
-                ...rest,
-            }),
-        );
+        const payload = buildTemplatePayload();
+        if (!payload) return;
 
         updateQuestionTemplate.mutate(
             {
                 templateId: existingTemplate.id,
                 data: {
-                    question_type: values.questionType,
-                    question_text_template: preview.question_text_template,
-                    text_template_type: preview.text_template_type,
-                    description: values.templateDescription || undefined,
-                    code: preview.code,
-                    entry_function: preview.entry_function,
-                    output_type: preview.output_type,
-                    num_distractors: preview.num_distractors,
-                    target_elements: targetElements,
+                    ...payload,
                     input_data_config:
                         Object.keys(inputDataConfig).length > 0 ? inputDataConfig : null,
                 },
@@ -713,41 +711,11 @@ function TemplateBuilderPage() {
                     </div>
 
                     {/* Preview */}
-                    <div ref={previewRef} className="space-y-6">
+                    <div ref={previewRef} className="flex flex-col gap-6">
                         {preview ? (
-                            <>
-                                <TemplatePreview preview={preview} />
-                                <Button
-                                    className="w-full"
-                                    onClick={handleSaveButtonClick}
-                                    disabled={
-                                        isEditMode
-                                            ? updateQuestionTemplate.isPending
-                                            : createAssessmentTemplate.isPending ||
-                                              addQuestionTemplate.isPending ||
-                                              createQuestionTemplateBank.isPending ||
-                                              insertQuestionTemplateIntoBank.isPending
-                                    }
-                                >
-                                    {(isEditMode && updateQuestionTemplate.isPending) ||
-                                    createAssessmentTemplate.isPending ||
-                                    addQuestionTemplate.isPending ||
-                                    createQuestionTemplateBank.isPending ||
-                                    insertQuestionTemplateIntoBank.isPending ? (
-                                        <>
-                                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                            {isEditMode ? "Updating..." : "Saving..."}
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="h-4 w-4 mr-2" />
-                                            {isEditMode ? "Update Template" : "Save Template"}
-                                        </>
-                                    )}
-                                </Button>
-                            </>
+                            <TemplatePreview preview={preview} />
                         ) : (
-                            <Card className="h-full min-h-[400px] flex items-center">
+                            <Card className="flex-1 min-h-[400px] flex items-center">
                                 <CardContent className="text-center text-muted-foreground">
                                     <Wand2 className="h-12 w-12 mx-auto mb-4 opacity-20" />
                                     <p className="font-medium mb-2">Template Preview</p>
@@ -761,6 +729,34 @@ function TemplateBuilderPage() {
                                 </CardContent>
                             </Card>
                         )}
+                        <Button
+                            className="w-full"
+                            onClick={handleSaveButtonClick}
+                            disabled={
+                                isEditMode
+                                    ? updateQuestionTemplate.isPending
+                                    : createAssessmentTemplate.isPending ||
+                                      addQuestionTemplate.isPending ||
+                                      createQuestionTemplateBank.isPending ||
+                                      insertQuestionTemplateIntoBank.isPending
+                            }
+                        >
+                            {(isEditMode && updateQuestionTemplate.isPending) ||
+                            createAssessmentTemplate.isPending ||
+                            addQuestionTemplate.isPending ||
+                            createQuestionTemplateBank.isPending ||
+                            insertQuestionTemplateIntoBank.isPending ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    {isEditMode ? "Updating..." : "Saving..."}
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="h-4 w-4 mr-2" />
+                                    {isEditMode ? "Update Template" : "Save Template"}
+                                </>
+                            )}
+                        </Button>
                     </div>
                 </div>
 
