@@ -41,6 +41,7 @@ interface InputDataCardProps {
     isSaving?: boolean;
     optional?: boolean;
     initialValues?: Record<string, unknown>;
+    canEdit?: boolean;
 }
 
 const isValidJson = (value: string) => {
@@ -133,6 +134,7 @@ export function InputDataCard({
     isSaving,
     optional = false,
     initialValues,
+    canEdit = true,
 }: InputDataCardProps) {
     const generateInputs = useGenerateInputs();
 
@@ -412,7 +414,7 @@ export function InputDataCard({
                     </CardTitle>
 
                     <div className="flex items-center gap-2">
-                        {onSave && (
+                        {canEdit && onSave && (
                             <Button
                                 type="button"
                                 size="sm"

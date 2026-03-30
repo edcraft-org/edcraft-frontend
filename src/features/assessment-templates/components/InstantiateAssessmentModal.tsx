@@ -56,6 +56,7 @@ interface InstantiateAssessmentModalProps {
     ) => Promise<void>;
     onCancelGeneration?: () => void;
     isLoading?: boolean;
+    canEdit: boolean;
 }
 
 export function InstantiateAssessmentModal({
@@ -66,6 +67,7 @@ export function InstantiateAssessmentModal({
     onInstantiate,
     onCancelGeneration,
     isLoading,
+    canEdit,
 }: InstantiateAssessmentModalProps) {
     const totalSteps = questionTemplates.length + 1;
     const [currentStep, setCurrentStep] = useState(0);
@@ -341,6 +343,7 @@ export function InstantiateAssessmentModal({
                                 }}
                                 onSave={() => handleSaveConfigForStep(templateIndex)}
                                 isSaving={updateQuestionTemplate.isPending}
+                                canEdit={canEdit}
                             />
 
                             {/* Test Generate section */}

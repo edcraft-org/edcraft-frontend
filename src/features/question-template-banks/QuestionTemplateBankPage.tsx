@@ -370,6 +370,7 @@ function QuestionTemplateBankPage() {
                 open={showCreateFromTemplate}
                 onOpenChange={setShowCreateFromTemplate}
                 template={selectedTemplate}
+                canEdit={canEdit}
             />
 
             <LinkOrDuplicateTemplateModal

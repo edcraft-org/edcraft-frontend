@@ -46,12 +46,14 @@ interface CreateFromTemplateModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     template: QuestionTemplateResponse | null;
+    canEdit: boolean;
 }
 
 export function CreateFromTemplateModal({
     open,
     onOpenChange,
     template,
+    canEdit,
 }: CreateFromTemplateModalProps) {
     const [generatedQuestion, setGeneratedQuestion] = useState<Question | null>(null);
     const [showSaveModal, setShowSaveModal] = useState(false);
@@ -305,6 +307,7 @@ export function CreateFromTemplateModal({
                                     onValidationChange={setIsInputDataValid}
                                     onSave={handleSaveConfig}
                                     isSaving={updateQuestionTemplate.isPending}
+                                    canEdit={canEdit}
                                 />
                             </div>
 

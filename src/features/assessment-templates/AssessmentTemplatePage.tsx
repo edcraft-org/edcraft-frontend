@@ -485,6 +485,7 @@ function AssessmentTemplatePage() {
                 open={showCreateFromTemplate}
                 onOpenChange={setShowCreateFromTemplate}
                 template={selectedTemplate}
+                canEdit={canEdit}
             />
 
             {/* Link or Duplicate Template Modal */}
@@ -505,6 +506,7 @@ function AssessmentTemplatePage() {
                 onInstantiate={handleInstantiate}
                 onCancelGeneration={generateAssessment.cancel}
                 isLoading={generateAssessment.isPending}
+                canEdit={canEdit}
             />
 
             {/* Remove Template Confirmation */}
