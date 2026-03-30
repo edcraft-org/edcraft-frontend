@@ -331,10 +331,12 @@ function TemplateBuilderPage() {
             return;
         }
         if (isEditMode) {
-            // Directly update without showing modal
             handleUpdateTemplate();
+        } else if (destinationAssessmentTemplateId) {
+            handleSaveToExistingAssessmentTemplate(destinationAssessmentTemplateId);
+        } else if (destinationTemplateBankId) {
+            handleSaveToExistingQuestionTemplateBank(destinationTemplateBankId);
         } else {
-            // Show modal for new template (choose destination)
             setShowSaveModal(true);
         }
     };
