@@ -30,6 +30,18 @@ const TutorialPage = lazy(() => import("@/features/landing/TutorialPage"));
 const TemplateBuilderTutorialPage = lazy(
     () => import("@/features/landing/TemplateBuilderTutorialPage"),
 );
+const GenerateQuestionFromTemplateTutorialPage = lazy(
+    () => import("@/features/landing/GenerateQuestionFromTemplateTutorialPage"),
+);
+const CreateAssessmentFromTemplateTutorialPage = lazy(
+    () => import("@/features/landing/CreateAssessmentFromTemplateTutorialPage"),
+);
+const LinkDuplicateTutorialPage = lazy(
+    () => import("@/features/landing/LinkDuplicateTutorialPage"),
+);
+const UploadToCanvasTutorialPage = lazy(
+    () => import("@/features/landing/UploadToCanvasTutorialPage"),
+);
 
 // Helper to wrap lazy loaded components with Suspense
 function lazyRoute(Component: ComponentType) {
@@ -62,6 +74,22 @@ export const router = createBrowserRouter([
                         path: "template-builder",
                         element: lazyRoute(TemplateBuilderTutorialPage),
                     },
+                    {
+                        path: "generate-question-from-template",
+                        element: lazyRoute(GenerateQuestionFromTemplateTutorialPage),
+                    },
+                    {
+                        path: "create-assessment-from-template",
+                        element: lazyRoute(CreateAssessmentFromTemplateTutorialPage),
+                    },
+                    {
+                        path: "link-duplicate",
+                        element: lazyRoute(LinkDuplicateTutorialPage),
+                    },
+                    {
+                        path: "upload-to-canvas",
+                        element: lazyRoute(UploadToCanvasTutorialPage),
+                    }
                 ],
             },
             {

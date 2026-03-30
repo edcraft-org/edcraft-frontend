@@ -92,14 +92,14 @@ export default function TemplateBuilderTutorialPage() {
                             </ul>
                         </div>
                         <TutorialImage
-                            src="/assets/tutorial/loop-iteration-selection.png"
+                            src="/assets/tutorials/template-builder/loop-iteration-selection.png"
                             alt="Loop iteration selection"
                         />
                         <p className="text-sm text-foreground mt-4">
                             Then select the variable <Code>arr</Code>.
                         </p>
                         <TutorialImage
-                            src="/assets/tutorial/variable-selection.png"
+                            src="/assets/tutorials/template-builder/variable-selection.png"
                             alt="Variable selection"
                         />
                     </Step>
@@ -119,7 +119,7 @@ export default function TemplateBuilderTutorialPage() {
                             function where inputs are passed into your code.
                         </p>
                         <TutorialImage
-                            src="/assets/tutorial/question-config.png"
+                            src="/assets/tutorials/template-builder/question-config.png"
                             alt="Question configuration"
                         />
                     </Step>
@@ -159,7 +159,7 @@ export default function TemplateBuilderTutorialPage() {
                             </ul>
                         </div>
                         <TutorialImage
-                            src="/assets/tutorial/array-input-generation.png"
+                            src="/assets/tutorials/template-builder/array-input-generation.png"
                             alt="Array input generation configuration"
                             className="w-4/5"
                         />

@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/router/paths";
-import { LayoutTemplate, ArrowRight } from "lucide-react";
+import { LayoutTemplate, ArrowRight, Sparkles, Link2, FilePlus, Upload } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface TutorialCardProps {
@@ -44,14 +44,35 @@ const TUTORIAL_CARDS: TutorialCardProps[] = [
         linkTo: ROUTES.TUTORIAL_TEMPLATE_BUILDER,
         linkLabel: "View Tutorial",
     },
-    // {
-    //     icon: FileQuestion,
-    //     title: "Using the Question Builder",
-    //     description:
-    //         "Generate individual questions from your code in a few steps — write your code, configure the target, and produce complete questions with answers and distractors.",
-    //     linkTo: ROUTES.QUESTION_BUILDER,
-    //     linkLabel: "Try it",
-    // },
+    {
+        icon: Sparkles,
+        title: "Generating questions from templates",
+        description: "Learn how to generate questions from your question templates.",
+        linkTo: ROUTES.TUTORIAL_GENERATE_QUESTION_FROM_TEMPLATE,
+        linkLabel: "View Tutorial",
+    },
+    {
+        icon: Link2,
+        title: "Link or duplicate question templates",
+        description:
+            "Learn how to link or duplicate question templates to reuse them across multiple assessments.",
+        linkTo: ROUTES.TUTORIAL_LINK_DUPLICATE,
+        linkLabel: "View Tutorial",
+    },
+    {
+        icon: FilePlus,
+        title: "Creating assessments from templates",
+        description: "Learn how to create assessments from your assessment templates.",
+        linkTo: ROUTES.TUTORIAL_CREATE_ASSESSMENT_FROM_TEMPLATE,
+        linkLabel: "View Tutorial",
+    },
+    {
+        icon: Upload,
+        title: "Upload to Canvas",
+        description: "Learn how to upload your generated questions and assessments to Canvas.",
+        linkTo: ROUTES.TUTORIAL_UPLOAD_TO_CANVAS,
+        linkLabel: "View Tutorial",
+    },
 ];
 
 export default function TutorialPage() {
@@ -69,8 +90,7 @@ export default function TutorialPage() {
 
             {/* Tutorial cards */}
             <section className="px-6 py-14 border-b">
-                {/* <div className="mx-auto grid gap-6 sm:grid-cols-3"> */}
-                <div className="max-w-sm mx-auto flex flex-col gap-6">
+                <div className="mx-auto grid gap-6 sm:grid-cols-3">
                     {TUTORIAL_CARDS.map((card) => (
                         <TutorialCard key={card.title} {...card} />
                     ))}
