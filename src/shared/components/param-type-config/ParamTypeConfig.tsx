@@ -276,6 +276,20 @@ function AdvancedConfigContent({
                         onChange={(v) => set("maxItems", v)}
                     />
                 </div>
+                {type === "array" && (
+                    <div className="grid grid-cols-2 gap-2">
+                        <CheckField
+                            label="Unique"
+                            checked={Boolean(config.unique)}
+                            onChange={(v) => set("unique", v || undefined)}
+                        />
+                        <CheckField
+                            label="Sorted"
+                            checked={Boolean(config.sorted)}
+                            onChange={(v) => set("sorted", v || undefined)}
+                        />
+                    </div>
+                )}
                 <div className="space-y-1">
                     <Label className="text-xs font-medium">Items schema</Label>
                     <NestedSchemaConfig
@@ -468,6 +482,15 @@ function AdvancedConfigContent({
                         label="Acyclic"
                         checked={Boolean(config.acyclic)}
                         onChange={(v) => set("acyclic", v || undefined)}
+                    />
+                </div>
+                <div className="space-y-1">
+                    <Label className="text-xs font-medium">Node schema</Label>
+                    <NestedSchemaConfig
+                        schema={(config.node_schema as Record<string, unknown> | undefined) ?? {}}
+                        onChange={(updated) =>
+                            set("node_schema", Object.keys(updated).length ? updated : undefined)
+                        }
                     />
                 </div>
                 <div className="space-y-1">
