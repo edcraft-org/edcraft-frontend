@@ -8,6 +8,7 @@ export const ROUTES = {
   TUTORIAL_LINK_DUPLICATE: "/tutorial/link-duplicate",
   TUTORIAL_CREATE_ASSESSMENT_FROM_TEMPLATE: "/tutorial/create-assessment-from-template",
   TUTORIAL_UPLOAD_TO_CANVAS: "/tutorial/upload-to-canvas",
+  KNOWN_LIMITATIONS: "/known-limitations",
   FOLDER: (id: string) => `/folders/${id}`,
   FOLDER_ROOT: "/folders/root",
   QUESTION_BUILDER: "/question-builder",

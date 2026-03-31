@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { Link } from "react-router-dom";
 import type { TargetSelection, ScopePathItem, Modifier } from "@/types/frontend.types";
 import { ElementType, Modifier as ModifierEnum, isSelectionModifier } from "@/constants";
+import { ROUTES } from "@/router/paths";
 import {
     findSubtreeInCodeTree,
     reconstructTreeFromPath,
@@ -92,39 +94,65 @@ export default function TargetSelector({
         // Resets state to a partial level with no element selected, notifies parent
         const stopAt = (overrides: Partial<SelectionState> = {}) => {
             setSelectionState({
-                type: null, elementId: null, scopePath, modifier: null, currentTree,
-                functionNameSelected: null, functionLineStage: false, selectedLineNumbers: [],
-                currentLoopInIterationScope, selectedVariableNames: [], argumentKeys: null,
+                type: null,
+                elementId: null,
+                scopePath,
+                modifier: null,
+                currentTree,
+                functionNameSelected: null,
+                functionLineStage: false,
+                selectedLineNumbers: [],
+                currentLoopInIterationScope,
+                selectedVariableNames: [],
+                argumentKeys: null,
                 selectedElementData: null,
                 ...overrides,
             });
             onTargetChange(null);
         };
 
-        if (scopeTruncated) { stopAt(); return; }
+        if (scopeTruncated) {
+            stopAt();
+            return;
+        }
 
         if (initialSelection.type === ElementType.Function) {
             const functionNameSelected = initialSelection.name || null;
             const nameStillExists = currentTree.function_indices.some(
                 (id) => codeInfo.functions[id]?.name === functionNameSelected,
             );
-            if (!nameStillExists) { stopAt({ type: ElementType.Function }); return; }
+            if (!nameStillExists) {
+                stopAt({ type: ElementType.Function });
+                return;
+            }
 
             if (Array.isArray(initialSelection.element_id)) {
                 const validIds = initialSelection.element_id.filter((id) => codeInfo.functions[id]);
                 if (validIds.length === 0) {
-                    stopAt({ type: ElementType.Function, functionNameSelected, functionLineStage: true });
+                    stopAt({
+                        type: ElementType.Function,
+                        functionNameSelected,
+                        functionLineStage: true,
+                    });
                     return;
                 }
                 // Preserve element_id reference if nothing was filtered — prevents infinite re-trigger
-                const elementId = validIds.length === initialSelection.element_id.length
-                    ? (initialSelection.element_id as number[])
-                    : validIds;
+                const elementId =
+                    validIds.length === initialSelection.element_id.length
+                        ? (initialSelection.element_id as number[])
+                        : validIds;
                 setSelectionState({
-                    type: ElementType.Function, elementId: -1, scopePath,
-                    modifier: initialSelection.modifier || null, currentTree, functionNameSelected,
-                    functionLineStage: true, selectedLineNumbers: elementId, currentLoopInIterationScope,
-                    selectedVariableNames: [], argumentKeys: initialSelection.argument_keys ?? null,
+                    type: ElementType.Function,
+                    elementId: -1,
+                    scopePath,
+                    modifier: initialSelection.modifier || null,
+                    currentTree,
+                    functionNameSelected,
+                    functionLineStage: true,
+                    selectedLineNumbers: elementId,
+                    currentLoopInIterationScope,
+                    selectedVariableNames: [],
+                    argumentKeys: initialSelection.argument_keys ?? null,
                     selectedElementData: { name: functionNameSelected || undefined },
                 });
                 onTargetChange(
@@ -139,15 +167,26 @@ export default function TargetSelector({
                 );
                 const matchIndex = matchingIds.indexOf(globalId);
                 if (matchIndex === -1) {
-                    stopAt({ type: ElementType.Function, functionNameSelected, functionLineStage: true });
+                    stopAt({
+                        type: ElementType.Function,
+                        functionNameSelected,
+                        functionLineStage: true,
+                    });
                     return;
                 }
                 const fn = codeInfo.functions[globalId];
                 setSelectionState({
-                    type: ElementType.Function, elementId: matchIndex + 1, scopePath,
-                    modifier: initialSelection.modifier || null, currentTree, functionNameSelected,
-                    functionLineStage: true, selectedLineNumbers: [], currentLoopInIterationScope,
-                    selectedVariableNames: [], argumentKeys: initialSelection.argument_keys ?? null,
+                    type: ElementType.Function,
+                    elementId: matchIndex + 1,
+                    scopePath,
+                    modifier: initialSelection.modifier || null,
+                    currentTree,
+                    functionNameSelected,
+                    functionLineStage: true,
+                    selectedLineNumbers: [],
+                    currentLoopInIterationScope,
+                    selectedVariableNames: [],
+                    argumentKeys: initialSelection.argument_keys ?? null,
                     selectedElementData: { globalId, name: fn.name, line_number: fn.line_number },
                 });
                 onTargetChange(initialSelection);
@@ -155,16 +194,30 @@ export default function TargetSelector({
         } else if (initialSelection.type === ElementType.Variable) {
             const allNames = initialSelection.name ? initialSelection.name.split(",") : [];
             const validNames = allNames.filter((name) => currentTree.variables.includes(name));
-            if (validNames.length === 0) { stopAt({ type: ElementType.Variable }); return; }
+            if (validNames.length === 0) {
+                stopAt({ type: ElementType.Variable });
+                return;
+            }
             const validName = validNames.join(",");
             setSelectionState({
-                type: ElementType.Variable, elementId: 0, scopePath,
-                modifier: initialSelection.modifier || null, currentTree,
-                functionNameSelected: null, functionLineStage: false, selectedLineNumbers: [],
-                currentLoopInIterationScope, selectedVariableNames: validNames,
-                argumentKeys: null, selectedElementData: { name: validName },
+                type: ElementType.Variable,
+                elementId: 0,
+                scopePath,
+                modifier: initialSelection.modifier || null,
+                currentTree,
+                functionNameSelected: null,
+                functionLineStage: false,
+                selectedLineNumbers: [],
+                currentLoopInIterationScope,
+                selectedVariableNames: validNames,
+                argumentKeys: null,
+                selectedElementData: { name: validName },
             });
-            onTargetChange(validName === initialSelection.name ? initialSelection : { ...initialSelection, name: validName });
+            onTargetChange(
+                validName === initialSelection.name
+                    ? initialSelection
+                    : { ...initialSelection, name: validName },
+            );
         } else {
             // Loop or Branch
             const globalId = initialSelection.element_id as number;
@@ -172,18 +225,36 @@ export default function TargetSelector({
             const elementId = isLoop
                 ? currentTree.loop_indices.indexOf(globalId)
                 : currentTree.branch_indices.indexOf(globalId);
-            if (elementId === -1) { stopAt({ type: initialSelection.type }); return; }
+            if (elementId === -1) {
+                stopAt({ type: initialSelection.type });
+                return;
+            }
 
             const selectedElementData: SelectionState["selectedElementData"] = isLoop
                 ? { globalId, line_number: codeInfo.loops[globalId].line_number }
-                : (() => { const b = codeInfo.branches[globalId]; return { globalId, line_number: b.line_number, condition: b.condition, name: b.condition }; })();
+                : (() => {
+                      const b = codeInfo.branches[globalId];
+                      return {
+                          globalId,
+                          line_number: b.line_number,
+                          condition: b.condition,
+                          name: b.condition,
+                      };
+                  })();
 
             setSelectionState({
-                type: initialSelection.type, elementId, scopePath,
-                modifier: initialSelection.modifier || null, currentTree,
-                functionNameSelected: null, functionLineStage: false, selectedLineNumbers: [],
-                currentLoopInIterationScope, selectedVariableNames: [],
-                argumentKeys: initialSelection.argument_keys ?? null, selectedElementData,
+                type: initialSelection.type,
+                elementId,
+                scopePath,
+                modifier: initialSelection.modifier || null,
+                currentTree,
+                functionNameSelected: null,
+                functionLineStage: false,
+                selectedLineNumbers: [],
+                currentLoopInIterationScope,
+                selectedVariableNames: [],
+                argumentKeys: initialSelection.argument_keys ?? null,
+                selectedElementData,
             });
             onTargetChange(initialSelection);
         }
@@ -442,7 +513,8 @@ export default function TargetSelector({
                 selectionState.modifier === modifier ? null : (modifier as Modifier);
 
             // Reset argument_keys when modifier changes away from "arguments"
-            const newArgumentKeys = newModifier === "arguments" ? selectionState.argumentKeys : null;
+            const newArgumentKeys =
+                newModifier === "arguments" ? selectionState.argumentKeys : null;
 
             setSelectionState({
                 ...selectionState,
@@ -593,7 +665,13 @@ export default function TargetSelector({
 
         const idx = selectionState.elementId - 1;
         return allMatching[idx] ? [allMatching[idx]] : [];
-    }, [selectionState.type, selectionState.functionNameSelected, selectionState.elementId, selectionState.currentTree, codeInfo]);
+    }, [
+        selectionState.type,
+        selectionState.functionNameSelected,
+        selectionState.elementId,
+        selectionState.currentTree,
+        codeInfo,
+    ]);
 
     // Determine if navigation into scope is possible
     const canNavigateInto = useMemo(() => {
@@ -615,7 +693,17 @@ export default function TargetSelector({
 
     return (
         <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Target Selection</h3>
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Target Selection</h3>
+                <Link
+                    to={ROUTES.KNOWN_LIMITATIONS}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                    Known limitations
+                </Link>
+            </div>
 
             <BreadcrumbNavigation
                 scopePath={selectionState.scopePath}

@@ -42,6 +42,9 @@ const LinkDuplicateTutorialPage = lazy(
 const UploadToCanvasTutorialPage = lazy(
     () => import("@/features/landing/UploadToCanvasTutorialPage"),
 );
+const KnownLimitationsPage = lazy(
+    () => import("@/features/landing/KnownLimitationsPage"),
+);
 
 // Helper to wrap lazy loaded components with Suspense
 function lazyRoute(Component: ComponentType) {
@@ -91,6 +94,10 @@ export const router = createBrowserRouter([
                         element: lazyRoute(UploadToCanvasTutorialPage),
                     }
                 ],
+            },
+            {
+                path: "known-limitations",
+                element: lazyRoute(KnownLimitationsPage),
             },
             {
                 path: "question-builder",
