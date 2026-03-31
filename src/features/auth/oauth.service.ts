@@ -48,7 +48,7 @@ export function initiateOAuth(provider: OAuthProvider, redirectTo?: string) {
     const baseUrl = window.__CONFIG__?.API_URL ?? import.meta.env.VITE_API_BASE_URL ?? "/api";
     const params = new URLSearchParams({ state });
 
-    window.location.href = `${baseUrl}/auth/oauth/${provider}/authorize?${params}`;
+    window.location.href = `${baseUrl}/api/auth/oauth/${provider}/authorize?${params}`;
 }
 
 /**
