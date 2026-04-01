@@ -2,7 +2,15 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/router/paths";
-import { LayoutTemplate, ArrowRight, Sparkles, Link2, FilePlus, Upload } from "lucide-react";
+import {
+    LayoutTemplate,
+    ArrowRight,
+    Sparkles,
+    Link2,
+    FilePlus,
+    Upload,
+    Crosshair,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface TutorialCardProps {
@@ -42,6 +50,14 @@ const TUTORIAL_CARDS: TutorialCardProps[] = [
         description:
             "Learn how to create reusable question templates so you can generate new questions from the same code as many times as you need.",
         linkTo: ROUTES.TUTORIAL_TEMPLATE_BUILDER,
+        linkLabel: "View Tutorial",
+    },
+    {
+        icon: Crosshair,
+        title: "Target Selection",
+        description:
+            "Learn how to use target selection to define how answers are extracted from your code.",
+        linkTo: ROUTES.TUTORIAL_TARGET_SELECTION,
         linkLabel: "View Tutorial",
     },
     {

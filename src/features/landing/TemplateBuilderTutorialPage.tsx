@@ -67,6 +67,14 @@ export default function TemplateBuilderTutorialPage() {
                     <Step number={4} title="Configure the target">
                         <p>
                             The target determines how the answer will be extracted from your code.
+                            See the{" "}
+                            <Link
+                                to={ROUTES.TUTORIAL_TARGET_SELECTION}
+                                className="underline underline-offset-4 hover:text-foreground"
+                            >
+                                Target Selection Tutorial
+                            </Link>{" "}
+                            for a full explanation of all available options.
                         </p>
                         <div className="mt-3 flex flex-col gap-2">
                             <p className="font-medium text-sm">Example scenario</p>
