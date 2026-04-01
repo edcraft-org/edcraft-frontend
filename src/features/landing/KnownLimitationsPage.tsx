@@ -89,6 +89,32 @@ fn = lambda x: process(x)              # call inside lambda body`}</code>
                         </p>
                     </Limitation>
 
+                    <Limitation title="Function scoping with nonlocal and global is not fully supported">
+                        <p>
+                            Variables declared with{" "}
+                            <code className="text-foreground bg-muted px-1 rounded">nonlocal</code>{" "}
+                            or{" "}
+                            <code className="text-foreground bg-muted px-1 rounded">global</code>{" "}
+                            are not fully supported. The variable is tracked in the correct
+                            enclosing or global scope, but the function that declares it will
+                            appear to have no such variable in its own scope.
+                        </p>
+                        <pre className="mt-2 rounded-lg bg-muted px-4 py-3 text-sm overflow-x-auto">
+                            <code>{`x = 0
+
+def outer():
+    count = 0
+    def inner():
+        nonlocal count
+        count += 1  # tracked in outer's scope, but inner appears to have no 'count'
+    inner()
+
+def increment():
+    global x
+    x += 1  # tracked in global scope, but increment appears to have no 'x'`}</code>
+                        </pre>
+                    </Limitation>
+
                     <Limitation title="Walrus operator (:=) assignments are not tracked">
                         <p>
                             Variable assignments made via the walrus operator (
