@@ -5,9 +5,11 @@ import { Sidebar } from "./Sidebar";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/sonner";
 import { initAuth } from "@/features/auth/auth.service";
+import { useUserStore } from "@/shared/stores/user.store";
 
 export function MainLayout() {
     const { pathname } = useLocation();
+    const user = useUserStore((s) => s.user);
 
     useEffect(() => {
         initAuth();
@@ -21,7 +23,7 @@ export function MainLayout() {
         <div className="min-h-screen flex flex-col">
             <Header />
             <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
+                {user && <Sidebar />}
                 <main className="flex-1 overflow-auto">
                     <ErrorBoundary>
                         <Outlet />
