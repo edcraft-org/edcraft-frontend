@@ -89,18 +89,6 @@ fn = lambda x: process(x)              # call inside lambda body`}</code>
                         </p>
                     </Limitation>
 
-                    <Limitation title="Branch modifiers do not work correctly with count output type">
-                        <p>
-                            When using{" "}
-                            <strong className="text-foreground">branch modifiers</strong> with the{" "}
-                            <strong className="text-foreground">count</strong> output type, the
-                            result may be incorrect. If no branches match, the output will still
-                            return <code className="text-foreground bg-muted px-1 rounded">1</code>{" "}
-                            instead of <code className="text-foreground bg-muted px-1 rounded">0</code>.
-                            We are working on a fix for this.
-                        </p>
-                    </Limitation>
-
                     <Limitation title="Walrus operator (:=) assignments are not tracked">
                         <p>
                             Variable assignments made via the walrus operator (
