@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { AuthButton } from "./AuthButton";
 import { AuthDialog } from "@/components/auth/AuthDialog";
 import { ROUTES } from "@/router/paths";
-import { FileQuestion, LayoutTemplate } from "lucide-react";
+import { BookOpen, FileQuestion, LayoutTemplate } from "lucide-react";
 
 export function Header() {
     return (
@@ -24,6 +24,12 @@ export function Header() {
                         <Link to={ROUTES.TEMPLATE_BUILDER}>
                             <LayoutTemplate className="h-4 w-4 mr-2" />
                             Template Builder
+                        </Link>
+                    </Button>
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link to={ROUTES.TUTORIAL}>
+                            <BookOpen className="h-4 w-4 mr-2" />
+                            Tutorials
                         </Link>
                     </Button>
                 </nav>

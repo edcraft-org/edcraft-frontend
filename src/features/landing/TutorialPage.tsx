@@ -1,7 +1,9 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/router/paths";
+import { useUserStore } from "@/shared/stores/user.store";
+import { useAuthDialogStore } from "@/shared/stores/auth-dialog.store";
 import {
     LayoutTemplate,
     ArrowRight,
@@ -92,6 +94,18 @@ const TUTORIAL_CARDS: TutorialCardProps[] = [
 ];
 
 export default function TutorialPage() {
+    const navigate = useNavigate();
+    const user = useUserStore((s) => s.user);
+    const setAuthDialogOpen = useAuthDialogStore((s) => s.setOpen);
+
+    function handleGetStarted() {
+        if (user) {
+            navigate(ROUTES.FOLDER_ROOT);
+        } else {
+            setAuthDialogOpen(true);
+        }
+    }
+
     return (
         <div className="flex flex-col">
             {/* Header */}
@@ -119,11 +133,9 @@ export default function TutorialPage() {
                 <p className="text-muted-foreground max-w-md">
                     Sign up for free to make full use of EdCraft's functionalities.
                 </p>
-                <Button asChild size="lg">
-                    <Link to={ROUTES.FOLDER_ROOT}>
-                        Get Started
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                    </Link>
+                <Button size="lg" onClick={handleGetStarted}>
+                    Get Started
+                    <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
             </section>
         </div>
