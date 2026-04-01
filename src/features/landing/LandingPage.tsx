@@ -1,7 +1,9 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/router/paths";
+import { useUserStore } from "@/shared/stores/user.store";
+import { useAuthDialogStore } from "@/shared/stores/auth-dialog.store";
 import {
     FileQuestion,
     LayoutTemplate,
@@ -68,6 +70,18 @@ const steps = [
 ];
 
 export default function LandingPage() {
+    const navigate = useNavigate();
+    const user = useUserStore((s) => s.user);
+    const setAuthDialogOpen = useAuthDialogStore((s) => s.setOpen);
+
+    function handleGetStarted() {
+        if (user) {
+            navigate(ROUTES.FOLDER_ROOT);
+        } else {
+            setAuthDialogOpen(true);
+        }
+    }
+
     return (
         <div className="flex flex-col">
             {/* Hero */}
@@ -84,11 +98,9 @@ export default function LandingPage() {
                     Automatically generate new questions from templates.
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-3">
-                    <Button asChild size="lg">
-                        <Link to={ROUTES.FOLDER_ROOT}>
-                            Get Started
-                            <ArrowRight className="h-4 w-4 ml-2" />
-                        </Link>
+                    <Button size="lg" onClick={handleGetStarted}>
+                        Get Started
+                        <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                     <Button asChild variant="outline" size="lg">
                         <Link to={ROUTES.QUESTION_BUILDER}>Try Question Builder</Link>
@@ -151,11 +163,9 @@ export default function LandingPage() {
                     Sign up for free and start generating questions today.
                 </p>
                 <div className="flex flex-wrap gap-3 justify-center">
-                    <Button asChild size="lg">
-                        <Link to={ROUTES.FOLDER_ROOT}>
-                            Get Started
-                            <ArrowRight className="h-4 w-4 ml-2" />
-                        </Link>
+                    <Button size="lg" onClick={handleGetStarted}>
+                        Get Started
+                        <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                     <Button asChild variant="outline" size="lg">
                         <Link to={ROUTES.TUTORIAL}>View Tutorial</Link>
