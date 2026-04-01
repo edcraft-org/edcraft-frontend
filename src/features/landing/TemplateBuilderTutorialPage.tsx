@@ -87,7 +87,8 @@ export default function TemplateBuilderTutorialPage() {
                                     Loop iterations: Enables analysis of each iteration individually
                                 </li>
                                 <li>
-                                    View elements inside loop iterations: Applies subseqent selections within each iteration
+                                    View elements inside loop iterations: Applies subseqent
+                                    selections within each iteration
                                 </li>
                             </ul>
                         </div>
@@ -125,11 +126,14 @@ export default function TemplateBuilderTutorialPage() {
                     </Step>
 
                     {/* Step 7 */}
-                    <Step number={7} title="Create a question template (optional)">
+                    <Step number={7} title="Create a question text template (optional)">
                         <p>
-                            You can define the question text using input variables. The variable
-                            name in curly braces will be replaced with the actual input value when
-                            generating question.
+                            You can define the question text using input variables. Any variable
+                            name in curly braces will be replaced with the corresponding input value
+                            when the question is generated. If left empty, the system will
+                            automatically generate a question for you. After previewing, the
+                            template will be populated. To regenerate, simply clear the text
+                            template.
                         </p>
                         <p className="text-sm text-foreground mt-2">Example:</p>
                         <blockquote className="mt-2 border-l-4 pl-4 text-sm italic text-foreground">

@@ -86,6 +86,7 @@ function TemplateBuilderPage() {
     const analyseCode = useAnalyseCode();
     const [codeInfo, setCodeInfo] = useState<CodeInfoOutput | undefined>(undefined);
     const [targetSelection, setTargetSelection] = useState<TargetSelection | null>(null);
+    const [targetSelectorKey, setTargetSelectorKey] = useState(0);
 
     // Preview and save state
     const [preview, setPreview] = useState<TemplatePreviewResponse | null>(null);
@@ -244,6 +245,7 @@ function TemplateBuilderPage() {
                 onSuccess: (data) => {
                     toast.success("Code analysed successfully");
                     setCodeInfo(data.code_info);
+                    setTargetSelectorKey((k) => k + 1);
                     const currentEntryFunction = form.getValues("entryFunction");
                     const stillExists = data.code_info.functions.some(
                         (f) => f.name === currentEntryFunction && f.is_definition,
@@ -626,6 +628,7 @@ function TemplateBuilderPage() {
                         {/* Target Selection - Only show after code analysis */}
                         {codeInfo && (
                             <TargetSelectionCard
+                                key={targetSelectorKey}
                                 codeInfo={codeInfo}
                                 onTargetChange={setTargetSelection}
                                 initialSelection={targetSelection}
