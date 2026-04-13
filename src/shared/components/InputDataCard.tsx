@@ -286,7 +286,7 @@ export function InputDataCard({
     /** Populate a single field with a generated value */
     const setGeneratedValue = useCallback(
         (paramName: string, value: unknown) => {
-            const serialized = typeof value === "string" ? value : JSON.stringify(value);
+            const serialized = JSON.stringify(value);
             internalForm.setValue(`fixedParams.${paramName}`, serialized, {
                 shouldValidate: true,
                 shouldDirty: true,
