@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuthDialogStore } from "@/shared/stores/auth-dialog.store";
 import { login, signup, resendVerification } from "@/features/auth/auth.service";
-// import { OAuthButtons } from "./OAuthButtons";
+import { OAuthButtons } from "./OAuthButtons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const loginSchema = z.object({
@@ -140,7 +140,7 @@ function LoginForm({ onClose, onSwitchMode }: { onClose: () => void; onSwitchMod
                 </form>
             </Form>
 
-            {/* <div className="relative">
+            <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
                 </div>
@@ -149,7 +149,7 @@ function LoginForm({ onClose, onSwitchMode }: { onClose: () => void; onSwitchMod
                 </div>
             </div>
 
-            <OAuthButtons onOAuthStart={onClose} /> */}
+            <OAuthButtons onOAuthStart={onClose} />
         </div>
     );
 }
@@ -288,7 +288,7 @@ function SignupForm({ onSwitchMode }: { onSwitchMode: () => void }) {
                         </button>
                     </p>
 
-                    {/* <div className="relative">
+                    <div className="relative">
                         <div className="absolute inset-0 flex items-center">
                             <span className="w-full border-t" />
                         </div>
@@ -297,7 +297,7 @@ function SignupForm({ onSwitchMode }: { onSwitchMode: () => void }) {
                         </div>
                     </div>
 
-                    <OAuthButtons onOAuthStart={() => {}} /> */}
+                    <OAuthButtons onOAuthStart={() => {}} />
                 </form>
             </Form>
         </div>
