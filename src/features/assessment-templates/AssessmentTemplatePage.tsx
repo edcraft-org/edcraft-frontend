@@ -5,7 +5,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ROUTES } from "@/router";
 import { getQuestionTemplate } from "@/features/question-templates/question-template.service";
-import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
 import { Play, Plus, GripVertical, Users } from "lucide-react";
 import { isAbortError } from "@/api/pollJob";
@@ -14,7 +13,7 @@ import { ResourcePath } from "@/api/models";
 import {
     CollaborationModal,
     DeleteConfirmationDialog,
-    ResourcePageHeader,
+    ResourceCollectionPage,
 } from "@/shared/components";
 import { queryKeys } from "@/api";
 import {
@@ -40,6 +39,7 @@ import { questionTemplateResponseToCreateRequest } from "@/shared/utils/question
 
 function AssessmentTemplatePage() {
     const { templateId } = useParams<{ templateId: string }>();
+    const assessmentTemplateResourceId = templateId ?? "";
     const navigate = useNavigate();
     const user = useUserStore((state) => state.user);
 
@@ -53,7 +53,9 @@ function AssessmentTemplatePage() {
     const [reorderedTemplates, setReorderedTemplates] = useState<QuestionTemplateResponse[]>([]);
     const [showCollabModal, setShowCollabModal] = useState(false);
 
-    const { data: assessmentTemplate, isLoading } = useAssessmentTemplate(templateId || "");
+    const { data: assessmentTemplate, isLoading } = useAssessmentTemplate(
+        assessmentTemplateResourceId,
+    );
 
     const myRole = assessmentTemplate?.my_role ?? null;
     const canEdit = canEditResource(myRole);
@@ -75,17 +77,13 @@ function AssessmentTemplatePage() {
         [assessmentTemplate?.question_templates],
     );
 
-    if (!templateId) {
-        return <div className="p-6 text-center text-muted-foreground">Template ID is missing</div>;
-    }
-
     // Validation Helpers
     const validateSession = (): { templateId: string; userId: string } | null => {
         if (!user) {
             toast.error("Please log in to continue");
             return null;
         }
-        return { templateId, userId: user.id };
+        return { templateId: assessmentTemplateResourceId, userId: user.id };
     };
 
     const validateTemplateSelected = (
@@ -306,7 +304,7 @@ function AssessmentTemplatePage() {
                 },
             });
             toast.success("Assessment created successfully");
-            navigate(`/assessments/${newAssessment.id}`);
+            navigate(ROUTES.ASSESSMENT(newAssessment.id));
         } catch (error) {
             if (isAbortError(error)) return;
             throw error;
@@ -319,7 +317,7 @@ function AssessmentTemplatePage() {
     };
 
     const handleSaveReorder = () => {
-        if (reorderMutation.isPending || !templateId) return;
+        if (reorderMutation.isPending) return;
 
         const session = validateSession();
         if (!session) return;
@@ -331,7 +329,7 @@ function AssessmentTemplatePage() {
 
         reorderMutation.mutate(
             {
-                templateId,
+                templateId: assessmentTemplateResourceId,
                 data: { question_template_orders: templateOrders },
             },
             {
@@ -345,167 +343,157 @@ function AssessmentTemplatePage() {
         );
     };
 
-    if (isLoading) {
-        return <PageSkeleton />;
-    }
-
-    if (!assessmentTemplate) {
-        return (
-            <div className="p-6 text-center text-muted-foreground">
-                Assessment template not found
-            </div>
-        );
-    }
-
     return (
-        <div className="p-6 space-y-6">
-            <ResourcePageHeader
-                title={assessmentTemplate.title}
-                description={assessmentTemplate.description}
-                onBack={() => navigate(ROUTES.FOLDER(assessmentTemplate.folder_id))}
-                actions={
-                    <>
-                        {!isReorderMode && (
+        <ResourceCollectionPage
+            resourceId={assessmentTemplateResourceId}
+            resource={assessmentTemplate}
+            isLoading={isLoading}
+            messages={{
+                missingResource: "Template ID is missing",
+                notFound: "Assessment template not found",
+            }}
+            onBack={(assessmentTemplate) =>
+                navigate(ROUTES.FOLDER(assessmentTemplate.folder_id))
+            }
+            actions={() => (
+                <>
+                    {!isReorderMode && (
+                        <Button variant="outline" onClick={() => setShowInstantiateDialog(true)}>
+                            <Play className="h-4 w-4 mr-2" />
+                            Instantiate Assessment
+                        </Button>
+                    )}
+                    {canEdit && !isReorderMode && (
+                        <>
+                            <Button variant="outline" onClick={() => setShowCollabModal(true)}>
+                                <Users className="h-4 w-4 mr-2" />
+                                Share
+                            </Button>
                             <Button
                                 variant="outline"
-                                onClick={() => setShowInstantiateDialog(true)}
+                                onClick={() => {
+                                    setIsReorderMode(true);
+                                    setReorderedTemplates(sortedTemplates);
+                                }}
                             >
-                                <Play className="h-4 w-4 mr-2" />
-                                Instantiate Assessment
+                                <GripVertical className="h-4 w-4 mr-2" />
+                                Reorder
                             </Button>
-                        )}
-                        {canEdit && !isReorderMode && (
-                            <>
-                                <Button variant="outline" onClick={() => setShowCollabModal(true)}>
-                                    <Users className="h-4 w-4 mr-2" />
-                                    Share
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        setIsReorderMode(true);
-                                        setReorderedTemplates(sortedTemplates);
-                                    }}
-                                >
-                                    <GripVertical className="h-4 w-4 mr-2" />
-                                    Reorder
-                                </Button>
-                                <Button onClick={() => setShowAddTemplateModal(true)}>
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Add Template
-                                </Button>
-                            </>
-                        )}
-                        {canEdit && isReorderMode && (
-                            <>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        setIsReorderMode(false);
-                                        setReorderedTemplates([]);
-                                    }}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    onClick={handleSaveReorder}
-                                    disabled={reorderMutation.isPending}
-                                >
-                                    {reorderMutation.isPending ? "Saving..." : "Save Order"}
-                                </Button>
-                            </>
-                        )}
-                    </>
-                }
-            />
-
-            {/* Question Templates List */}
-            <QuestionTemplatesList
-                templates={isReorderMode ? reorderedTemplates : sortedTemplates}
-                onCreateQuestion={handleCreateQuestion}
-                onEdit={handleEditTemplate}
-                onDuplicate={handleDuplicateTemplate}
-                onRemove={(template) => {
-                    setSelectedTemplate(template);
-                    setShowRemoveDialog(true);
-                }}
-                isReorderMode={isReorderMode}
-                onReorder={handleReorder}
-                onSync={handleSyncTemplate}
-                onGoToSource={handleGoToTemplateSource}
-                onUnlink={handleUnlinkTemplate}
-                canEdit={canEdit}
-            />
-
-            {/* Add Question Template Modal */}
-            {user && (
-                <AddQuestionTemplateModal
-                    open={showAddTemplateModal}
-                    onOpenChange={setShowAddTemplateModal}
-                    destination={{ type: "assessmentTemplate", id: templateId }}
-                    ownerId={user.id}
-                    onSelectExisting={handleSelectExisting}
-                />
+                            <Button onClick={() => setShowAddTemplateModal(true)}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Template
+                            </Button>
+                        </>
+                    )}
+                    {canEdit && isReorderMode && (
+                        <>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setIsReorderMode(false);
+                                    setReorderedTemplates([]);
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button onClick={handleSaveReorder} disabled={reorderMutation.isPending}>
+                                {reorderMutation.isPending ? "Saving..." : "Save Order"}
+                            </Button>
+                        </>
+                    )}
+                </>
             )}
+        >
+            {(assessmentTemplate) => (
+                <>
+                    <QuestionTemplatesList
+                        templates={isReorderMode ? reorderedTemplates : sortedTemplates}
+                        onCreateQuestion={handleCreateQuestion}
+                        onEdit={handleEditTemplate}
+                        onDuplicate={handleDuplicateTemplate}
+                        onRemove={(template) => {
+                            setSelectedTemplate(template);
+                            setShowRemoveDialog(true);
+                        }}
+                        isReorderMode={isReorderMode}
+                        onReorder={handleReorder}
+                        onSync={handleSyncTemplate}
+                        onGoToSource={handleGoToTemplateSource}
+                        onUnlink={handleUnlinkTemplate}
+                        canEdit={canEdit}
+                    />
 
-            {/* Create From Template Modal */}
-            <CreateFromTemplateModal
-                open={showCreateFromTemplate}
-                onOpenChange={setShowCreateFromTemplate}
-                template={selectedTemplate}
-                canEdit={canEdit}
-            />
+                    {user && (
+                        <AddQuestionTemplateModal
+                            open={showAddTemplateModal}
+                            onOpenChange={setShowAddTemplateModal}
+                            destination={{
+                                type: "assessmentTemplate",
+                                id: assessmentTemplateResourceId,
+                            }}
+                            ownerId={user.id}
+                            onSelectExisting={handleSelectExisting}
+                        />
+                    )}
 
-            {/* Link or Duplicate Template Modal */}
-            <LinkOrDuplicateTemplateModal
-                open={showLinkOrDuplicateModal}
-                onOpenChange={setShowLinkOrDuplicateModal}
-                onLink={handleLinkTemplate}
-                onDuplicate={handleDuplicateTemplate}
-                isLoading={linkQuestionTemplate.isPending || addQuestionTemplate.isPending}
-            />
+                    <CreateFromTemplateModal
+                        open={showCreateFromTemplate}
+                        onOpenChange={setShowCreateFromTemplate}
+                        template={selectedTemplate}
+                        canEdit={canEdit}
+                    />
 
-            {/* Instantiate Assessment Modal */}
-            <InstantiateAssessmentModal
-                open={showInstantiateDialog}
-                onOpenChange={setShowInstantiateDialog}
-                assessmentTemplateTitle={assessmentTemplate.title}
-                questionTemplates={assessmentTemplate.question_templates ?? []}
-                onInstantiate={handleInstantiate}
-                onCancelGeneration={generateAssessment.cancel}
-                isLoading={generateAssessment.isPending}
-                canEdit={canEdit}
-            />
+                    <LinkOrDuplicateTemplateModal
+                        open={showLinkOrDuplicateModal}
+                        onOpenChange={setShowLinkOrDuplicateModal}
+                        onLink={handleLinkTemplate}
+                        onDuplicate={handleDuplicateTemplate}
+                        isLoading={linkQuestionTemplate.isPending || addQuestionTemplate.isPending}
+                    />
 
-            {/* Remove Template Confirmation */}
-            <DeleteConfirmationDialog
-                open={showRemoveDialog}
-                onOpenChange={setShowRemoveDialog}
-                onConfirm={handleRemoveTemplate}
-                isLoading={removeQuestionTemplate.isPending}
-                resourceName="question template"
-            />
+                    <InstantiateAssessmentModal
+                        open={showInstantiateDialog}
+                        onOpenChange={setShowInstantiateDialog}
+                        assessmentTemplateTitle={assessmentTemplate.title}
+                        questionTemplates={assessmentTemplate.question_templates ?? []}
+                        onInstantiate={handleInstantiate}
+                        onCancelGeneration={generateAssessment.cancel}
+                        isLoading={generateAssessment.isPending}
+                        canEdit={canEdit}
+                    />
 
-            {myRole && (
-                <CollaborationModal
-                    resourcePath={ResourcePath["assessment-templates"]}
-                    resourceId={templateId}
-                    isOpen={showCollabModal}
-                    onOpenChange={setShowCollabModal}
-                    myRole={myRole}
-                    currentVisibility={assessmentTemplate.visibility}
-                    onVisibilityChange={(visibility) =>
-                        updateTemplate.mutate({
-                            templateId,
-                            data: { visibility },
-                            oldFolderId: assessmentTemplate.folder_id,
-                        })
-                    }
-                    isVisibilityUpdating={updateTemplate.isPending}
-                    resourceDetailQueryKey={queryKeys.assessmentTemplates.detail(templateId)}
-                />
+                    <DeleteConfirmationDialog
+                        open={showRemoveDialog}
+                        onOpenChange={setShowRemoveDialog}
+                        onConfirm={handleRemoveTemplate}
+                        isLoading={removeQuestionTemplate.isPending}
+                        resourceName="question template"
+                    />
+
+                    {myRole && (
+                        <CollaborationModal
+                            resourcePath={ResourcePath["assessment-templates"]}
+                            resourceId={assessmentTemplateResourceId}
+                            isOpen={showCollabModal}
+                            onOpenChange={setShowCollabModal}
+                            myRole={myRole}
+                            currentVisibility={assessmentTemplate.visibility}
+                            onVisibilityChange={(visibility) =>
+                                updateTemplate.mutate({
+                                    templateId: assessmentTemplateResourceId,
+                                    data: { visibility },
+                                    oldFolderId: assessmentTemplate.folder_id,
+                                })
+                            }
+                            isVisibilityUpdating={updateTemplate.isPending}
+                            resourceDetailQueryKey={queryKeys.assessmentTemplates.detail(
+                                assessmentTemplateResourceId,
+                            )}
+                        />
+                    )}
+                </>
             )}
-        </div>
+        </ResourceCollectionPage>
     );
 }
 

@@ -3,7 +3,6 @@
 import { useState, useMemo, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
 import { Plus, GripVertical, Upload, Users } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
@@ -11,7 +10,7 @@ import { ResourcePath } from "@/api/models";
 import {
     CollaborationModal,
     DeleteConfirmationDialog,
-    ResourcePageHeader,
+    ResourceCollectionPage,
 } from "@/shared/components";
 import { queryKeys } from "@/api";
 import { ROUTES } from "@/router/paths";
@@ -46,6 +45,7 @@ const CanvasExportModal = lazy(() =>
 
 function AssessmentPage() {
     const { assessmentId } = useParams<{ assessmentId: string }>();
+    const assessmentResourceId = assessmentId ?? "";
     const navigate = useNavigate();
     const user = useUserStore((state) => state.user);
 
@@ -63,7 +63,7 @@ function AssessmentPage() {
     );
     const [showCollabModal, setShowCollabModal] = useState(false);
 
-    const { data: assessment, isLoading } = useAssessment(assessmentId || "");
+    const { data: assessment, isLoading } = useAssessment(assessmentResourceId);
 
     const myRole = assessment?.my_role ?? null;
     const canEdit = canEditResource(myRole);
@@ -82,19 +82,13 @@ function AssessmentPage() {
         [assessment?.questions],
     );
 
-    if (!assessmentId) {
-        return (
-            <div className="p-6 text-center text-muted-foreground">Assessment ID is missing</div>
-        );
-    }
-
     // Validation Helpers
     const validateSession = (): { assessmentId: string; userId: string } | null => {
         if (!user) {
             toast.error("Please log in to continue");
             return null;
         }
-        return { assessmentId, userId: user.id };
+        return { assessmentId: assessmentResourceId, userId: user.id };
     };
 
     const validateQuestionSelected = (
@@ -370,163 +364,163 @@ function AssessmentPage() {
         );
     };
 
-    if (isLoading) {
-        return <PageSkeleton />;
-    }
-
-    if (!assessment) {
-        return <div className="p-6 text-center text-muted-foreground">Assessment not found</div>;
-    }
-
     return (
-        <div className="p-6 space-y-6">
-            <ResourcePageHeader
-                title={assessment.title}
-                description={assessment.description}
-                onBack={() => navigate(ROUTES.FOLDER(assessment.folder_id))}
-                actions={
-                    <>
-                        <ExportButton assessment={assessment} />
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setCanvasExportQuestions(sortedQuestions);
-                                setCanvasExportMode("assessment");
-                                setShowCanvasExport(true);
-                            }}
-                        >
-                            <Upload className="h-4 w-4 mr-2" />
-                            Upload to Canvas
-                        </Button>
-                        {canEdit && !isReorderMode && (
-                            <>
-                                <Button variant="outline" onClick={() => setShowCollabModal(true)}>
-                                    <Users className="h-4 w-4 mr-2" />
-                                    Share
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        setIsReorderMode(true);
-                                        setReorderedQuestions(sortedQuestions);
-                                    }}
-                                >
-                                    <GripVertical className="h-4 w-4 mr-2" />
-                                    Reorder
-                                </Button>
-                                <Button onClick={() => setShowAddModal(true)}>
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Add Question
-                                </Button>
-                            </>
-                        )}
-                        {canEdit && isReorderMode && (
-                            <>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        setIsReorderMode(false);
-                                        setReorderedQuestions([]);
-                                    }}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    onClick={handleSaveReorder}
-                                    disabled={reorderMutation.isPending}
-                                >
-                                    {reorderMutation.isPending ? "Saving..." : "Save Order"}
-                                </Button>
-                            </>
-                        )}
-                    </>
-                }
-            />
-
-            <QuestionsList
-                questions={isReorderMode ? reorderedQuestions : sortedQuestions}
-                onEdit={handleEditQuestion}
-                onDuplicate={handleDuplicateQuestion}
-                onRemove={(question) => {
-                    setSelectedQuestion(question);
-                    setShowRemoveDialog(true);
-                }}
-                onAddToCanvas={handleAddToCanvas}
-                onSync={handleSyncQuestion}
-                onUnlink={handleUnlinkQuestion}
-                onGoToSource={handleGoToSource}
-                isReorderMode={isReorderMode}
-                onReorder={handleReorder}
-                canEdit={canEdit}
-            />
-
-            {user && (
-                <AddQuestionModal
-                    open={showAddModal}
-                    onOpenChange={setShowAddModal}
-                    assessmentId={assessmentId}
-                    ownerId={user.id}
-                    onSaveQuestion={handleSaveNewQuestion}
-                    onSelectExisting={handleSelectExisting}
-                    isSaving={addQuestion.isPending}
-                    destinationType="assessment"
-                />
+        <ResourceCollectionPage
+            resourceId={assessmentResourceId}
+            resource={assessment}
+            isLoading={isLoading}
+            messages={{
+                missingResource: "Assessment ID is missing",
+                notFound: "Assessment not found",
+            }}
+            onBack={(assessment) => navigate(ROUTES.FOLDER(assessment.folder_id))}
+            actions={(assessment) => (
+                <>
+                    <ExportButton assessment={assessment} />
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            setCanvasExportQuestions(sortedQuestions);
+                            setCanvasExportMode("assessment");
+                            setShowCanvasExport(true);
+                        }}
+                    >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload to Canvas
+                    </Button>
+                    {canEdit && !isReorderMode && (
+                        <>
+                            <Button variant="outline" onClick={() => setShowCollabModal(true)}>
+                                <Users className="h-4 w-4 mr-2" />
+                                Share
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setIsReorderMode(true);
+                                    setReorderedQuestions(sortedQuestions);
+                                }}
+                            >
+                                <GripVertical className="h-4 w-4 mr-2" />
+                                Reorder
+                            </Button>
+                            <Button onClick={() => setShowAddModal(true)}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Question
+                            </Button>
+                        </>
+                    )}
+                    {canEdit && isReorderMode && (
+                        <>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setIsReorderMode(false);
+                                    setReorderedQuestions([]);
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button onClick={handleSaveReorder} disabled={reorderMutation.isPending}>
+                                {reorderMutation.isPending ? "Saving..." : "Save Order"}
+                            </Button>
+                        </>
+                    )}
+                </>
             )}
+        >
+            {(assessment) => (
+                <>
+                    <QuestionsList
+                        questions={isReorderMode ? reorderedQuestions : sortedQuestions}
+                        onEdit={handleEditQuestion}
+                        onDuplicate={handleDuplicateQuestion}
+                        onRemove={(question) => {
+                            setSelectedQuestion(question);
+                            setShowRemoveDialog(true);
+                        }}
+                        onAddToCanvas={handleAddToCanvas}
+                        onSync={handleSyncQuestion}
+                        onUnlink={handleUnlinkQuestion}
+                        onGoToSource={handleGoToSource}
+                        isReorderMode={isReorderMode}
+                        onReorder={handleReorder}
+                        canEdit={canEdit}
+                    />
 
-            <EditQuestionModal
-                open={showEditModal}
-                onOpenChange={setShowEditModal}
-                question={selectedQuestion}
-                onSave={handleSaveEditedQuestion}
-                isLoading={updateQuestion.isPending}
-            />
+                    {user && (
+                        <AddQuestionModal
+                            open={showAddModal}
+                            onOpenChange={setShowAddModal}
+                            assessmentId={assessmentResourceId}
+                            ownerId={user.id}
+                            onSaveQuestion={handleSaveNewQuestion}
+                            onSelectExisting={handleSelectExisting}
+                            isSaving={addQuestion.isPending}
+                            destinationType="assessment"
+                        />
+                    )}
 
-            <LinkOrDuplicateModal
-                open={showLinkOrDuplicateModal}
-                onOpenChange={setShowLinkOrDuplicateModal}
-                onLink={handleLinkQuestion}
-                onDuplicate={handleDuplicateQuestion}
-                isLoading={linkQuestion.isPending || addQuestion.isPending}
-            />
+                    <EditQuestionModal
+                        open={showEditModal}
+                        onOpenChange={setShowEditModal}
+                        question={selectedQuestion}
+                        onSave={handleSaveEditedQuestion}
+                        isLoading={updateQuestion.isPending}
+                    />
 
-            <DeleteConfirmationDialog
-                open={showRemoveDialog}
-                onOpenChange={setShowRemoveDialog}
-                onConfirm={handleRemoveQuestion}
-                isLoading={removeQuestion.isPending}
-                resourceName="question"
-            />
+                    <LinkOrDuplicateModal
+                        open={showLinkOrDuplicateModal}
+                        onOpenChange={setShowLinkOrDuplicateModal}
+                        onLink={handleLinkQuestion}
+                        onDuplicate={handleDuplicateQuestion}
+                        isLoading={linkQuestion.isPending || addQuestion.isPending}
+                    />
 
-            {myRole && (
-                <CollaborationModal
-                    resourcePath={ResourcePath.assessments}
-                    resourceId={assessmentId}
-                    isOpen={showCollabModal}
-                    onOpenChange={setShowCollabModal}
-                    myRole={myRole}
-                    currentVisibility={assessment.visibility}
-                    onVisibilityChange={(visibility) =>
-                        updateAssessment.mutate({
-                            assessmentId,
-                            data: { visibility },
-                            oldFolderId: assessment.folder_id,
-                        })
-                    }
-                    isVisibilityUpdating={updateAssessment.isPending}
-                    resourceDetailQueryKey={queryKeys.assessments.detail(assessmentId)}
-                />
+                    <DeleteConfirmationDialog
+                        open={showRemoveDialog}
+                        onOpenChange={setShowRemoveDialog}
+                        onConfirm={handleRemoveQuestion}
+                        isLoading={removeQuestion.isPending}
+                        resourceName="question"
+                    />
+
+                    {myRole && (
+                        <CollaborationModal
+                            resourcePath={ResourcePath.assessments}
+                            resourceId={assessmentResourceId}
+                            isOpen={showCollabModal}
+                            onOpenChange={setShowCollabModal}
+                            myRole={myRole}
+                            currentVisibility={assessment.visibility}
+                            onVisibilityChange={(visibility) =>
+                                updateAssessment.mutate({
+                                    assessmentId: assessmentResourceId,
+                                    data: { visibility },
+                                    oldFolderId: assessment.folder_id,
+                                })
+                            }
+                            isVisibilityUpdating={updateAssessment.isPending}
+                            resourceDetailQueryKey={queryKeys.assessments.detail(
+                                assessmentResourceId,
+                            )}
+                        />
+                    )}
+
+                    <Suspense>
+                        <CanvasExportModal
+                            open={showCanvasExport}
+                            onOpenChange={setShowCanvasExport}
+                            questions={canvasExportQuestions}
+                            quizTitle={
+                                canvasExportMode === "assessment" ? assessment.title : undefined
+                            }
+                            mode={canvasExportMode}
+                        />
+                    </Suspense>
+                </>
             )}
-
-            <Suspense>
-                <CanvasExportModal
-                    open={showCanvasExport}
-                    onOpenChange={setShowCanvasExport}
-                    questions={canvasExportQuestions}
-                    quizTitle={canvasExportMode === "assessment" ? assessment.title : undefined}
-                    mode={canvasExportMode}
-                />
-            </Suspense>
-        </div>
+        </ResourceCollectionPage>
     );
 }
 

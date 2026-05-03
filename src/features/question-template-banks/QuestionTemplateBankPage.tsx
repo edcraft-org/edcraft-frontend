@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
 import { Plus, Users } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
@@ -12,7 +11,7 @@ import {
     CollaborationModal,
     DeleteConfirmationDialog,
     EmptyResourceState,
-    ResourcePageHeader,
+    ResourceCollectionPage,
 } from "@/shared/components";
 import { queryKeys } from "@/api";
 import { ROUTES } from "@/router/paths";
@@ -38,6 +37,7 @@ import { questionTemplateResponseToCreateRequest } from "@/shared/utils/question
 
 function QuestionTemplateBankPage() {
     const { templateBankId } = useParams<{ templateBankId: string }>();
+    const templateBankResourceId = templateBankId ?? "";
     const navigate = useNavigate();
     const user = useUserStore((state) => state.user);
 
@@ -48,7 +48,7 @@ function QuestionTemplateBankPage() {
     const [showCreateFromTemplate, setShowCreateFromTemplate] = useState(false);
     const [showCollabModal, setShowCollabModal] = useState(false);
 
-    const { data: templateBank, isLoading } = useQuestionTemplateBank(templateBankId || "");
+    const { data: templateBank, isLoading } = useQuestionTemplateBank(templateBankResourceId);
 
     const myRole = templateBank?.my_role ?? null;
     const canEdit = canEditResource(myRole);
@@ -68,19 +68,13 @@ function QuestionTemplateBankPage() {
         [templateBank?.question_templates],
     );
 
-    if (!templateBankId) {
-        return (
-            <div className="p-6 text-center text-muted-foreground">Template bank ID is missing</div>
-        );
-    }
-
     // Validation Helpers
     const validateSession = (): { templateBankId: string; userId: string } | null => {
         if (!user) {
             toast.error("Please log in to continue");
             return null;
         }
-        return { templateBankId, userId: user.id };
+        return { templateBankId: templateBankResourceId, userId: user.id };
     };
 
     const validateTemplateSelected = (
@@ -278,121 +272,118 @@ function QuestionTemplateBankPage() {
         });
     };
 
-    if (isLoading) {
-        return <PageSkeleton />;
-    }
-
-    if (!templateBank) {
-        return (
-            <div className="p-6 text-center text-muted-foreground">
-                Question template bank not found
-            </div>
-        );
-    }
-
     return (
-        <div className="p-6 space-y-6">
-            <ResourcePageHeader
-                title={templateBank.title}
-                description={templateBank.description}
-                onBack={() => navigate(ROUTES.FOLDER(templateBank.folder_id))}
-                actions={
-                    canEdit ? (
-                        <>
-                            <Button variant="outline" onClick={() => setShowCollabModal(true)}>
-                                <Users className="h-4 w-4 mr-2" />
-                                Share
-                            </Button>
-                            <Button onClick={() => setShowAddModal(true)}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Template
-                            </Button>
-                        </>
-                    ) : undefined
-                }
-            />
+        <ResourceCollectionPage
+            resourceId={templateBankResourceId}
+            resource={templateBank}
+            isLoading={isLoading}
+            messages={{
+                missingResource: "Template bank ID is missing",
+                notFound: "Question template bank not found",
+            }}
+            onBack={(templateBank) => navigate(ROUTES.FOLDER(templateBank.folder_id))}
+            actions={() =>
+                canEdit ? (
+                    <>
+                        <Button variant="outline" onClick={() => setShowCollabModal(true)}>
+                            <Users className="h-4 w-4 mr-2" />
+                            Share
+                        </Button>
+                        <Button onClick={() => setShowAddModal(true)}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Template
+                        </Button>
+                    </>
+                ) : undefined
+            }
+        >
+            {(templateBank) => (
+                <>
+                    <div className="space-y-4">
+                        {sortedTemplates.length === 0 ? (
+                            <EmptyResourceState
+                                title="No templates yet"
+                                description="Add templates using the button above"
+                            />
+                        ) : (
+                            sortedTemplates.map((template, index) => (
+                                <QuestionTemplateCard
+                                    key={template.id}
+                                    template={template}
+                                    index={index}
+                                    onCreateQuestion={handleCreateQuestion}
+                                    onEdit={handleEditTemplate}
+                                    onDuplicate={handleDuplicateTemplate}
+                                    onRemove={(template) => {
+                                        setSelectedTemplate(template);
+                                        setShowRemoveDialog(true);
+                                    }}
+                                    onSync={handleSyncTemplate}
+                                    onGoToSource={handleGoToTemplateSource}
+                                    onUnlink={handleUnlinkTemplate}
+                                    canEdit={canEdit}
+                                />
+                            ))
+                        )}
+                    </div>
 
-            <div className="space-y-4">
-                {sortedTemplates.length === 0 ? (
-                    <EmptyResourceState
-                        title="No templates yet"
-                        description="Add templates using the button above"
-                    />
-                ) : (
-                    sortedTemplates.map((template, index) => (
-                        <QuestionTemplateCard
-                            key={template.id}
-                            template={template}
-                            index={index}
-                            onCreateQuestion={handleCreateQuestion}
-                            onEdit={handleEditTemplate}
-                            onDuplicate={handleDuplicateTemplate}
-                            onRemove={(template) => {
-                                setSelectedTemplate(template);
-                                setShowRemoveDialog(true);
-                            }}
-                            onSync={handleSyncTemplate}
-                            onGoToSource={handleGoToTemplateSource}
-                            onUnlink={handleUnlinkTemplate}
-                            canEdit={canEdit}
+                    {user && (
+                        <AddQuestionTemplateModal
+                            open={showAddModal}
+                            onOpenChange={setShowAddModal}
+                            destination={{ type: "templateBank", id: templateBankResourceId }}
+                            ownerId={user.id}
+                            onSelectExisting={handleSelectExisting}
                         />
-                    ))
-                )}
-            </div>
+                    )}
 
-            {user && (
-                <AddQuestionTemplateModal
-                    open={showAddModal}
-                    onOpenChange={setShowAddModal}
-                    destination={{ type: "templateBank", id: templateBankId }}
-                    ownerId={user.id}
-                    onSelectExisting={handleSelectExisting}
-                />
+                    <CreateFromTemplateModal
+                        open={showCreateFromTemplate}
+                        onOpenChange={setShowCreateFromTemplate}
+                        template={selectedTemplate}
+                        canEdit={canEdit}
+                    />
+
+                    <LinkOrDuplicateTemplateModal
+                        open={showLinkOrDuplicateModal}
+                        onOpenChange={setShowLinkOrDuplicateModal}
+                        onLink={handleLinkTemplate}
+                        onDuplicate={handleDuplicateTemplate}
+                        isLoading={linkTemplate.isPending || insertTemplate.isPending}
+                    />
+
+                    <DeleteConfirmationDialog
+                        open={showRemoveDialog}
+                        onOpenChange={setShowRemoveDialog}
+                        onConfirm={handleRemoveTemplate}
+                        isLoading={removeTemplate.isPending}
+                        resourceName="question template"
+                    />
+
+                    {myRole && (
+                        <CollaborationModal
+                            resourcePath={ResourcePath["question-template-banks"]}
+                            resourceId={templateBankResourceId}
+                            isOpen={showCollabModal}
+                            onOpenChange={setShowCollabModal}
+                            myRole={myRole}
+                            currentVisibility={templateBank.visibility}
+                            onVisibilityChange={(visibility) =>
+                                updateTemplateBank.mutate({
+                                    templateBankId: templateBankResourceId,
+                                    data: { visibility },
+                                    oldFolderId: templateBank.folder_id,
+                                })
+                            }
+                            isVisibilityUpdating={updateTemplateBank.isPending}
+                            resourceDetailQueryKey={queryKeys.questionTemplateBanks.detail(
+                                templateBankResourceId,
+                            )}
+                        />
+                    )}
+                </>
             )}
-
-            <CreateFromTemplateModal
-                open={showCreateFromTemplate}
-                onOpenChange={setShowCreateFromTemplate}
-                template={selectedTemplate}
-                canEdit={canEdit}
-            />
-
-            <LinkOrDuplicateTemplateModal
-                open={showLinkOrDuplicateModal}
-                onOpenChange={setShowLinkOrDuplicateModal}
-                onLink={handleLinkTemplate}
-                onDuplicate={handleDuplicateTemplate}
-                isLoading={linkTemplate.isPending || insertTemplate.isPending}
-            />
-
-            <DeleteConfirmationDialog
-                open={showRemoveDialog}
-                onOpenChange={setShowRemoveDialog}
-                onConfirm={handleRemoveTemplate}
-                isLoading={removeTemplate.isPending}
-                resourceName="question template"
-            />
-
-            {myRole && (
-                <CollaborationModal
-                    resourcePath={ResourcePath["question-template-banks"]}
-                    resourceId={templateBankId}
-                    isOpen={showCollabModal}
-                    onOpenChange={setShowCollabModal}
-                    myRole={myRole}
-                    currentVisibility={templateBank.visibility}
-                    onVisibilityChange={(visibility) =>
-                        updateTemplateBank.mutate({
-                            templateBankId,
-                            data: { visibility },
-                            oldFolderId: templateBank.folder_id,
-                        })
-                    }
-                    isVisibilityUpdating={updateTemplateBank.isPending}
-                    resourceDetailQueryKey={queryKeys.questionTemplateBanks.detail(templateBankId)}
-                />
-            )}
-        </div>
+        </ResourceCollectionPage>
     );
 }
 

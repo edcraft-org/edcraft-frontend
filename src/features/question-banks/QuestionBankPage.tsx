@@ -3,7 +3,6 @@
 import { useState, useMemo, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
 import { Plus, Users } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
@@ -12,7 +11,7 @@ import {
     CollaborationModal,
     DeleteConfirmationDialog,
     EmptyResourceState,
-    ResourcePageHeader,
+    ResourceCollectionPage,
 } from "@/shared/components";
 import { queryKeys } from "@/api";
 import { ROUTES } from "@/router/paths";
@@ -45,6 +44,7 @@ const CanvasExportModal = lazy(() =>
 
 function QuestionBankPage() {
     const { questionBankId } = useParams<{ questionBankId: string }>();
+    const questionBankResourceId = questionBankId ?? "";
     const navigate = useNavigate();
     const user = useUserStore((state) => state.user);
 
@@ -57,7 +57,7 @@ function QuestionBankPage() {
     const [canvasQuestions, setCanvasQuestions] = useState<QuestionResponse[]>([]);
     const [showCollabModal, setShowCollabModal] = useState(false);
 
-    const { data: questionBank, isLoading } = useQuestionBank(questionBankId || "");
+    const { data: questionBank, isLoading } = useQuestionBank(questionBankResourceId);
 
     const myRole = questionBank?.my_role ?? null;
     const canEdit = canEditResource(myRole);
@@ -78,19 +78,13 @@ function QuestionBankPage() {
         [questionBank?.questions],
     );
 
-    if (!questionBankId) {
-        return (
-            <div className="p-6 text-center text-muted-foreground">Question bank ID is missing</div>
-        );
-    }
-
     // Validation Helpers
     const validateSession = (): { questionBankId: string; userId: string } | null => {
         if (!user) {
             toast.error("Please log in to continue");
             return null;
         }
-        return { questionBankId, userId: user.id };
+        return { questionBankId: questionBankResourceId, userId: user.id };
     };
 
     const validateQuestionSelected = (
@@ -290,9 +284,8 @@ function QuestionBankPage() {
     };
 
     const handleSyncQuestion = (question: QuestionResponse) => {
-        if (!questionBankId) return;
         syncQuestion.mutate(
-            { questionBankId, questionId: question.id },
+            { questionBankId: questionBankResourceId, questionId: question.id },
             {
                 onSuccess: () => toast.success("Question synced from source"),
                 onError: (error) => handleMutationError(error, "sync question"),
@@ -301,9 +294,8 @@ function QuestionBankPage() {
     };
 
     const handleUnlinkQuestion = (question: QuestionResponse) => {
-        if (!questionBankId) return;
         unlinkQuestion.mutate(
-            { questionBankId, questionId: question.id },
+            { questionBankId: questionBankResourceId, questionId: question.id },
             {
                 onSuccess: () => toast.success("Question unlinked"),
                 onError: (error) => handleMutationError(error, "unlink question"),
@@ -329,130 +321,131 @@ function QuestionBankPage() {
         }
     };
 
-    if (isLoading) {
-        return <PageSkeleton />;
-    }
-
-    if (!questionBank) {
-        return <div className="p-6 text-center text-muted-foreground">Question bank not found</div>;
-    }
-
     return (
-        <div className="p-6 space-y-6">
-            <ResourcePageHeader
-                title={questionBank.title}
-                description={questionBank.description}
-                onBack={() => navigate(ROUTES.FOLDER(questionBank.folder_id))}
-                actions={
-                    canEdit ? (
-                        <>
-                            <Button variant="outline" onClick={() => setShowCollabModal(true)}>
-                                <Users className="h-4 w-4 mr-2" />
-                                Share
-                            </Button>
-                            <Button onClick={() => setShowAddModal(true)}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Question
-                            </Button>
-                        </>
-                    ) : undefined
-                }
-            />
+        <ResourceCollectionPage
+            resourceId={questionBankResourceId}
+            resource={questionBank}
+            isLoading={isLoading}
+            messages={{
+                missingResource: "Question bank ID is missing",
+                notFound: "Question bank not found",
+            }}
+            onBack={(questionBank) => navigate(ROUTES.FOLDER(questionBank.folder_id))}
+            actions={() =>
+                canEdit ? (
+                    <>
+                        <Button variant="outline" onClick={() => setShowCollabModal(true)}>
+                            <Users className="h-4 w-4 mr-2" />
+                            Share
+                        </Button>
+                        <Button onClick={() => setShowAddModal(true)}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Question
+                        </Button>
+                    </>
+                ) : undefined
+            }
+        >
+            {(questionBank) => (
+                <>
+                    <div className="space-y-4">
+                        {sortedQuestions.length === 0 ? (
+                            <EmptyResourceState
+                                title="No questions yet"
+                                description="Add questions using the button above"
+                            />
+                        ) : (
+                            sortedQuestions.map((question, index) => (
+                                <QuestionCard
+                                    key={question.id}
+                                    question={question}
+                                    questionNumber={index + 1}
+                                    onEdit={handleEditQuestion}
+                                    onDuplicate={handleDuplicateQuestion}
+                                    onRemove={(question) => {
+                                        setSelectedQuestion(question);
+                                        setShowRemoveDialog(true);
+                                    }}
+                                    onAddToCanvas={handleAddToCanvas}
+                                    onSync={handleSyncQuestion}
+                                    onUnlink={handleUnlinkQuestion}
+                                    onGoToSource={handleGoToSource}
+                                    canEdit={canEdit}
+                                />
+                            ))
+                        )}
+                    </div>
 
-            <div className="space-y-4">
-                {sortedQuestions.length === 0 ? (
-                    <EmptyResourceState
-                        title="No questions yet"
-                        description="Add questions using the button above"
-                    />
-                ) : (
-                    sortedQuestions.map((question, index) => (
-                        <QuestionCard
-                            key={question.id}
-                            question={question}
-                            questionNumber={index + 1}
-                            onEdit={handleEditQuestion}
-                            onDuplicate={handleDuplicateQuestion}
-                            onRemove={(question) => {
-                                setSelectedQuestion(question);
-                                setShowRemoveDialog(true);
-                            }}
-                            onAddToCanvas={handleAddToCanvas}
-                            onSync={handleSyncQuestion}
-                            onUnlink={handleUnlinkQuestion}
-                            onGoToSource={handleGoToSource}
-                            canEdit={canEdit}
+                    {user && (
+                        <AddQuestionModal
+                            open={showAddModal}
+                            onOpenChange={setShowAddModal}
+                            assessmentId={questionBankResourceId}
+                            ownerId={user.id}
+                            onSaveQuestion={handleSaveNewQuestion}
+                            onSelectExisting={handleSelectExisting}
+                            isSaving={addQuestion.isPending}
+                            destinationType="questionBank"
                         />
-                    ))
-                )}
-            </div>
+                    )}
 
-            {user && (
-                <AddQuestionModal
-                    open={showAddModal}
-                    onOpenChange={setShowAddModal}
-                    assessmentId={questionBankId}
-                    ownerId={user.id}
-                    onSaveQuestion={handleSaveNewQuestion}
-                    onSelectExisting={handleSelectExisting}
-                    isSaving={addQuestion.isPending}
-                    destinationType="questionBank"
-                />
+                    <EditQuestionModal
+                        open={showEditModal}
+                        onOpenChange={setShowEditModal}
+                        question={selectedQuestion}
+                        onSave={handleSaveEditedQuestion}
+                        isLoading={updateQuestion.isPending}
+                    />
+
+                    <LinkOrDuplicateModal
+                        open={showLinkOrDuplicateModal}
+                        onOpenChange={setShowLinkOrDuplicateModal}
+                        onLink={handleLinkQuestion}
+                        onDuplicate={handleDuplicateQuestion}
+                        isLoading={linkQuestion.isPending || addQuestion.isPending}
+                    />
+
+                    <DeleteConfirmationDialog
+                        open={showRemoveDialog}
+                        onOpenChange={setShowRemoveDialog}
+                        onConfirm={handleRemoveQuestion}
+                        isLoading={removeQuestion.isPending}
+                        resourceName="question"
+                    />
+
+                    <Suspense>
+                        <CanvasExportModal
+                            open={showCanvasExport}
+                            onOpenChange={setShowCanvasExport}
+                            questions={canvasQuestions}
+                            mode="question"
+                        />
+                    </Suspense>
+
+                    {myRole && (
+                        <CollaborationModal
+                            resourcePath={ResourcePath["question-banks"]}
+                            resourceId={questionBankResourceId}
+                            isOpen={showCollabModal}
+                            onOpenChange={setShowCollabModal}
+                            myRole={myRole}
+                            currentVisibility={questionBank.visibility}
+                            onVisibilityChange={(visibility) =>
+                                updateQuestionBank.mutate({
+                                    questionBankId: questionBankResourceId,
+                                    data: { visibility },
+                                    oldFolderId: questionBank.folder_id,
+                                })
+                            }
+                            isVisibilityUpdating={updateQuestionBank.isPending}
+                            resourceDetailQueryKey={queryKeys.questionBanks.detail(
+                                questionBankResourceId,
+                            )}
+                        />
+                    )}
+                </>
             )}
-
-            <EditQuestionModal
-                open={showEditModal}
-                onOpenChange={setShowEditModal}
-                question={selectedQuestion}
-                onSave={handleSaveEditedQuestion}
-                isLoading={updateQuestion.isPending}
-            />
-
-            <LinkOrDuplicateModal
-                open={showLinkOrDuplicateModal}
-                onOpenChange={setShowLinkOrDuplicateModal}
-                onLink={handleLinkQuestion}
-                onDuplicate={handleDuplicateQuestion}
-                isLoading={linkQuestion.isPending || addQuestion.isPending}
-            />
-
-            <DeleteConfirmationDialog
-                open={showRemoveDialog}
-                onOpenChange={setShowRemoveDialog}
-                onConfirm={handleRemoveQuestion}
-                isLoading={removeQuestion.isPending}
-                resourceName="question"
-            />
-
-            <Suspense>
-                <CanvasExportModal
-                    open={showCanvasExport}
-                    onOpenChange={setShowCanvasExport}
-                    questions={canvasQuestions}
-                    mode="question"
-                />
-            </Suspense>
-
-            {myRole && (
-                <CollaborationModal
-                    resourcePath={ResourcePath["question-banks"]}
-                    resourceId={questionBankId}
-                    isOpen={showCollabModal}
-                    onOpenChange={setShowCollabModal}
-                    myRole={myRole}
-                    currentVisibility={questionBank.visibility}
-                    onVisibilityChange={(visibility) =>
-                        updateQuestionBank.mutate({
-                            questionBankId,
-                            data: { visibility },
-                            oldFolderId: questionBank.folder_id,
-                        })
-                    }
-                    isVisibilityUpdating={updateQuestionBank.isPending}
-                    resourceDetailQueryKey={queryKeys.questionBanks.detail(questionBankId)}
-                />
-            )}
-        </div>
+        </ResourceCollectionPage>
     );
 }
 
