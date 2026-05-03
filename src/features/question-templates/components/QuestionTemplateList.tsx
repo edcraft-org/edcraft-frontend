@@ -1,45 +1,41 @@
 import type { QuestionTemplateResponse } from "@/api/models";
-import { QuestionTemplateCard } from "@/features/question-templates";
-import { EmptyResourceState, ReorderableList } from "@/shared/components";
+import { ResourceItemList } from "@/shared/components";
+import { QuestionTemplateCard } from "./QuestionTemplateCard";
 
-interface QuestionTemplatesListProps {
+interface QuestionTemplateListProps {
     templates: QuestionTemplateResponse[];
     onCreateQuestion: (template: QuestionTemplateResponse) => void;
     onEdit: (template: QuestionTemplateResponse) => void;
     onDuplicate: (template: QuestionTemplateResponse) => void;
     onRemove: (template: QuestionTemplateResponse) => void;
-    isReorderMode?: boolean;
-    onReorder?: (newOrder: QuestionTemplateResponse[]) => void;
     onSync: (template: QuestionTemplateResponse) => void;
     onGoToSource: (template: QuestionTemplateResponse) => void;
     onUnlink: (template: QuestionTemplateResponse) => void;
+    isReorderMode?: boolean;
+    onReorder?: (newOrder: QuestionTemplateResponse[]) => void;
     canEdit: boolean;
 }
 
-export function QuestionTemplatesList({
+export function QuestionTemplateList({
     templates,
     onCreateQuestion,
     onEdit,
     onDuplicate,
     onRemove,
-    isReorderMode = false,
-    onReorder,
     onSync,
     onGoToSource,
     onUnlink,
+    isReorderMode = false,
+    onReorder,
     canEdit,
-}: QuestionTemplatesListProps) {
+}: QuestionTemplateListProps) {
     return (
-        <ReorderableList
+        <ResourceItemList
             items={templates}
             isReorderMode={isReorderMode}
             onReorder={onReorder}
-            emptyState={
-                <EmptyResourceState
-                    title="No question templates yet"
-                    description="Add question templates using the button above"
-                />
-            }
+            emptyTitle="No question templates yet"
+            emptyDescription="Add question templates using the button above"
             renderItem={(template, index) => (
                 <QuestionTemplateCard
                     template={template}

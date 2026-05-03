@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
-import { ResourcePageHeader } from "@/shared/components/ResourcePageHeader";
+import { ResourcePageHeader } from "./ResourcePageHeader";
 
 interface ResourcePageResource {
     title: string;
@@ -48,7 +48,7 @@ export function ResourceCollectionPage<TResource extends ResourcePageResource>({
     }
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="space-y-6 p-6">
             <ResourcePageHeader
                 title={resource.title}
                 description={resource.description}

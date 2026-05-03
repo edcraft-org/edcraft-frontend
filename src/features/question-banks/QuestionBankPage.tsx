@@ -3,15 +3,14 @@
 import { useState, useMemo, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Plus, Users } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
 import { ResourcePath } from "@/api/models";
 import {
+    AddResourceButton,
     CollaborationModal,
     DeleteConfirmationDialog,
-    EmptyResourceState,
     ResourceCollectionPage,
+    ShareResourceButton,
 } from "@/shared/components";
 import { queryKeys } from "@/api";
 import { ROUTES } from "@/router/paths";
@@ -28,10 +27,10 @@ import {
     EditQuestionModal,
     AddQuestionModal,
     LinkOrDuplicateModal,
-    QuestionCard,
+    QuestionList,
+    useQuestionSourceNavigation,
     useUpdateQuestion,
 } from "@/features/questions";
-import { getQuestion } from "@/features/questions/question.service";
 import type { QuestionResponse, QuestionEditorData } from "@/types/frontend.types";
 import type { CreateMCQRequest, CreateMRQRequest, CreateShortAnswerRequest } from "@/api/models";
 import { questionResponseToRequestData } from "@/shared/utils/questionUtils";
@@ -69,6 +68,7 @@ function QuestionBankPage() {
     const unlinkQuestion = useUnlinkQuestionInQuestionBank();
     const updateQuestion = useUpdateQuestion();
     const updateQuestionBank = useUpdateQuestionBank();
+    const navigateToQuestionSource = useQuestionSourceNavigation(navigate);
 
     const sortedQuestions = useMemo(
         () =>
@@ -303,24 +303,6 @@ function QuestionBankPage() {
         );
     };
 
-    const handleGoToSource = async (question: QuestionResponse) => {
-        if (!question.linked_from_question_id) {
-            toast.error("This question is not linked to any source");
-            return;
-        }
-
-        try {
-            const source = await getQuestion(question.linked_from_question_id);
-            if (source.assessment_id) {
-                navigate(ROUTES.ASSESSMENT(source.assessment_id));
-            } else if (source.question_bank_id) {
-                navigate(ROUTES.QUESTION_BANK(source.question_bank_id));
-            }
-        } catch {
-            toast.error("Failed to navigate to source");
-        }
-    };
-
     return (
         <ResourceCollectionPage
             resourceId={questionBankResourceId}
@@ -334,47 +316,31 @@ function QuestionBankPage() {
             actions={() =>
                 canEdit ? (
                     <>
-                        <Button variant="outline" onClick={() => setShowCollabModal(true)}>
-                            <Users className="h-4 w-4 mr-2" />
-                            Share
-                        </Button>
-                        <Button onClick={() => setShowAddModal(true)}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Question
-                        </Button>
+                        <ShareResourceButton onClick={() => setShowCollabModal(true)} />
+                        <AddResourceButton
+                            label="Add Question"
+                            onClick={() => setShowAddModal(true)}
+                        />
                     </>
                 ) : undefined
             }
         >
             {(questionBank) => (
                 <>
-                    <div className="space-y-4">
-                        {sortedQuestions.length === 0 ? (
-                            <EmptyResourceState
-                                title="No questions yet"
-                                description="Add questions using the button above"
-                            />
-                        ) : (
-                            sortedQuestions.map((question, index) => (
-                                <QuestionCard
-                                    key={question.id}
-                                    question={question}
-                                    questionNumber={index + 1}
-                                    onEdit={handleEditQuestion}
-                                    onDuplicate={handleDuplicateQuestion}
-                                    onRemove={(question) => {
-                                        setSelectedQuestion(question);
-                                        setShowRemoveDialog(true);
-                                    }}
-                                    onAddToCanvas={handleAddToCanvas}
-                                    onSync={handleSyncQuestion}
-                                    onUnlink={handleUnlinkQuestion}
-                                    onGoToSource={handleGoToSource}
-                                    canEdit={canEdit}
-                                />
-                            ))
-                        )}
-                    </div>
+                    <QuestionList
+                        questions={sortedQuestions}
+                        onEdit={handleEditQuestion}
+                        onDuplicate={handleDuplicateQuestion}
+                        onRemove={(question) => {
+                            setSelectedQuestion(question);
+                            setShowRemoveDialog(true);
+                        }}
+                        onAddToCanvas={handleAddToCanvas}
+                        onSync={handleSyncQuestion}
+                        onUnlink={handleUnlinkQuestion}
+                        onGoToSource={navigateToQuestionSource}
+                        canEdit={canEdit}
+                    />
 
                     {user && (
                         <AddQuestionModal

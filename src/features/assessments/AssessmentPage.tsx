@@ -4,13 +4,16 @@ import { useState, useMemo, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Plus, GripVertical, Upload, Users } from "lucide-react";
+import { Upload } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
 import { ResourcePath } from "@/api/models";
 import {
+    AddResourceButton,
     CollaborationModal,
     DeleteConfirmationDialog,
+    ReorderActionButtons,
     ResourceCollectionPage,
+    ShareResourceButton,
 } from "@/shared/components";
 import { queryKeys } from "@/api";
 import { ROUTES } from "@/router/paths";
@@ -24,14 +27,15 @@ import {
     useReorderQuestions,
     useUpdateAssessment,
 } from "./useAssessments";
-import { QuestionsList, ExportButton } from "./components";
+import { ExportButton } from "./components";
 import {
-    EditQuestionModal,
     AddQuestionModal,
+    EditQuestionModal,
     LinkOrDuplicateModal,
+    QuestionList,
+    useQuestionSourceNavigation,
     useUpdateQuestion,
 } from "@/features/questions";
-import { getQuestion } from "@/features/questions/question.service";
 import type { QuestionResponse, QuestionEditorData } from "@/types/frontend.types";
 import type { CreateMCQRequest, CreateMRQRequest, CreateShortAnswerRequest } from "@/api/models";
 import { questionResponseToRequestData } from "@/shared/utils/questionUtils";
@@ -76,6 +80,7 @@ function AssessmentPage() {
     const updateQuestion = useUpdateQuestion();
     const reorderMutation = useReorderQuestions();
     const updateAssessment = useUpdateAssessment();
+    const navigateToQuestionSource = useQuestionSourceNavigation(navigate);
 
     const sortedQuestions = useMemo(
         () => [...(assessment?.questions ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
@@ -275,24 +280,6 @@ function AssessmentPage() {
         );
     };
 
-    const handleGoToSource = async (question: QuestionResponse) => {
-        if (!question.linked_from_question_id) {
-            toast.error("This question is not linked to any source");
-            return;
-        }
-
-        try {
-            const source = await getQuestion(question.linked_from_question_id);
-            if (source.assessment_id) {
-                navigate(ROUTES.ASSESSMENT(source.assessment_id));
-            } else if (source.question_bank_id) {
-                navigate(ROUTES.QUESTION_BANK(source.question_bank_id));
-            }
-        } catch {
-            toast.error("Failed to navigate to source");
-        }
-    };
-
     // Handle editing a question
     const handleEditQuestion = (question: QuestionResponse) => {
         setSelectedQuestion(question);
@@ -390,48 +377,37 @@ function AssessmentPage() {
                     </Button>
                     {canEdit && !isReorderMode && (
                         <>
-                            <Button variant="outline" onClick={() => setShowCollabModal(true)}>
-                                <Users className="h-4 w-4 mr-2" />
-                                Share
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => {
+                            <ShareResourceButton onClick={() => setShowCollabModal(true)} />
+                            <ReorderActionButtons
+                                isReorderMode={false}
+                                onStart={() => {
                                     setIsReorderMode(true);
                                     setReorderedQuestions(sortedQuestions);
                                 }}
-                            >
-                                <GripVertical className="h-4 w-4 mr-2" />
-                                Reorder
-                            </Button>
-                            <Button onClick={() => setShowAddModal(true)}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Question
-                            </Button>
+                            />
+                            <AddResourceButton
+                                label="Add Question"
+                                onClick={() => setShowAddModal(true)}
+                            />
                         </>
                     )}
                     {canEdit && isReorderMode && (
-                        <>
-                            <Button
-                                variant="outline"
-                                onClick={() => {
-                                    setIsReorderMode(false);
-                                    setReorderedQuestions([]);
-                                }}
-                            >
-                                Cancel
-                            </Button>
-                            <Button onClick={handleSaveReorder} disabled={reorderMutation.isPending}>
-                                {reorderMutation.isPending ? "Saving..." : "Save Order"}
-                            </Button>
-                        </>
+                        <ReorderActionButtons
+                            isReorderMode
+                            isSaving={reorderMutation.isPending}
+                            onCancel={() => {
+                                setIsReorderMode(false);
+                                setReorderedQuestions([]);
+                            }}
+                            onSave={handleSaveReorder}
+                        />
                     )}
                 </>
             )}
         >
             {(assessment) => (
                 <>
-                    <QuestionsList
+                    <QuestionList
                         questions={isReorderMode ? reorderedQuestions : sortedQuestions}
                         onEdit={handleEditQuestion}
                         onDuplicate={handleDuplicateQuestion}
@@ -442,7 +418,7 @@ function AssessmentPage() {
                         onAddToCanvas={handleAddToCanvas}
                         onSync={handleSyncQuestion}
                         onUnlink={handleUnlinkQuestion}
-                        onGoToSource={handleGoToSource}
+                        onGoToSource={navigateToQuestionSource}
                         isReorderMode={isReorderMode}
                         onReorder={handleReorder}
                         canEdit={canEdit}

@@ -7,7 +7,6 @@ export { CreateQuestionBankModal } from "./CreateQuestionBankModal";
 export { CreateQuestionTemplateBankModal } from "./CreateQuestionTemplateBankModal";
 export { RenameModal } from "./RenameModal";
 export { MoveModal } from "./MoveModal";
-export { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 export { FolderBreadcrumbs } from "./FolderBreadcrumbs";
 export { NewResourceDropdown } from "./NewResourceDropdown";
 export { ResourceCard } from "./ResourceCard";

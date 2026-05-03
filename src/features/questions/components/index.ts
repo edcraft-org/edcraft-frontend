@@ -5,3 +5,4 @@ export { QuestionBrowser } from "./QuestionBrowser";
 export { LinkOrDuplicateModal } from "./LinkOrDuplicateModal";
 export { QuestionCard } from "./QuestionCard";
 export { QuestionActionsMenu } from "./QuestionActionsMenu";
+export { QuestionList } from "./QuestionList";

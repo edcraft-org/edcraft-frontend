@@ -4,6 +4,7 @@ export {
     LinkOrDuplicateTemplateModal,
     AddQuestionTemplateModal,
     CreateFromTemplateModal,
+    QuestionTemplateList,
 } from "./components";
 
 export {
@@ -12,3 +13,4 @@ export {
     useUpdateQuestionTemplate,
     useDeleteQuestionTemplate,
 } from "./useQuestionTemplates";
+export { useQuestionTemplateSourceNavigation } from "./hooks/useQuestionTemplateSourceNavigation";

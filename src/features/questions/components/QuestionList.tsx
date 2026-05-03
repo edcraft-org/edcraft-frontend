@@ -1,8 +1,8 @@
 import type { QuestionResponse } from "@/types/frontend.types";
-import { QuestionCard } from "@/features/questions";
-import { EmptyResourceState, ReorderableList } from "@/shared/components";
+import { ResourceItemList } from "@/shared/components";
+import { QuestionCard } from "./QuestionCard";
 
-interface QuestionsListProps {
+interface QuestionListProps {
     questions: QuestionResponse[];
     onEdit: (question: QuestionResponse) => void;
     onDuplicate: (question: QuestionResponse) => void;
@@ -16,7 +16,7 @@ interface QuestionsListProps {
     canEdit?: boolean;
 }
 
-export function QuestionsList({
+export function QuestionList({
     questions,
     onEdit,
     onDuplicate,
@@ -28,18 +28,14 @@ export function QuestionsList({
     isReorderMode = false,
     onReorder,
     canEdit = true,
-}: QuestionsListProps) {
+}: QuestionListProps) {
     return (
-        <ReorderableList
+        <ResourceItemList
             items={questions}
             isReorderMode={isReorderMode}
             onReorder={onReorder}
-            emptyState={
-                <EmptyResourceState
-                    title="No questions yet"
-                    description="Add questions using the button above"
-                />
-            }
+            emptyTitle="No questions yet"
+            emptyDescription="Add questions using the button above"
             renderItem={(question, index) => (
                 <QuestionCard
                     question={question}

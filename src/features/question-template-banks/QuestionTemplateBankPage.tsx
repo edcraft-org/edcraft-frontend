@@ -3,19 +3,17 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Plus, Users } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
 import { ResourcePath } from "@/api/models";
 import {
+    AddResourceButton,
     CollaborationModal,
     DeleteConfirmationDialog,
-    EmptyResourceState,
     ResourceCollectionPage,
+    ShareResourceButton,
 } from "@/shared/components";
 import { queryKeys } from "@/api";
 import { ROUTES } from "@/router/paths";
-import { getQuestionTemplate } from "@/features/question-templates/question-template.service";
 import {
     useQuestionTemplateBank,
     useInsertQuestionTemplateIntoBank,
@@ -29,7 +27,8 @@ import {
     AddQuestionTemplateModal,
     CreateFromTemplateModal,
     LinkOrDuplicateTemplateModal,
-    QuestionTemplateCard,
+    QuestionTemplateList,
+    useQuestionTemplateSourceNavigation,
 } from "@/features/question-templates";
 import type { QuestionTemplateResponse, CreateQuestionTemplateRequest } from "@/api/models";
 import { canEditResource, notifyMutationError } from "@/shared/utils/resourceUtils";
@@ -59,6 +58,7 @@ function QuestionTemplateBankPage() {
     const syncTemplate = useSyncQuestionTemplateInBank();
     const unlinkTemplate = useUnlinkQuestionTemplateInBank();
     const updateTemplateBank = useUpdateQuestionTemplateBank();
+    const navigateToTemplateSource = useQuestionTemplateSourceNavigation(navigate);
 
     const sortedTemplates = useMemo(
         () =>
@@ -238,25 +238,6 @@ function QuestionTemplateBankPage() {
         );
     };
 
-    const handleGoToTemplateSource = async (template: QuestionTemplateResponse) => {
-        if (!template.linked_from_template_id) {
-            toast.error("This template is not linked to any source");
-            return;
-        }
-        try {
-            const source = await getQuestionTemplate(template.linked_from_template_id);
-            if (source.assessment_template_id) {
-                navigate(ROUTES.ASSESSMENT_TEMPLATE(source.assessment_template_id));
-            } else if (source.question_template_bank_id) {
-                navigate(ROUTES.QUESTION_TEMPLATE_BANK(source.question_template_bank_id));
-            } else {
-                toast.error("Source template location not found");
-            }
-        } catch {
-            toast.error("Failed to find source template");
-        }
-    };
-
     const handleRemoveTemplate = () => {
         if (removeTemplate.isPending) return;
 
@@ -285,47 +266,31 @@ function QuestionTemplateBankPage() {
             actions={() =>
                 canEdit ? (
                     <>
-                        <Button variant="outline" onClick={() => setShowCollabModal(true)}>
-                            <Users className="h-4 w-4 mr-2" />
-                            Share
-                        </Button>
-                        <Button onClick={() => setShowAddModal(true)}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Template
-                        </Button>
+                        <ShareResourceButton onClick={() => setShowCollabModal(true)} />
+                        <AddResourceButton
+                            label="Add Template"
+                            onClick={() => setShowAddModal(true)}
+                        />
                     </>
                 ) : undefined
             }
         >
             {(templateBank) => (
                 <>
-                    <div className="space-y-4">
-                        {sortedTemplates.length === 0 ? (
-                            <EmptyResourceState
-                                title="No templates yet"
-                                description="Add templates using the button above"
-                            />
-                        ) : (
-                            sortedTemplates.map((template, index) => (
-                                <QuestionTemplateCard
-                                    key={template.id}
-                                    template={template}
-                                    index={index}
-                                    onCreateQuestion={handleCreateQuestion}
-                                    onEdit={handleEditTemplate}
-                                    onDuplicate={handleDuplicateTemplate}
-                                    onRemove={(template) => {
-                                        setSelectedTemplate(template);
-                                        setShowRemoveDialog(true);
-                                    }}
-                                    onSync={handleSyncTemplate}
-                                    onGoToSource={handleGoToTemplateSource}
-                                    onUnlink={handleUnlinkTemplate}
-                                    canEdit={canEdit}
-                                />
-                            ))
-                        )}
-                    </div>
+                    <QuestionTemplateList
+                        templates={sortedTemplates}
+                        onCreateQuestion={handleCreateQuestion}
+                        onEdit={handleEditTemplate}
+                        onDuplicate={handleDuplicateTemplate}
+                        onRemove={(template) => {
+                            setSelectedTemplate(template);
+                            setShowRemoveDialog(true);
+                        }}
+                        onSync={handleSyncTemplate}
+                        onGoToSource={navigateToTemplateSource}
+                        onUnlink={handleUnlinkTemplate}
+                        canEdit={canEdit}
+                    />
 
                     {user && (
                         <AddQuestionTemplateModal

@@ -15,36 +15,41 @@ interface DeleteConfirmationDialogProps {
     onOpenChange: (open: boolean) => void;
     onConfirm: () => void;
     isLoading?: boolean;
-    resourceName: string;
+    resourceName?: string;
+    title?: string;
+    description?: string;
 }
 
 export function DeleteConfirmationDialog({
     open,
     onOpenChange,
     onConfirm,
-    isLoading,
-    resourceName,
+    isLoading = false,
+    resourceName = "resource",
+    title,
+    description,
 }: DeleteConfirmationDialogProps) {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Remove {resourceName}?</AlertDialogTitle>
+                    <AlertDialogTitle>{title ?? `Remove ${resourceName}?`}</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This will permanently remove the resource. This action cannot be undone.
+                        {description ??
+                            "This will permanently remove the resource. This action cannot be undone."}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                        onClick={(e) => {
-                            e.preventDefault();
+                        onClick={(event) => {
+                            event.preventDefault();
                             onConfirm();
                         }}
                         disabled={isLoading}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                        {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Delete
                     </AlertDialogAction>
                 </AlertDialogFooter>

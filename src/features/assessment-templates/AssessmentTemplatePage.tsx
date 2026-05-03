@@ -4,24 +4,28 @@ import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ROUTES } from "@/router";
-import { getQuestionTemplate } from "@/features/question-templates/question-template.service";
 import { Button } from "@/components/ui/button";
-import { Play, Plus, GripVertical, Users } from "lucide-react";
+import { Play } from "lucide-react";
 import { isAbortError } from "@/api/pollJob";
 import { useUserStore } from "@/shared/stores/user.store";
 import { ResourcePath } from "@/api/models";
 import {
+    AddResourceButton,
     CollaborationModal,
     DeleteConfirmationDialog,
+    ReorderActionButtons,
     ResourceCollectionPage,
+    ShareResourceButton,
 } from "@/shared/components";
 import { queryKeys } from "@/api";
 import {
     AddQuestionTemplateModal,
     CreateFromTemplateModal,
     LinkOrDuplicateTemplateModal,
+    QuestionTemplateList,
+    useQuestionTemplateSourceNavigation,
 } from "@/features/question-templates";
-import { InstantiateAssessmentModal, QuestionTemplatesList } from "./components";
+import { InstantiateAssessmentModal } from "./components";
 import {
     useAddQuestionTemplateToAssessmentTemplate,
     useLinkQuestionTemplateToAssessmentTemplate,
@@ -68,6 +72,7 @@ function AssessmentTemplatePage() {
     const syncQuestionTemplate = useSyncQuestionTemplateInAssessmentTemplate();
     const unlinkQuestionTemplate = useUnlinkQuestionTemplateInAssessmentTemplate();
     const updateTemplate = useUpdateAssessmentTemplate();
+    const navigateToTemplateSource = useQuestionTemplateSourceNavigation(navigate);
 
     const sortedTemplates = useMemo(
         () =>
@@ -264,25 +269,6 @@ function AssessmentTemplatePage() {
         );
     };
 
-    const handleGoToTemplateSource = async (template: QuestionTemplateResponse) => {
-        if (!template.linked_from_template_id) {
-            toast.error("This template is not linked to any source");
-            return;
-        }
-        try {
-            const source = await getQuestionTemplate(template.linked_from_template_id);
-            if (source.assessment_template_id) {
-                navigate(ROUTES.ASSESSMENT_TEMPLATE(source.assessment_template_id));
-            } else if (source.question_template_bank_id) {
-                navigate(ROUTES.QUESTION_TEMPLATE_BANK(source.question_template_bank_id));
-            } else {
-                toast.error("Source template location not found");
-            }
-        } catch {
-            toast.error("Failed to find source template");
-        }
-    };
-
     const handleInstantiate = async (
         title: string,
         description: string | undefined,
@@ -365,48 +351,37 @@ function AssessmentTemplatePage() {
                     )}
                     {canEdit && !isReorderMode && (
                         <>
-                            <Button variant="outline" onClick={() => setShowCollabModal(true)}>
-                                <Users className="h-4 w-4 mr-2" />
-                                Share
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => {
+                            <ShareResourceButton onClick={() => setShowCollabModal(true)} />
+                            <ReorderActionButtons
+                                isReorderMode={false}
+                                onStart={() => {
                                     setIsReorderMode(true);
                                     setReorderedTemplates(sortedTemplates);
                                 }}
-                            >
-                                <GripVertical className="h-4 w-4 mr-2" />
-                                Reorder
-                            </Button>
-                            <Button onClick={() => setShowAddTemplateModal(true)}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Template
-                            </Button>
+                            />
+                            <AddResourceButton
+                                label="Add Template"
+                                onClick={() => setShowAddTemplateModal(true)}
+                            />
                         </>
                     )}
                     {canEdit && isReorderMode && (
-                        <>
-                            <Button
-                                variant="outline"
-                                onClick={() => {
-                                    setIsReorderMode(false);
-                                    setReorderedTemplates([]);
-                                }}
-                            >
-                                Cancel
-                            </Button>
-                            <Button onClick={handleSaveReorder} disabled={reorderMutation.isPending}>
-                                {reorderMutation.isPending ? "Saving..." : "Save Order"}
-                            </Button>
-                        </>
+                        <ReorderActionButtons
+                            isReorderMode
+                            isSaving={reorderMutation.isPending}
+                            onCancel={() => {
+                                setIsReorderMode(false);
+                                setReorderedTemplates([]);
+                            }}
+                            onSave={handleSaveReorder}
+                        />
                     )}
                 </>
             )}
         >
             {(assessmentTemplate) => (
                 <>
-                    <QuestionTemplatesList
+                    <QuestionTemplateList
                         templates={isReorderMode ? reorderedTemplates : sortedTemplates}
                         onCreateQuestion={handleCreateQuestion}
                         onEdit={handleEditTemplate}
@@ -418,7 +393,7 @@ function AssessmentTemplatePage() {
                         isReorderMode={isReorderMode}
                         onReorder={handleReorder}
                         onSync={handleSyncTemplate}
-                        onGoToSource={handleGoToTemplateSource}
+                        onGoToSource={navigateToTemplateSource}
                         onUnlink={handleUnlinkTemplate}
                         canEdit={canEdit}
                     />
