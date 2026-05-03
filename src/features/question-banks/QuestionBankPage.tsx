@@ -5,11 +5,17 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Users } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
-import { CollaboratorRole, ResourcePath } from "@/api/models";
-import { CollaborationModal } from "@/shared/components";
+import { ResourcePath } from "@/api/models";
+import {
+    CollaborationModal,
+    DeleteConfirmationDialog,
+    EmptyResourceState,
+    ResourcePageHeader,
+} from "@/shared/components";
 import { queryKeys } from "@/api";
+import { ROUTES } from "@/router/paths";
 import {
     useQuestionBank,
     useAddQuestionToQuestionBank,
@@ -19,18 +25,18 @@ import {
     useUnlinkQuestionInQuestionBank,
     useUpdateQuestionBank,
 } from "./useQuestionBanks";
-import { DeleteConfirmationDialog } from "@/shared/components";
-import { QuestionCard } from "./components";
 import {
     EditQuestionModal,
     AddQuestionModal,
     LinkOrDuplicateModal,
+    QuestionCard,
     useUpdateQuestion,
 } from "@/features/questions";
 import { getQuestion } from "@/features/questions/question.service";
 import type { QuestionResponse, QuestionEditorData } from "@/types/frontend.types";
 import type { CreateMCQRequest, CreateMRQRequest, CreateShortAnswerRequest } from "@/api/models";
 import { questionResponseToRequestData } from "@/shared/utils/questionUtils";
+import { canEditResource, notifyMutationError } from "@/shared/utils/resourceUtils";
 const CanvasExportModal = lazy(() =>
     import("@/features/canvas/components/CanvasExportModal").then((m) => ({
         default: m.CanvasExportModal,
@@ -54,7 +60,7 @@ function QuestionBankPage() {
     const { data: questionBank, isLoading } = useQuestionBank(questionBankId || "");
 
     const myRole = questionBank?.my_role ?? null;
-    const canEdit = myRole === CollaboratorRole.owner || myRole === CollaboratorRole.editor;
+    const canEdit = canEditResource(myRole);
 
     const addQuestion = useAddQuestionToQuestionBank();
     const linkQuestion = useLinkQuestionToQuestionBank();
@@ -99,7 +105,7 @@ function QuestionBankPage() {
 
     // Reusable error handler for mutations
     const handleMutationError = (error: Error, operationName: string) => {
-        toast.error(`Failed to ${operationName}: ${error.message}`);
+        toast.error(notifyMutationError(error, operationName));
     };
 
     // Mutation Handlers
@@ -314,9 +320,9 @@ function QuestionBankPage() {
         try {
             const source = await getQuestion(question.linked_from_question_id);
             if (source.assessment_id) {
-                navigate(`/assessments/${source.assessment_id}`);
+                navigate(ROUTES.ASSESSMENT(source.assessment_id));
             } else if (source.question_bank_id) {
-                navigate(`/question-banks/${source.question_bank_id}`);
+                navigate(ROUTES.QUESTION_BANK(source.question_bank_id));
             }
         } catch {
             toast.error("Failed to navigate to source");
@@ -333,46 +339,38 @@ function QuestionBankPage() {
 
     return (
         <div className="p-6 space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate(`/folders/${questionBank.folder_id}`)}
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div className="flex-1">
-                    <h1 className="text-2xl font-semibold">{questionBank.title}</h1>
-                    {questionBank.description && (
-                        <p className="text-muted-foreground mt-1">{questionBank.description}</p>
-                    )}
-                </div>
-                {canEdit && (
-                    <>
-                        <Button variant="outline" onClick={() => setShowCollabModal(true)}>
-                            <Users className="h-4 w-4 mr-2" />
-                            Share
-                        </Button>
-                        <Button onClick={() => setShowAddModal(true)}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Question
-                        </Button>
-                    </>
-                )}
-            </div>
+            <ResourcePageHeader
+                title={questionBank.title}
+                description={questionBank.description}
+                onBack={() => navigate(ROUTES.FOLDER(questionBank.folder_id))}
+                actions={
+                    canEdit ? (
+                        <>
+                            <Button variant="outline" onClick={() => setShowCollabModal(true)}>
+                                <Users className="h-4 w-4 mr-2" />
+                                Share
+                            </Button>
+                            <Button onClick={() => setShowAddModal(true)}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Question
+                            </Button>
+                        </>
+                    ) : undefined
+                }
+            />
 
             <div className="space-y-4">
                 {sortedQuestions.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                        <p>No questions yet</p>
-                        <p className="text-sm">Add questions using the button above</p>
-                    </div>
+                    <EmptyResourceState
+                        title="No questions yet"
+                        description="Add questions using the button above"
+                    />
                 ) : (
-                    sortedQuestions.map((question) => (
+                    sortedQuestions.map((question, index) => (
                         <QuestionCard
                             key={question.id}
                             question={question}
+                            questionNumber={index + 1}
                             onEdit={handleEditQuestion}
                             onDuplicate={handleDuplicateQuestion}
                             onRemove={(question) => {

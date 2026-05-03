@@ -3,6 +3,7 @@ export {
     QuestionTemplateCard,
     LinkOrDuplicateTemplateModal,
     AddQuestionTemplateModal,
+    CreateFromTemplateModal,
 } from "./components";
 
 export {

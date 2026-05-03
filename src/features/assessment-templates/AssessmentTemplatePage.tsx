@@ -7,20 +7,22 @@ import { ROUTES } from "@/router";
 import { getQuestionTemplate } from "@/features/question-templates/question-template.service";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, Plus, GripVertical, Users } from "lucide-react";
+import { Play, Plus, GripVertical, Users } from "lucide-react";
 import { isAbortError } from "@/api/pollJob";
 import { useUserStore } from "@/shared/stores/user.store";
-import { CollaboratorRole, ResourcePath } from "@/api/models";
-import { CollaborationModal } from "@/shared/components";
+import { ResourcePath } from "@/api/models";
+import {
+    CollaborationModal,
+    DeleteConfirmationDialog,
+    ResourcePageHeader,
+} from "@/shared/components";
 import { queryKeys } from "@/api";
 import {
     AddQuestionTemplateModal,
+    CreateFromTemplateModal,
     LinkOrDuplicateTemplateModal,
 } from "@/features/question-templates";
-import type { CodeInfoOutput, CreateTargetElementRequest } from "@/api/models";
-import { TextTemplateType } from "@/api/models";
 import { InstantiateAssessmentModal, QuestionTemplatesList } from "./components";
-import { DeleteConfirmationDialog } from "@/shared/components";
 import {
     useAddQuestionTemplateToAssessmentTemplate,
     useLinkQuestionTemplateToAssessmentTemplate,
@@ -32,8 +34,9 @@ import {
     useUnlinkQuestionTemplateInAssessmentTemplate,
     useUpdateAssessmentTemplate,
 } from "./useAssessmentTemplates";
-import type { QuestionTemplateResponse } from "@/api/models";
-import { CreateFromTemplateModal } from "../question-templates/components";
+import type { CreateQuestionTemplateRequest, QuestionTemplateResponse } from "@/api/models";
+import { canEditResource, notifyMutationError } from "@/shared/utils/resourceUtils";
+import { questionTemplateResponseToCreateRequest } from "@/shared/utils/questionTemplateUtils";
 
 function AssessmentTemplatePage() {
     const { templateId } = useParams<{ templateId: string }>();
@@ -53,7 +56,7 @@ function AssessmentTemplatePage() {
     const { data: assessmentTemplate, isLoading } = useAssessmentTemplate(templateId || "");
 
     const myRole = assessmentTemplate?.my_role ?? null;
-    const canEdit = myRole === CollaboratorRole.owner || myRole === CollaboratorRole.editor;
+    const canEdit = canEditResource(myRole);
 
     const addQuestionTemplate = useAddQuestionTemplateToAssessmentTemplate();
     const linkQuestionTemplate = useLinkQuestionTemplateToAssessmentTemplate();
@@ -97,7 +100,7 @@ function AssessmentTemplatePage() {
 
     // Reusable error handler for mutations
     const handleMutationError = (error: Error, operationName: string) => {
-        toast.error(`Failed to ${operationName}: ${error.message}`);
+        toast.error(notifyMutationError(error, operationName));
     };
 
     // Mutation Handlers
@@ -105,18 +108,7 @@ function AssessmentTemplatePage() {
     // Adds a new question template to the assessment template
     const handleAddQuestionTemplateMutation = (
         templateId: string,
-        templateData: {
-            question_type: string;
-            question_text_template: string;
-            text_template_type: TextTemplateType;
-            description?: string | undefined;
-            code: string;
-            code_info: CodeInfoOutput | undefined | null;
-            entry_function: string;
-            output_type: string;
-            num_distractors: number;
-            target_elements: CreateTargetElementRequest[];
-        },
+        templateData: CreateQuestionTemplateRequest,
         successMessage: string,
         onSuccess: () => void,
     ) => {
@@ -222,29 +214,9 @@ function AssessmentTemplatePage() {
         const template = templateParam || validateTemplateSelected(selectedTemplate);
         if (!template) return;
 
-        // Convert target_elements: TargetElementResponse[] → CreateTargetElementRequest[]
-        const targetElements = template.target_elements.map(
-            ({ order: _, element_type, id_list, ...rest }) => ({
-                element_type,
-                id_list,
-                ...rest,
-            }),
-        );
-
         handleAddQuestionTemplateMutation(
             session.templateId,
-            {
-                question_type: template.question_type,
-                question_text_template: template.question_text_template,
-                text_template_type: template.text_template_type,
-                description: template.description ?? undefined,
-                code: template.code,
-                entry_function: template.entry_function,
-                output_type: template.output_type,
-                num_distractors: template.num_distractors,
-                target_elements: targetElements,
-                code_info: template.code_info,
-            },
+            questionTemplateResponseToCreateRequest(template),
             "Question template duplicated successfully",
             () => {
                 setShowLinkOrDuplicateModal(false);
@@ -387,30 +359,22 @@ function AssessmentTemplatePage() {
 
     return (
         <div className="p-6 space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate(`/folders/${assessmentTemplate.folder_id}`)}
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div className="flex-1">
-                    <h1 className="text-2xl font-semibold">{assessmentTemplate.title}</h1>
-                    {assessmentTemplate.description && (
-                        <p className="text-muted-foreground mt-1">
-                            {assessmentTemplate.description}
-                        </p>
-                    )}
-                </div>
-                {!isReorderMode ? (
+            <ResourcePageHeader
+                title={assessmentTemplate.title}
+                description={assessmentTemplate.description}
+                onBack={() => navigate(ROUTES.FOLDER(assessmentTemplate.folder_id))}
+                actions={
                     <>
-                        <Button variant="outline" onClick={() => setShowInstantiateDialog(true)}>
-                            <Play className="h-4 w-4 mr-2" />
-                            Instantiate Assessment
-                        </Button>
-                        {canEdit && (
+                        {!isReorderMode && (
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowInstantiateDialog(true)}
+                            >
+                                <Play className="h-4 w-4 mr-2" />
+                                Instantiate Assessment
+                            </Button>
+                        )}
+                        {canEdit && !isReorderMode && (
                             <>
                                 <Button variant="outline" onClick={() => setShowCollabModal(true)}>
                                     <Users className="h-4 w-4 mr-2" />
@@ -432,24 +396,28 @@ function AssessmentTemplatePage() {
                                 </Button>
                             </>
                         )}
+                        {canEdit && isReorderMode && (
+                            <>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setIsReorderMode(false);
+                                        setReorderedTemplates([]);
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={handleSaveReorder}
+                                    disabled={reorderMutation.isPending}
+                                >
+                                    {reorderMutation.isPending ? "Saving..." : "Save Order"}
+                                </Button>
+                            </>
+                        )}
                     </>
-                ) : (
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setIsReorderMode(false);
-                                setReorderedTemplates([]);
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button onClick={handleSaveReorder} disabled={reorderMutation.isPending}>
-                            {reorderMutation.isPending ? "Saving..." : "Save Order"}
-                        </Button>
-                    </div>
-                )}
-            </div>
+                }
+            />
 
             {/* Question Templates List */}
             <QuestionTemplatesList

@@ -5,11 +5,16 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, GripVertical, Upload, Users } from "lucide-react";
+import { Plus, GripVertical, Upload, Users } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
-import { CollaboratorRole, ResourcePath } from "@/api/models";
-import { CollaborationModal } from "@/shared/components";
+import { ResourcePath } from "@/api/models";
+import {
+    CollaborationModal,
+    DeleteConfirmationDialog,
+    ResourcePageHeader,
+} from "@/shared/components";
 import { queryKeys } from "@/api";
+import { ROUTES } from "@/router/paths";
 import {
     useAssessment,
     useAddQuestionToAssessment,
@@ -21,7 +26,6 @@ import {
     useUpdateAssessment,
 } from "./useAssessments";
 import { QuestionsList, ExportButton } from "./components";
-import { DeleteConfirmationDialog } from "@/shared/components";
 import {
     EditQuestionModal,
     AddQuestionModal,
@@ -32,6 +36,7 @@ import { getQuestion } from "@/features/questions/question.service";
 import type { QuestionResponse, QuestionEditorData } from "@/types/frontend.types";
 import type { CreateMCQRequest, CreateMRQRequest, CreateShortAnswerRequest } from "@/api/models";
 import { questionResponseToRequestData } from "@/shared/utils/questionUtils";
+import { canEditResource, notifyMutationError } from "@/shared/utils/resourceUtils";
 
 const CanvasExportModal = lazy(() =>
     import("@/features/canvas/components/CanvasExportModal").then((m) => ({
@@ -61,7 +66,7 @@ function AssessmentPage() {
     const { data: assessment, isLoading } = useAssessment(assessmentId || "");
 
     const myRole = assessment?.my_role ?? null;
-    const canEdit = myRole === CollaboratorRole.owner || myRole === CollaboratorRole.editor;
+    const canEdit = canEditResource(myRole);
 
     const addQuestion = useAddQuestionToAssessment();
     const linkQuestion = useLinkQuestionToAssessment();
@@ -104,7 +109,7 @@ function AssessmentPage() {
 
     // Reusable error handler for mutations
     const handleMutationError = (error: Error, operationName: string) => {
-        toast.error(`Failed to ${operationName}: ${error.message}`);
+        toast.error(notifyMutationError(error, operationName));
     };
 
     // Mutation Handlers
@@ -285,9 +290,9 @@ function AssessmentPage() {
         try {
             const source = await getQuestion(question.linked_from_question_id);
             if (source.assessment_id) {
-                navigate(`/assessments/${source.assessment_id}`);
+                navigate(ROUTES.ASSESSMENT(source.assessment_id));
             } else if (source.question_bank_id) {
-                navigate(`/question-banks/${source.question_bank_id}`);
+                navigate(ROUTES.QUESTION_BANK(source.question_bank_id));
             }
         } catch {
             toast.error("Failed to navigate to source");
@@ -375,73 +380,68 @@ function AssessmentPage() {
 
     return (
         <div className="p-6 space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate(`/folders/${assessment.folder_id}`)}
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div className="flex-1">
-                    <h1 className="text-2xl font-semibold">{assessment.title}</h1>
-                    {assessment.description && (
-                        <p className="text-muted-foreground mt-1">{assessment.description}</p>
-                    )}
-                </div>
-                <ExportButton assessment={assessment} />
-                <Button
-                    variant="outline"
-                    onClick={() => {
-                        setCanvasExportQuestions(sortedQuestions);
-                        setCanvasExportMode("assessment");
-                        setShowCanvasExport(true);
-                    }}
-                >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload to Canvas
-                </Button>
-                {canEdit && (
-                    <Button variant="outline" onClick={() => setShowCollabModal(true)}>
-                        <Users className="h-4 w-4 mr-2" />
-                        Share
-                    </Button>
-                )}
-                {canEdit && !isReorderMode ? (
+            <ResourcePageHeader
+                title={assessment.title}
+                description={assessment.description}
+                onBack={() => navigate(ROUTES.FOLDER(assessment.folder_id))}
+                actions={
                     <>
+                        <ExportButton assessment={assessment} />
                         <Button
                             variant="outline"
                             onClick={() => {
-                                setIsReorderMode(true);
-                                setReorderedQuestions(sortedQuestions);
+                                setCanvasExportQuestions(sortedQuestions);
+                                setCanvasExportMode("assessment");
+                                setShowCanvasExport(true);
                             }}
                         >
-                            <GripVertical className="h-4 w-4 mr-2" />
-                            Reorder
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload to Canvas
                         </Button>
-                        <Button onClick={() => setShowAddModal(true)}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Question
-                        </Button>
+                        {canEdit && !isReorderMode && (
+                            <>
+                                <Button variant="outline" onClick={() => setShowCollabModal(true)}>
+                                    <Users className="h-4 w-4 mr-2" />
+                                    Share
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setIsReorderMode(true);
+                                        setReorderedQuestions(sortedQuestions);
+                                    }}
+                                >
+                                    <GripVertical className="h-4 w-4 mr-2" />
+                                    Reorder
+                                </Button>
+                                <Button onClick={() => setShowAddModal(true)}>
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Question
+                                </Button>
+                            </>
+                        )}
+                        {canEdit && isReorderMode && (
+                            <>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setIsReorderMode(false);
+                                        setReorderedQuestions([]);
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={handleSaveReorder}
+                                    disabled={reorderMutation.isPending}
+                                >
+                                    {reorderMutation.isPending ? "Saving..." : "Save Order"}
+                                </Button>
+                            </>
+                        )}
                     </>
-                ) : canEdit && isReorderMode ? (
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setIsReorderMode(false);
-                                setReorderedQuestions([]);
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button onClick={handleSaveReorder} disabled={reorderMutation.isPending}>
-                            {reorderMutation.isPending ? "Saving..." : "Save Order"}
-                        </Button>
-                    </div>
-                ) : null}
-            </div>
+                }
+            />
 
             <QuestionsList
                 questions={isReorderMode ? reorderedQuestions : sortedQuestions}

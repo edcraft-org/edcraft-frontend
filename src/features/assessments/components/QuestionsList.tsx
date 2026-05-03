@@ -1,21 +1,6 @@
 import type { QuestionResponse } from "@/types/frontend.types";
 import { QuestionCard } from "@/features/questions";
-import {
-    DndContext,
-    closestCenter,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-    SortableContext,
-    sortableKeyboardCoordinates,
-    verticalListSortingStrategy,
-    arrayMove,
-} from "@dnd-kit/sortable";
-import { SortableItem } from "@/shared/components/SortableItem";
+import { EmptyResourceState, ReorderableList } from "@/shared/components";
 
 interface QuestionsListProps {
     questions: QuestionResponse[];
@@ -44,70 +29,31 @@ export function QuestionsList({
     onReorder,
     canEdit = true,
 }: QuestionsListProps) {
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8,
-            },
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    );
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-        if (!over || active.id === over.id) return;
-
-        const oldIndex = questions.findIndex((q) => q.id === active.id);
-        const newIndex = questions.findIndex((q) => q.id === over.id);
-
-        const reordered = arrayMove(questions, oldIndex, newIndex);
-        onReorder?.(reordered);
-    };
-
-    if (questions.length === 0) {
-        return (
-            <div className="text-center py-12 text-muted-foreground">
-                <p>No questions yet</p>
-                <p className="text-sm">Add questions using the button above</p>
-            </div>
-        );
-    }
-
     return (
-        <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-        >
-            <SortableContext
-                items={questions.map((q) => q.id)}
-                strategy={verticalListSortingStrategy}
-            >
-                <div className="space-y-4">
-                    {questions.map((question, index) => (
-                        <SortableItem
-                            key={question.id}
-                            id={question.id}
-                            isReorderMode={isReorderMode}
-                        >
-                            <QuestionCard
-                                question={question}
-                                questionNumber={index + 1}
-                                onEdit={onEdit}
-                                onDuplicate={onDuplicate}
-                                onRemove={onRemove}
-                                onAddToCanvas={onAddToCanvas}
-                                onSync={onSync}
-                                onUnlink={onUnlink}
-                                onGoToSource={onGoToSource}
-                                canEdit={canEdit}
-                            />
-                        </SortableItem>
-                    ))}
-                </div>
-            </SortableContext>
-        </DndContext>
+        <ReorderableList
+            items={questions}
+            isReorderMode={isReorderMode}
+            onReorder={onReorder}
+            emptyState={
+                <EmptyResourceState
+                    title="No questions yet"
+                    description="Add questions using the button above"
+                />
+            }
+            renderItem={(question, index) => (
+                <QuestionCard
+                    question={question}
+                    questionNumber={index + 1}
+                    onEdit={onEdit}
+                    onDuplicate={onDuplicate}
+                    onRemove={onRemove}
+                    onAddToCanvas={onAddToCanvas}
+                    onSync={onSync}
+                    onUnlink={onUnlink}
+                    onGoToSource={onGoToSource}
+                    canEdit={canEdit}
+                />
+            )}
+        />
     );
 }

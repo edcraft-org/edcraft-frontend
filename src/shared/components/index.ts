@@ -1,7 +1,10 @@
 export { CollaborationModal } from "./CollaborationModal";
 export { LinkMenu } from "./LinkMenu";
+export { EmptyResourceState } from "./EmptyResourceState";
 export { ErrorBoundary } from "./ErrorBoundary";
 export { ErrorFallback } from "./ErrorFallback";
+export { ReorderableList } from "./ReorderableList";
+export { ResourcePageHeader } from "./ResourcePageHeader";
 export {
     CardSkeleton,
     CardGridSkeleton,

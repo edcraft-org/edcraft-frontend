@@ -5,10 +5,15 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Users } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
-import { CollaboratorRole, ResourcePath } from "@/api/models";
-import { CollaborationModal } from "@/shared/components";
+import { ResourcePath } from "@/api/models";
+import {
+    CollaborationModal,
+    DeleteConfirmationDialog,
+    EmptyResourceState,
+    ResourcePageHeader,
+} from "@/shared/components";
 import { queryKeys } from "@/api";
 import { ROUTES } from "@/router/paths";
 import { getQuestionTemplate } from "@/features/question-templates/question-template.service";
@@ -21,14 +26,15 @@ import {
     useUnlinkQuestionTemplateInBank,
     useUpdateQuestionTemplateBank,
 } from "./useQuestionTemplateBanks";
-import { DeleteConfirmationDialog } from "@/shared/components";
-import { QuestionTemplateCard } from "./components";
 import {
     AddQuestionTemplateModal,
+    CreateFromTemplateModal,
     LinkOrDuplicateTemplateModal,
+    QuestionTemplateCard,
 } from "@/features/question-templates";
 import type { QuestionTemplateResponse, CreateQuestionTemplateRequest } from "@/api/models";
-import { CreateFromTemplateModal } from "@/features/question-templates/components";
+import { canEditResource, notifyMutationError } from "@/shared/utils/resourceUtils";
+import { questionTemplateResponseToCreateRequest } from "@/shared/utils/questionTemplateUtils";
 
 function QuestionTemplateBankPage() {
     const { templateBankId } = useParams<{ templateBankId: string }>();
@@ -45,7 +51,7 @@ function QuestionTemplateBankPage() {
     const { data: templateBank, isLoading } = useQuestionTemplateBank(templateBankId || "");
 
     const myRole = templateBank?.my_role ?? null;
-    const canEdit = myRole === CollaboratorRole.owner || myRole === CollaboratorRole.editor;
+    const canEdit = canEditResource(myRole);
 
     const insertTemplate = useInsertQuestionTemplateIntoBank();
     const linkTemplate = useLinkQuestionTemplateToBank();
@@ -89,7 +95,7 @@ function QuestionTemplateBankPage() {
 
     // Reusable error handler for mutations
     const handleMutationError = (error: Error, operationName: string) => {
-        toast.error(`Failed to ${operationName}: ${error.message}`);
+        toast.error(notifyMutationError(error, operationName));
     };
 
     // Mutation Handlers
@@ -201,23 +207,9 @@ function QuestionTemplateBankPage() {
         const template = templateParam || validateTemplateSelected(selectedTemplate);
         if (!template) return;
 
-        // Create a new template with the same data
-        const templateData: CreateQuestionTemplateRequest = {
-            question_type: template.question_type,
-            question_text_template: template.question_text_template,
-            text_template_type: template.text_template_type,
-            description: template.description,
-            code: template.code,
-            entry_function: template.entry_function,
-            num_distractors: template.num_distractors,
-            output_type: template.output_type,
-            target_elements: template.target_elements,
-            code_info: template.code_info,
-        };
-
         handleInsertTemplateMutation(
             session.templateBankId,
-            templateData,
+            questionTemplateResponseToCreateRequest(template),
             "Template duplicated successfully",
             () => {
                 setShowLinkOrDuplicateModal(false);
@@ -300,46 +292,38 @@ function QuestionTemplateBankPage() {
 
     return (
         <div className="p-6 space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate(`/folders/${templateBank.folder_id}`)}
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div className="flex-1">
-                    <h1 className="text-2xl font-semibold">{templateBank.title}</h1>
-                    {templateBank.description && (
-                        <p className="text-muted-foreground mt-1">{templateBank.description}</p>
-                    )}
-                </div>
-                {canEdit && (
-                    <>
-                        <Button variant="outline" onClick={() => setShowCollabModal(true)}>
-                            <Users className="h-4 w-4 mr-2" />
-                            Share
-                        </Button>
-                        <Button onClick={() => setShowAddModal(true)}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Template
-                        </Button>
-                    </>
-                )}
-            </div>
+            <ResourcePageHeader
+                title={templateBank.title}
+                description={templateBank.description}
+                onBack={() => navigate(ROUTES.FOLDER(templateBank.folder_id))}
+                actions={
+                    canEdit ? (
+                        <>
+                            <Button variant="outline" onClick={() => setShowCollabModal(true)}>
+                                <Users className="h-4 w-4 mr-2" />
+                                Share
+                            </Button>
+                            <Button onClick={() => setShowAddModal(true)}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Template
+                            </Button>
+                        </>
+                    ) : undefined
+                }
+            />
 
             <div className="space-y-4">
                 {sortedTemplates.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                        <p>No templates yet</p>
-                        <p className="text-sm">Add templates using the button above</p>
-                    </div>
+                    <EmptyResourceState
+                        title="No templates yet"
+                        description="Add templates using the button above"
+                    />
                 ) : (
-                    sortedTemplates.map((template) => (
+                    sortedTemplates.map((template, index) => (
                         <QuestionTemplateCard
                             key={template.id}
                             template={template}
+                            index={index}
                             onCreateQuestion={handleCreateQuestion}
                             onEdit={handleEditTemplate}
                             onDuplicate={handleDuplicateTemplate}
