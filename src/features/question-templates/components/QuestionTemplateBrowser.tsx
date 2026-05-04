@@ -2,14 +2,11 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
 import { useQuestionTemplates } from "../hooks/useQuestionTemplates";
 import { getQuestionTemplate } from "../services/question-template.service";
-import type { QuestionTemplateResponse } from "@/api/models";
-import { toast } from "sonner";
+import type { QuestionTemplateResponse, QuestionTemplateSummaryResponse } from "@/api/models";
+import { SelectByIdSection } from "@/shared/components/resources/SelectByIdSection";
+import { SelectableItemBrowser } from "@/shared/components/resources/SelectableItemBrowser";
 
 interface QuestionTemplateBrowserProps {
     ownerId: string;
@@ -17,83 +14,33 @@ interface QuestionTemplateBrowserProps {
     onBack: () => void;
 }
 
-export function QuestionTemplateBrowser({
-    ownerId,
-    onSelectTemplate,
-    onBack,
-}: QuestionTemplateBrowserProps) {
-    const [searchQuery, setSearchQuery] = useState("");
-    const [templateIdInput, setTemplateIdInput] = useState("");
-    const [idFetchError, setIdFetchError] = useState<string | null>(null);
-    const [isFetchingById, setIsFetchingById] = useState(false);
-    const [loadingTemplateId, setLoadingTemplateId] = useState<string | null>(null);
-    const { data: templates, isLoading } = useQuestionTemplates(ownerId);
+export function QuestionTemplateBrowser({ ownerId, onSelectTemplate, onBack }: QuestionTemplateBrowserProps) {
+    const { data, isLoading } = useQuestionTemplates(ownerId);
+    const [loadingId, setLoadingId] = useState<string | null>(null);
 
-    const filteredTemplates =
-        templates?.filter(
-            (t) =>
-                t.question_text_template.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                t.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-        ) || [];
-
-    const handleSelectById = async () => {
-        if (!templateIdInput.trim()) return;
-        setIdFetchError(null);
-        setIsFetchingById(true);
+    const handleSelect = async (template: QuestionTemplateSummaryResponse) => {
+        setLoadingId(template.id);
         try {
-            const template = await getQuestionTemplate(templateIdInput.trim());
-            onSelectTemplate(template);
-        } catch {
-            setIdFetchError("Template not found or you don't have access to it.");
-        } finally {
-            setIsFetchingById(false);
-        }
-    };
-
-    const handleSelectTemplate = async (templateId: string) => {
-        setLoadingTemplateId(templateId);
-        try {
-            const fullTemplate = await getQuestionTemplate(templateId);
+            const fullTemplate = await getQuestionTemplate(template.id);
             onSelectTemplate(fullTemplate);
-        } catch (error) {
-            toast.error("Failed to load template details");
-            console.error("Error fetching template:", error);
         } finally {
-            setLoadingTemplateId(null);
+            setLoadingId(null);
         }
     };
 
     return (
         <div className="space-y-4">
-            <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={onBack}>
-                    ← Back
-                </Button>
-            </div>
+            <Button variant="ghost" size="sm" onClick={onBack}>
+                ← Back
+            </Button>
 
-            <div className="space-y-1">
-                <p className="text-xs text-muted-foreground font-medium">Select by Template ID</p>
-                <div className="flex gap-2">
-                    <Input
-                        placeholder="Paste template ID..."
-                        value={templateIdInput}
-                        onChange={(e) => {
-                            setTemplateIdInput(e.target.value);
-                            setIdFetchError(null);
-                        }}
-                        onKeyDown={(e) => e.key === "Enter" && handleSelectById()}
-                    />
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleSelectById}
-                        disabled={!templateIdInput.trim() || isFetchingById}
-                    >
-                        {isFetchingById ? <Loader2 className="h-4 w-4 animate-spin" /> : "Select"}
-                    </Button>
-                </div>
-                {idFetchError && <p className="text-xs text-destructive">{idFetchError}</p>}
-            </div>
+            <SelectByIdSection
+                label="Select by Template ID"
+                placeholder="Paste template ID..."
+                fetchById={getQuestionTemplate}
+                onSelect={onSelectTemplate}
+                errorMessage="Template not found or no access"
+            />
 
             <div className="relative flex items-center">
                 <div className="flex-1 border-t border-border" />
@@ -101,58 +48,18 @@ export function QuestionTemplateBrowser({
                 <div className="flex-1 border-t border-border" />
             </div>
 
-            <Input
-                placeholder="Search question templates..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+            <SelectableItemBrowser<QuestionTemplateSummaryResponse>
+                data={data}
+                isLoading={isLoading}
+                onSelect={handleSelect}
+                isFetchingItem={(id) => id === loadingId}
+                getTitle={(t) => t.question_text_template}
+                getSubtitle={(t) => t.description ?? null}
+                getBadge={(t) => t.question_type.toUpperCase()}
+                searchPlaceholder="Search question templates..."
+                emptyMessage="No templates yet"
+                emptySearchMessage="No templates match your search"
             />
-
-            <ScrollArea className="h-[300px]">
-                {isLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    </div>
-                ) : filteredTemplates.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                        {searchQuery
-                            ? "No question templates match your search"
-                            : "No question templates in your bank yet"}
-                    </div>
-                ) : (
-                    <div className="space-y-2">
-                        {filteredTemplates.map((template) => (
-                            <Card
-                                key={template.id}
-                                className="cursor-pointer hover:bg-muted/50 transition-colors"
-                                onClick={() => handleSelectTemplate(template.id)}
-                            >
-                                <CardContent className="p-3">
-                                    <div className="flex items-start justify-between gap-2">
-                                        <div className="flex-1 min-w-0 space-y-1">
-                                            <p className="text-sm line-clamp-2">
-                                                {template.question_text_template}
-                                            </p>
-                                            {template.description && (
-                                                <p className="text-xs text-muted-foreground line-clamp-1">
-                                                    {template.description}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            {loadingTemplateId === template.id && (
-                                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                                            )}
-                                            <span className="text-xs px-2 py-1 bg-muted rounded">
-                                                {template.question_type.toUpperCase()}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                )}
-            </ScrollArea>
         </div>
     );
 }

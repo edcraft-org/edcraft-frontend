@@ -1,14 +1,11 @@
 // QuestionBrowser - Browse and search through existing questions
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
 import { useQuestions } from "../hooks/useQuestions";
 import { getQuestion } from "../services/question.service";
 import type { QuestionResponse } from "@/types/frontend.types";
+import { SelectableItemBrowser } from "@/shared/components/resources/SelectableItemBrowser";
+import { SelectByIdSection } from "@/shared/components/resources/SelectByIdSection";
 
 interface QuestionBrowserProps {
     ownerId: string;
@@ -17,62 +14,21 @@ interface QuestionBrowserProps {
 }
 
 export function QuestionBrowser({ ownerId, onSelectQuestion, onBack }: QuestionBrowserProps) {
-    const [searchQuery, setSearchQuery] = useState("");
-    const [questionIdInput, setQuestionIdInput] = useState("");
-    const [idFetchError, setIdFetchError] = useState<string | null>(null);
-    const [isFetchingById, setIsFetchingById] = useState(false);
-    const { data: questions, isLoading } = useQuestions(ownerId);
-
-    const filteredQuestions =
-        questions?.filter((q) =>
-            q.question_text.toLowerCase().includes(searchQuery.toLowerCase()),
-        ) || [];
-
-    const handleSelectById = async () => {
-        if (!questionIdInput.trim()) return;
-        setIdFetchError(null);
-        setIsFetchingById(true);
-        try {
-            const question = await getQuestion(questionIdInput.trim());
-            onSelectQuestion(question);
-        } catch {
-            setIdFetchError("Question not found or you don't have access to it.");
-        } finally {
-            setIsFetchingById(false);
-        }
-    };
+    const { data, isLoading } = useQuestions(ownerId);
 
     return (
         <div className="space-y-4">
-            <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={onBack}>
-                    ← Back
-                </Button>
-            </div>
+            <Button variant="ghost" size="sm" onClick={onBack}>
+                ← Back
+            </Button>
 
-            <div className="space-y-1">
-                <p className="text-xs text-muted-foreground font-medium">Select by Question ID</p>
-                <div className="flex gap-2">
-                    <Input
-                        placeholder="Paste question ID..."
-                        value={questionIdInput}
-                        onChange={(e) => {
-                            setQuestionIdInput(e.target.value);
-                            setIdFetchError(null);
-                        }}
-                        onKeyDown={(e) => e.key === "Enter" && handleSelectById()}
-                    />
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleSelectById}
-                        disabled={!questionIdInput.trim() || isFetchingById}
-                    >
-                        {isFetchingById ? <Loader2 className="h-4 w-4 animate-spin" /> : "Select"}
-                    </Button>
-                </div>
-                {idFetchError && <p className="text-xs text-destructive">{idFetchError}</p>}
-            </div>
+            <SelectByIdSection
+                label="Select by Question ID"
+                placeholder="Paste question ID..."
+                fetchById={getQuestion}
+                onSelect={onSelectQuestion}
+                errorMessage="Question not found or no access"
+            />
 
             <div className="relative flex items-center">
                 <div className="flex-1 border-t border-border" />
@@ -80,48 +36,16 @@ export function QuestionBrowser({ ownerId, onSelectQuestion, onBack }: QuestionB
                 <div className="flex-1 border-t border-border" />
             </div>
 
-            <Input
-                placeholder="Search questions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+            <SelectableItemBrowser
+                data={data}
+                isLoading={isLoading}
+                onSelect={onSelectQuestion}
+                getTitle={(q) => q.question_text}
+                getBadge={(q) => q.question_type.toUpperCase()}
+                searchPlaceholder="Search questions..."
+                emptyMessage="No questions in your bank yet"
+                emptySearchMessage="No questions match your search"
             />
-
-            <ScrollArea className="h-[300px]">
-                {isLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    </div>
-                ) : filteredQuestions.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                        {searchQuery
-                            ? "No questions match your search"
-                            : "No questions in your bank yet"}
-                    </div>
-                ) : (
-                    <div className="space-y-2">
-                        {filteredQuestions.map((question) => (
-                            <Card
-                                key={question.id}
-                                className="cursor-pointer hover:bg-muted/50 transition-colors"
-                                onClick={() => onSelectQuestion(question)}
-                            >
-                                <CardContent className="p-3">
-                                    <div className="flex items-start justify-between gap-2">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm line-clamp-2">
-                                                {question.question_text}
-                                            </p>
-                                        </div>
-                                        <span className="text-xs px-2 py-1 bg-muted rounded shrink-0">
-                                            {question.question_type.toUpperCase()}
-                                        </span>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                )}
-            </ScrollArea>
         </div>
     );
 }
