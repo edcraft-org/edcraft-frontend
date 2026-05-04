@@ -9,13 +9,13 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, type LucideIcon } from "lucide-react";
-import { CreateEntityForm } from "@/shared/components/resource/CreateResourceEntityForm";
+import { CreateCollectionForm } from "@/shared/components/resource-collections/CreateCollectionForm";
 import type { FolderResponse } from "@/api/models/folderResponse";
-import type { ResourceBrowserItem } from "@/shared/components/resource/ResourceBrowser";
+import type { CollectionBrowserItem } from "@/shared/components/resource-collections/CollectionBrowser";
 
 type Mode = "select" | "create";
 
-export interface ResourceConfig<T extends ResourceBrowserItem> {
+export interface ResourceConfig<T extends CollectionBrowserItem> {
     key: string;
     label: string;
     description: string;
@@ -46,7 +46,7 @@ export interface ResourceConfig<T extends ResourceBrowserItem> {
     onCreate: (data: { title: string; description?: string; folderId: string }) => void;
 }
 
-interface SaveResourceModalProps<T extends ResourceBrowserItem> {
+interface SaveToCollectionModalProps<T extends CollectionBrowserItem> {
     open: boolean;
     onOpenChange: (open: boolean) => void;
 
@@ -61,7 +61,7 @@ interface SaveResourceModalProps<T extends ResourceBrowserItem> {
     initialResourceKey?: string;
 }
 
-export function SaveResourceModal<T extends ResourceBrowserItem>({
+export function SaveToCollectionModal<T extends CollectionBrowserItem>({
     open,
     onOpenChange,
     title,
@@ -70,7 +70,7 @@ export function SaveResourceModal<T extends ResourceBrowserItem>({
     folders,
     currentFolderId,
     initialResourceKey,
-}: SaveResourceModalProps<T>) {
+}: SaveToCollectionModalProps<T>) {
     const [selected, setSelected] = useState<string | null>(initialResourceKey ?? null);
     const [mode, setMode] = useState<Mode>("select");
 
@@ -167,7 +167,7 @@ export function SaveResourceModal<T extends ResourceBrowserItem>({
                         )}
 
                         {mode === "create" && (
-                            <CreateEntityForm
+                            <CreateCollectionForm
                                 folders={folders}
                                 defaultFolderId={currentFolderId}
                                 onSubmit={active.onCreate}

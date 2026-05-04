@@ -9,7 +9,7 @@ import {
     AddResourceButton,
     CollaborationModal,
     DeleteConfirmationDialog,
-    ResourceCollectionPage,
+    CollectionPage,
     ShareResourceButton,
 } from "@/shared/components";
 import { queryKeys } from "@/api";
@@ -254,7 +254,7 @@ function QuestionTemplateBankPage() {
     };
 
     return (
-        <ResourceCollectionPage
+        <CollectionPage
             resourceId={templateBankResourceId}
             resource={templateBank}
             isLoading={isLoading}
@@ -348,7 +348,7 @@ function QuestionTemplateBankPage() {
                     )}
                 </>
             )}
-        </ResourceCollectionPage>
+        </CollectionPage>
     );
 }
 

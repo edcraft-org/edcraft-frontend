@@ -1,22 +1,22 @@
 import type { ReactNode } from "react";
 import { PageSkeleton } from "@/shared/components/feedback/LoadingSkeleton";
-import { ResourcePageHeader } from "./ResourcePageHeader";
+import { CollectionPageHeader } from "./CollectionPageHeader";
 
 interface ResourcePageResource {
     title: string;
     description?: string | null;
 }
 
-interface ResourceCollectionPageMessages {
+interface CollectionPageMessages {
     missingResource: string;
     notFound: string;
 }
 
-interface ResourceCollectionPageProps<TResource extends ResourcePageResource> {
+interface CollectionPageProps<TResource extends ResourcePageResource> {
     resourceId?: string | null;
     resource?: TResource | null;
     isLoading: boolean;
-    messages: ResourceCollectionPageMessages;
+    messages: CollectionPageMessages;
     onBack: (resource: TResource) => void;
     actions?: (resource: TResource) => ReactNode;
     children: (resource: TResource) => ReactNode;
@@ -26,7 +26,7 @@ function ResourcePageMessage({ children }: { children: ReactNode }) {
     return <div className="p-6 text-center text-muted-foreground">{children}</div>;
 }
 
-export function ResourceCollectionPage<TResource extends ResourcePageResource>({
+export function CollectionPage<TResource extends ResourcePageResource>({
     resourceId,
     resource,
     isLoading,
@@ -34,7 +34,7 @@ export function ResourceCollectionPage<TResource extends ResourcePageResource>({
     onBack,
     actions,
     children,
-}: ResourceCollectionPageProps<TResource>) {
+}: CollectionPageProps<TResource>) {
     if (!resourceId) {
         return <ResourcePageMessage>{messages.missingResource}</ResourcePageMessage>;
     }
@@ -49,7 +49,7 @@ export function ResourceCollectionPage<TResource extends ResourcePageResource>({
 
     return (
         <div className="space-y-6 p-6">
-            <ResourcePageHeader
+            <CollectionPageHeader
                 title={resource.title}
                 description={resource.description}
                 onBack={() => onBack(resource)}

@@ -1,5 +1,5 @@
 import type { QuestionResponse } from "@/types/frontend.types";
-import { ResourceItemList } from "@/shared/components";
+import { ResourceList } from "@/shared/components";
 import { QuestionCard } from "./QuestionCard";
 
 interface QuestionListProps {
@@ -30,7 +30,7 @@ export function QuestionList({
     canEdit = true,
 }: QuestionListProps) {
     return (
-        <ResourceItemList
+        <ResourceList
             items={questions}
             isReorderMode={isReorderMode}
             onReorder={onReorder}

@@ -11,8 +11,8 @@ import {
     AddResourceButton,
     CollaborationModal,
     DeleteConfirmationDialog,
-    ReorderActionButtons,
-    ResourceCollectionPage,
+    ReorderButton,
+    CollectionPage,
     ShareResourceButton,
 } from "@/shared/components";
 import { queryKeys } from "@/api";
@@ -352,7 +352,7 @@ function AssessmentPage() {
     };
 
     return (
-        <ResourceCollectionPage
+        <CollectionPage
             resourceId={assessmentResourceId}
             resource={assessment}
             isLoading={isLoading}
@@ -378,7 +378,7 @@ function AssessmentPage() {
                     {canEdit && !isReorderMode && (
                         <>
                             <ShareResourceButton onClick={() => setShowCollabModal(true)} />
-                            <ReorderActionButtons
+                            <ReorderButton
                                 isReorderMode={false}
                                 onStart={() => {
                                     setIsReorderMode(true);
@@ -392,7 +392,7 @@ function AssessmentPage() {
                         </>
                     )}
                     {canEdit && isReorderMode && (
-                        <ReorderActionButtons
+                        <ReorderButton
                             isReorderMode
                             isSaving={reorderMutation.isPending}
                             onCancel={() => {
@@ -496,7 +496,7 @@ function AssessmentPage() {
                     </Suspense>
                 </>
             )}
-        </ResourceCollectionPage>
+        </CollectionPage>
     );
 }
 

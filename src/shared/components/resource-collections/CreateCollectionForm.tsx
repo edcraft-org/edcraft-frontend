@@ -26,9 +26,9 @@ const createSchema = () =>
         folderId: z.string().min(1, "Folder is required"),
     });
 
-export type CreateEntityFormData = z.infer<ReturnType<typeof createSchema>>;
+export type CreateCollectionFormData = z.infer<ReturnType<typeof createSchema>>;
 
-interface CreateEntityFormConfig {
+interface CreateCollectionFormConfig {
     titleLabel?: string;
     titlePlaceholder?: string;
     descriptionPlaceholder?: string;
@@ -38,16 +38,16 @@ interface Props {
     folders?: FolderResponse[];
     defaultFolderId?: string;
 
-    onSubmit: (data: CreateEntityFormData) => void;
+    onSubmit: (data: CreateCollectionFormData) => void;
     onCancel: () => void;
 
     isLoading?: boolean;
     showBackButton?: boolean;
 
-    config: CreateEntityFormConfig;
+    config: CreateCollectionFormConfig;
 }
 
-export function CreateEntityForm({
+export function CreateCollectionForm({
     folders,
     defaultFolderId,
     onSubmit,
@@ -64,7 +64,7 @@ export function CreateEntityForm({
         setValue,
         watch,
         formState: { errors },
-    } = useForm<CreateEntityFormData>({
+    } = useForm<CreateCollectionFormData>({
         resolver: zodResolver(schema),
         defaultValues: {
             title: "",

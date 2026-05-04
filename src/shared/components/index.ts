@@ -2,16 +2,20 @@ export { LinkMenu } from "./links";
 export { ErrorBoundary, ErrorFallback } from "./feedback";
 export { ReorderableList, SortableItem } from "./dnd";
 export {
-    CollaborationModal,
     AddResourceButton,
-    DeleteConfirmationDialog,
-    EmptyResourceState,
-    ReorderActionButtons,
-    ResourceCollectionPage,
-    ResourceItemList,
-    ResourcePageHeader,
+    EmptyCollectionState,
+    ReorderButton,
+    CollectionPage,
+    CollectionPageHeader,
     ShareResourceButton,
-} from "./resource";
+} from "./resource-collections";
+export {
+    DeleteConfirmationDialog,
+    ResourceList,
+} from "./resources";
+export {
+    CollaborationModal
+} from "./collaboration";
 export {
     CardSkeleton,
     CardGridSkeleton,

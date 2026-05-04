@@ -4,8 +4,8 @@ import { FileText, Database } from "lucide-react";
 import { useAssessments } from "@/features/assessments/hooks/useAssessments";
 import { useQuestionBanks } from "@/features/question-banks/hooks/useQuestionBanks";
 import { useFolders } from "@/features/folders/hooks/useFolders";
-import { SaveResourceModal } from "@/shared/components/resource/SaveResourceModal";
-import { ResourceBrowser } from "@/shared/components/resource/ResourceBrowser";
+import { SaveToCollectionModal } from "@/shared/components/resource-collections/SaveToCollectionModal";
+import { CollectionBrowser } from "@/shared/components/resource-collections/CollectionBrowser";
 
 interface SaveQuestionModalProps {
     open: boolean;
@@ -63,7 +63,7 @@ export function SaveQuestionModal(props: SaveQuestionModalProps) {
     const { data: folders } = useFolders({});
 
     return (
-        <SaveResourceModal
+        <SaveToCollectionModal
             open={open}
             onOpenChange={onOpenChange}
             title="Save Question"
@@ -87,7 +87,7 @@ export function SaveQuestionModal(props: SaveQuestionModalProps) {
                     isLoading: isLoadingAssessment,
                     preSelectedId: preSelectedAssessmentId,
                     Browser: (props) => (
-                        <ResourceBrowser
+                        <CollectionBrowser
                             {...props}
                             icon={FileText}
                             searchPlaceholder="Search assessments..."
@@ -114,7 +114,7 @@ export function SaveQuestionModal(props: SaveQuestionModalProps) {
                     isLoading: isLoadingQuestionBank,
                     preSelectedId: preSelectedQuestionBankId,
                     Browser: (props) => (
-                        <ResourceBrowser
+                        <CollectionBrowser
                             {...props}
                             icon={Database}
                             searchPlaceholder="Search question banks..."

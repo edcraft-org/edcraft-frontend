@@ -4,13 +4,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
-export interface ResourceBrowserItem {
+export interface CollectionBrowserItem {
     id: string;
     title: string;
     description?: string | null;
 }
 
-interface ResourceBrowserProps<T extends ResourceBrowserItem> {
+interface CollectionBrowserProps<T extends CollectionBrowserItem> {
     data: T[];
     isLoading?: boolean;
     onSelect: (id: string) => void;
@@ -24,7 +24,7 @@ interface ResourceBrowserProps<T extends ResourceBrowserItem> {
     icon: React.ComponentType<{ className?: string }>;
 }
 
-export function ResourceBrowser<T extends ResourceBrowserItem>({
+export function CollectionBrowser<T extends CollectionBrowserItem>({
     data,
     isLoading,
     onSelect,
@@ -34,7 +34,7 @@ export function ResourceBrowser<T extends ResourceBrowserItem>({
     emptyMessage = "No items yet. Create one above.",
     emptySearchMessage = "No results found.",
     icon: Icon,
-}: ResourceBrowserProps<T>) {
+}: CollectionBrowserProps<T>) {
     const [query, setQuery] = useState("");
 
     const filtered = useMemo(() => {

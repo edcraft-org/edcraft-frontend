@@ -28,7 +28,7 @@ export function AddResourceButton({ label, onClick }: AddResourceButtonProps) {
     );
 }
 
-interface ReorderActionButtonsProps {
+interface ReorderButtonProps {
     isReorderMode: boolean;
     isSaving?: boolean;
     onStart?: () => void;
@@ -36,13 +36,13 @@ interface ReorderActionButtonsProps {
     onSave?: () => void;
 }
 
-export function ReorderActionButtons({
+export function ReorderButton({
     isReorderMode,
     isSaving = false,
     onStart,
     onCancel,
     onSave,
-}: ReorderActionButtonsProps) {
+}: ReorderButtonProps) {
     if (isReorderMode) {
         return (
             <>

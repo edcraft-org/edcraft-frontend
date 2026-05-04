@@ -2,19 +2,19 @@ import type { ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface ResourcePageHeaderProps {
+interface CollectionPageHeaderProps {
     title: string;
     description?: string | null;
     onBack: () => void;
     actions?: ReactNode;
 }
 
-export function ResourcePageHeader({
+export function CollectionPageHeader({
     title,
     description,
     onBack,
     actions,
-}: ResourcePageHeaderProps) {
+}: CollectionPageHeaderProps) {
     return (
         <header className="flex flex-wrap items-start gap-4">
             <Button variant="ghost" size="icon" onClick={onBack} aria-label="Go back">

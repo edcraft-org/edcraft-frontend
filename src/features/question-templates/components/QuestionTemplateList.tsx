@@ -1,5 +1,5 @@
 import type { QuestionTemplateResponse } from "@/api/models";
-import { ResourceItemList } from "@/shared/components";
+import { ResourceList } from "@/shared/components";
 import { QuestionTemplateCard } from "./QuestionTemplateCard";
 
 interface QuestionTemplateListProps {
@@ -30,7 +30,7 @@ export function QuestionTemplateList({
     canEdit,
 }: QuestionTemplateListProps) {
     return (
-        <ResourceItemList
+        <ResourceList
             items={templates}
             isReorderMode={isReorderMode}
             onReorder={onReorder}

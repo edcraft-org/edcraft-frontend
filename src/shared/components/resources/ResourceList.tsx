@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import { EmptyResourceState } from "./EmptyResourceState";
+import { EmptyCollectionState } from "@/shared/components/resource-collections/EmptyCollectionState";
 import { ReorderableList } from "@/shared/components/dnd/ReorderableList";
 
-interface ResourceItemListProps<TItem extends { id: string }> {
+interface ResourceListProps<TItem extends { id: string }> {
     items: TItem[];
     emptyTitle: string;
     emptyDescription: string;
@@ -11,20 +11,20 @@ interface ResourceItemListProps<TItem extends { id: string }> {
     renderItem: (item: TItem, index: number) => ReactNode;
 }
 
-export function ResourceItemList<TItem extends { id: string }>({
+export function ResourceList<TItem extends { id: string }>({
     items,
     emptyTitle,
     emptyDescription,
     isReorderMode = false,
     onReorder,
     renderItem,
-}: ResourceItemListProps<TItem>) {
+}: ResourceListProps<TItem>) {
     return (
         <ReorderableList
             items={items}
             isReorderMode={isReorderMode}
             onReorder={onReorder}
-            emptyState={<EmptyResourceState title={emptyTitle} description={emptyDescription} />}
+            emptyState={<EmptyCollectionState title={emptyTitle} description={emptyDescription} />}
             renderItem={renderItem}
         />
     );

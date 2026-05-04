@@ -4,8 +4,8 @@ import { FileText, Database } from "lucide-react";
 import { useAssessmentTemplates } from "@/features/assessment-templates/hooks/useAssessmentTemplates";
 import { useQuestionTemplateBanks } from "@/features/question-template-banks/hooks/useQuestionTemplateBanks";
 import { useFolders } from "@/features/folders/hooks/useFolders";
-import { SaveResourceModal } from "@/shared/components/resource/SaveResourceModal";
-import { ResourceBrowser } from "@/shared/components/resource/ResourceBrowser";
+import { SaveToCollectionModal } from "@/shared/components/resource-collections/SaveToCollectionModal";
+import { CollectionBrowser } from "@/shared/components/resource-collections/CollectionBrowser";
 
 interface SaveTemplateModalProps {
     open: boolean;
@@ -58,7 +58,7 @@ export function SaveTemplateModal(props: SaveTemplateModalProps) {
     const { data: folders } = useFolders({});
 
     return (
-        <SaveResourceModal
+        <SaveToCollectionModal
             open={open}
             onOpenChange={onOpenChange}
             title="Save Question Template"
@@ -80,7 +80,7 @@ export function SaveTemplateModal(props: SaveTemplateModalProps) {
                     },
                     data: assessmentTemplates,
                     Browser: (props) => (
-                        <ResourceBrowser
+                        <CollectionBrowser
                             {...props}
                             icon={FileText}
                             searchPlaceholder="Search assessment templates..."
@@ -105,7 +105,7 @@ export function SaveTemplateModal(props: SaveTemplateModalProps) {
                     },
                     data: questionTemplateBanks,
                     Browser: (props) => (
-                        <ResourceBrowser
+                        <CollectionBrowser
                             {...props}
                             icon={Database}
                             searchPlaceholder="Search question template banks..."
