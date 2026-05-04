@@ -6,7 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { CodeInfoOutput } from './codeInfoOutput';
-import type { FormElement } from './formElement';
 
 /**
  * Response model for code analysis. Contains code information and form schema.
@@ -14,6 +13,4 @@ import type { FormElement } from './formElement';
 export interface CodeAnalysisResponse {
   /** Code structure and elements information */
   code_info: CodeInfoOutput;
-  /** List of form elements */
-  form_elements: FormElement[];
 }

@@ -7,13 +7,14 @@
  */
 import type { MCQData } from './mCQData';
 import type { MRQData } from './mRQData';
+import type { QuestionType } from './questionType';
 import type { ShortAnswerData } from './shortAnswerData';
 
 /**
  * Schema for updating any question type.
  */
 export interface UpdateQuestionRequest {
-  question_type?: 'mcq' | 'mrq' | 'short_answer' | null;
+  question_type?: QuestionType | null;
   question_text?: string | null;
   data?: MCQData | MRQData | ShortAnswerData | null;
 }
