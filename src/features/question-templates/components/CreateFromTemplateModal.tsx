@@ -19,19 +19,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Wand2, X } from "lucide-react";
 import { isAbortError } from "@/api/pollJob";
 import { Form } from "@/components/ui/form";
-import { useGenerateFromTemplate, useUpdateQuestionTemplate } from "../useQuestionTemplates";
-import { QuestionDisplay } from "@/features/question-builder/components/QuestionDisplay";
+import { useGenerateFromTemplate, useUpdateQuestionTemplate } from "../hooks/useQuestionTemplates";
+import { QuestionDisplay } from "@/features/questions/components/GeneratedQuestionDisplay";
 import { SaveQuestionModal } from "@/features/question-builder/components";
-import { InputDataCard } from "@/shared/components";
+import { InputDataCard } from "@/features/template-input-data/components";
 import { useUserStore } from "@/shared/stores/user.store";
 import {
     useAddQuestionToAssessment,
     useCreateAssessment,
-} from "@/features/assessments/useAssessments";
+} from "@/features/assessments/hooks/useAssessments";
 import {
     useCreateQuestionBank,
     useAddQuestionToQuestionBank,
-} from "@/features/question-banks/useQuestionBanks";
+} from "@/features/question-banks/hooks/useQuestionBanks";
 import { generatedQuestionToRequestData } from "@/shared/utils/questionUtils";
 import type { Question, QuestionTemplateResponse } from "@/api/models";
 

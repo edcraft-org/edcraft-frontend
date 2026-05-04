@@ -2,9 +2,9 @@ import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
-import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
+import { ErrorBoundary } from "@/shared/components/feedback/ErrorBoundary";
 import { Toaster } from "@/components/ui/sonner";
-import { initAuth } from "@/features/auth/auth.service";
+import { initAuth } from "@/features/auth/services/auth.service";
 import { useUserStore } from "@/shared/stores/user.store";
 
 export function MainLayout() {

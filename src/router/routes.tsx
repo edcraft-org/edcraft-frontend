@@ -2,48 +2,48 @@ import { lazy, Suspense } from "react";
 import type { ComponentType } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
-import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
+import { PageSkeleton } from "@/shared/components/feedback/LoadingSkeleton";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 // Re-export ROUTES for convenience
 export { ROUTES } from "./paths";
 
 // Lazy load pages
-const FolderPage = lazy(() => import("@/features/folders/FolderPage"));
-const QuestionBuilderPage = lazy(() => import("@/features/question-builder/QuestionBuilderPage"));
-const AssessmentPage = lazy(() => import("@/features/assessments/AssessmentPage"));
+const FolderPage = lazy(() => import("@/features/folders/pages/FolderPage"));
+const QuestionBuilderPage = lazy(() => import("@/features/question-builder/pages/QuestionBuilderPage"));
+const AssessmentPage = lazy(() => import("@/features/assessments/pages/AssessmentPage"));
 const AssessmentTemplatePage = lazy(
-    () => import("@/features/assessment-templates/AssessmentTemplatePage"),
+    () => import("@/features/assessment-templates/pages/AssessmentTemplatePage"),
 );
-const QuestionBankPage = lazy(() => import("@/features/question-banks/QuestionBankPage"));
+const QuestionBankPage = lazy(() => import("@/features/question-banks/pages/QuestionBankPage"));
 const QuestionTemplateBankPage = lazy(
-    () => import("@/features/question-template-banks/QuestionTemplateBankPage"),
+    () => import("@/features/question-template-banks/pages/QuestionTemplateBankPage"),
 );
 const TemplateBuilderPage = lazy(
-    () => import("@/features/question-template-builder/TemplateBuilderPage"),
+    () => import("@/features/question-template-builder/pages/TemplateBuilderPage"),
 );
-const OAuthCallbackPage = lazy(() => import("@/features/auth/OAuthCallbackPage"));
-const VerifyEmailPage = lazy(() => import("@/features/auth/VerifyEmailPage"));
+const OAuthCallbackPage = lazy(() => import("@/features/auth/pages/OAuthCallbackPage"));
+const VerifyEmailPage = lazy(() => import("@/features/auth/pages/VerifyEmailPage"));
 const HomeRoute = lazy(() => import("./HomeRoute"));
 
-const TutorialPage = lazy(() => import("@/features/landing/TutorialPage"));
+const TutorialPage = lazy(() => import("@/features/tutorials/TutorialPage"));
 const TemplateBuilderTutorialPage = lazy(
-    () => import("@/features/landing/TemplateBuilderTutorialPage"),
+    () => import("@/features/tutorials/TemplateBuilderTutorialPage"),
 );
 const GenerateQuestionFromTemplateTutorialPage = lazy(
-    () => import("@/features/landing/GenerateQuestionFromTemplateTutorialPage"),
+    () => import("@/features/tutorials/GenerateQuestionFromTemplateTutorialPage"),
 );
 const CreateAssessmentFromTemplateTutorialPage = lazy(
-    () => import("@/features/landing/CreateAssessmentFromTemplateTutorialPage"),
+    () => import("@/features/tutorials/CreateAssessmentFromTemplateTutorialPage"),
 );
 const LinkDuplicateTutorialPage = lazy(
-    () => import("@/features/landing/LinkDuplicateTutorialPage"),
+    () => import("@/features/tutorials/LinkDuplicateTutorialPage"),
 );
 const UploadToCanvasTutorialPage = lazy(
-    () => import("@/features/landing/UploadToCanvasTutorialPage"),
+    () => import("@/features/tutorials/UploadToCanvasTutorialPage"),
 );
 const TargetSelectionTutorialPage = lazy(
-    () => import("@/features/landing/TargetSelectionTutorialPage"),
+    () => import("@/features/tutorials/TargetSelectionTutorialPage"),
 );
 const KnownLimitationsPage = lazy(() => import("@/features/landing/KnownLimitationsPage"));
 

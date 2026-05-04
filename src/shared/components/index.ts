@@ -1,9 +1,8 @@
-export { CollaborationModal } from "./CollaborationModal";
-export { LinkMenu } from "./LinkMenu";
-export { ErrorBoundary } from "./ErrorBoundary";
-export { ErrorFallback } from "./ErrorFallback";
-export { ReorderableList } from "./ReorderableList";
+export { LinkMenu } from "./links";
+export { ErrorBoundary, ErrorFallback } from "./feedback";
+export { ReorderableList, SortableItem } from "./dnd";
 export {
+    CollaborationModal,
     AddResourceButton,
     DeleteConfirmationDialog,
     EmptyResourceState,
@@ -19,9 +18,6 @@ export {
     TreeSkeleton,
     PageHeaderSkeleton,
     PageSkeleton,
-} from "./LoadingSkeleton";
-export { CodeInputCard } from "./CodeInputCard";
-export { TargetSelectionCard } from "./target-selector/TargetSelectionCard";
-export { QuestionConfigCard } from "./QuestionConfigCard";
-export { InputDataCard } from "./InputDataCard";
-export { InputDataConfigCard } from "./InputDataConfigCard";
+} from "./feedback";
+export { CodeInputCard, QuestionConfigCard } from "./builder-form";
+export { TargetSelectionCard, TargetSelector } from "./target-selector";

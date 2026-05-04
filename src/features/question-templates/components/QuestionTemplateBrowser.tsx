@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import { useQuestionTemplates } from "../useQuestionTemplates";
-import { getQuestionTemplate } from "../question-template.service";
+import { useQuestionTemplates } from "../hooks/useQuestionTemplates";
+import { getQuestionTemplate } from "../services/question-template.service";
 import type { QuestionTemplateResponse } from "@/api/models";
 import { toast } from "sonner";
 

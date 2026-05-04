@@ -1,2 +1,2 @@
-export { QuestionDisplay } from "./QuestionDisplay";
+export { QuestionDisplay } from "../../questions/components/GeneratedQuestionDisplay";
 export { SaveQuestionModal } from "./SaveQuestionModal";

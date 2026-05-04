@@ -12,5 +12,5 @@ export {
     useQuestion,
     useUpdateQuestion,
     useDeleteQuestion,
-} from "./useQuestions";
+} from "./hooks/useQuestions";
 export { useQuestionSourceNavigation } from "./hooks/useQuestionSourceNavigation";

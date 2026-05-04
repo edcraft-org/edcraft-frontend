@@ -1,1 +1,1 @@
-export { default as AssessmentTemplatePage } from "./AssessmentTemplatePage";
+export { default as AssessmentTemplatePage } from "./pages/AssessmentTemplatePage";

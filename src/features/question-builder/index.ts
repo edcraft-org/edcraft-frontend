@@ -1,1 +1,1 @@
-export { default as QuestionBuilderPage } from "./QuestionBuilderPage";
+export { default as QuestionBuilderPage } from "./pages/QuestionBuilderPage";

@@ -26,13 +26,13 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
-import { InputDataCard } from "@/shared/components";
+import { InputDataCard } from "@/features/template-input-data/components";
 import {
     useUpdateQuestionTemplate,
     useGenerateFromTemplate,
-} from "@/features/question-templates/useQuestionTemplates";
-import { QuestionTemplateContent } from "@/components/QuestionTemplateContent";
-import { QuestionDisplay } from "@/features/question-builder/components/QuestionDisplay";
+} from "@/features/question-templates/hooks/useQuestionTemplates";
+import { QuestionTemplateContent } from "@/features/question-templates/components/QuestionTemplateContent";
+import { QuestionDisplay } from "@/features/questions/components/GeneratedQuestionDisplay";
 import { isAbortError } from "@/api/pollJob";
 import type { QuestionTemplateResponse, Question } from "@/api/models";
 

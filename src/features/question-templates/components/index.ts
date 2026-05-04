@@ -1,4 +1,5 @@
 export { QuestionTemplateCard } from "./QuestionTemplateCard";
+export { QuestionTemplateContent } from "./QuestionTemplateContent";
 export { LinkOrDuplicateTemplateModal } from "./LinkOrDuplicateTemplateModal";
 export { AddQuestionTemplateModal } from "./AddQuestionTemplateModal";
 export { QuestionTemplateBrowser } from "./QuestionTemplateBrowser";

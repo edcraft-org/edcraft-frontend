@@ -1,3 +1,4 @@
+export { CollaborationModal } from "./CollaborationModal";
 export { AddResourceButton, ReorderActionButtons, ShareResourceButton } from "./ResourceActions";
 export { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 export { EmptyResourceState } from "./EmptyResourceState";

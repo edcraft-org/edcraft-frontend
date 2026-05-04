@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { QuestionResponse } from "@/types/frontend.types";
 import { getOptions, getCorrectIndices, getAnswerText } from "@/shared/utils/questionUtils";
 import { QuestionActionsMenu } from "./QuestionActionsMenu";
-import { QuestionContent } from "@/components/QuestionContent";
+import { QuestionContent } from "@/features/questions/components/QuestionContent";
 import { LinkMenu } from "@/shared/components";
 
 interface QuestionCardProps {

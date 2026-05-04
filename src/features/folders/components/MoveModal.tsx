@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, ArrowUp, Folder, ChevronRight } from "lucide-react";
-import { useFolders, useFolderPath } from "../useFolders";
+import { useFolders, useFolderPath } from "../hooks/useFolders";
 import { FolderBreadcrumbs } from "./FolderBreadcrumbs";
 import type { FolderResponse } from "@/api/models";
 import { cn } from "@/lib/utils";

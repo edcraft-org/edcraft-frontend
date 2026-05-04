@@ -8,7 +8,7 @@ import {
     ChevronUp,
 } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
-import { TreeSkeleton } from "@/shared/components/LoadingSkeleton";
+import { TreeSkeleton } from "@/shared/components/feedback/LoadingSkeleton";
 import { FolderTree } from "@/features/folders/components/FolderTree";
 import { Button } from "@/components/ui/button";
 import { SharedResourcesList } from "./SharedResourcesList";

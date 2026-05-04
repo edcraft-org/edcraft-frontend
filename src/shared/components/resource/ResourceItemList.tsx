@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { EmptyResourceState } from "./EmptyResourceState";
-import { ReorderableList } from "@/shared/components/ReorderableList";
+import { ReorderableList } from "@/shared/components/dnd/ReorderableList";
 
 interface ResourceItemListProps<TItem extends { id: string }> {
     items: TItem[];

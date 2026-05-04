@@ -12,7 +12,7 @@ import {
 import { User as UserIcon, LogOut, Settings } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
 import { useAuthDialogStore } from "@/shared/stores/auth-dialog.store";
-import { logout } from "@/features/auth/auth.service";
+import { logout } from "@/features/auth/services/auth.service";
 import { CanvasSettingsDialog } from "@/features/canvas/components/CanvasSettingsDialog";
 
 export function AuthButton() {

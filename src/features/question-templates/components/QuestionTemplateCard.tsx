@@ -1,5 +1,5 @@
 import type { QuestionTemplateResponse } from "@/api/models";
-import { QuestionTemplateContent } from "@/components/QuestionTemplateContent";
+import { QuestionTemplateContent } from "@/features/question-templates/components/QuestionTemplateContent";
 import { QuestionTemplateActionsMenu } from "./QuestionTemplateActionsMenu";
 
 interface QuestionTemplateCardProps {

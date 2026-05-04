@@ -3,7 +3,7 @@ import type { NavigateFunction } from "react-router-dom";
 import { toast } from "sonner";
 import { ROUTES } from "@/router/paths";
 import type { QuestionResponse } from "@/types/frontend.types";
-import { getQuestion } from "@/features/questions/question.service";
+import { getQuestion } from "@/features/questions/services/question.service";
 
 export function useQuestionSourceNavigation(navigate: NavigateFunction) {
     return useCallback(

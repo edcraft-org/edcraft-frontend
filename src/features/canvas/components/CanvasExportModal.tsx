@@ -15,8 +15,8 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCanvasStore } from "@/shared/stores/canvas.store";
 import type { QuestionResponse } from "@/types/frontend.types";
-import { useCanvasCourses, useCanvasQuizzes, useUploadToCanvas } from "../useCanvas";
-import type { CanvasCourse, CanvasExportTarget, CanvasQuiz } from "../types";
+import { useCanvasCourses, useCanvasQuizzes, useUploadToCanvas } from "../hooks/useCanvas";
+import type { CanvasCourse, CanvasExportTarget, CanvasQuiz } from "../types/canvas.types";
 import { CanvasSettingsDialog } from "./CanvasSettingsDialog";
 
 interface CanvasExportModalProps {

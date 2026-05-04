@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
+import { PageSkeleton } from "@/shared/components/feedback/LoadingSkeleton";
 import { ResourcePageHeader } from "./ResourcePageHeader";
 
 interface ResourcePageResource {

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { useUserStore } from "@/shared/stores/user.store";
 import { useAuthDialogStore } from "@/shared/stores/auth-dialog.store";
-import { PageSkeleton } from "@/shared/components/LoadingSkeleton";
+import { PageSkeleton } from "@/shared/components/feedback/LoadingSkeleton";
 
 export function ProtectedRoute() {
     const { user, isAuthChecked } = useUserStore();

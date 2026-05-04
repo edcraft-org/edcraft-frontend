@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import { useQuestions } from "../useQuestions";
-import { getQuestion } from "../question.service";
+import { useQuestions } from "../hooks/useQuestions";
+import { getQuestion } from "../services/question.service";
 import type { QuestionResponse } from "@/types/frontend.types";
 
 interface QuestionBrowserProps {

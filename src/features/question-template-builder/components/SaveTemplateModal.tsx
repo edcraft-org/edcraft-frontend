@@ -11,9 +11,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, FileText, Database } from "lucide-react";
-import { useAssessmentTemplates } from "@/features/assessment-templates/useAssessmentTemplates";
-import { useQuestionTemplateBanks } from "@/features/question-template-banks/useQuestionTemplateBanks";
-import { useFolders } from "@/features/folders/useFolders";
+import { useAssessmentTemplates } from "@/features/assessment-templates/hooks/useAssessmentTemplates";
+import { useQuestionTemplateBanks } from "@/features/question-template-banks/hooks/useQuestionTemplateBanks";
+import { useFolders } from "@/features/folders/hooks/useFolders";
 import { AssessmentTemplateBrowser } from "@/features/assessment-templates/components/AssessmentTemplateBrowser";
 import { CreateAssessmentTemplateBankForm } from "./CreateAssessmentTemplateBankForm";
 import { QuestionTemplateBankBrowser, CreateQuestionTemplateBankForm } from "@/features/question-template-banks/components";

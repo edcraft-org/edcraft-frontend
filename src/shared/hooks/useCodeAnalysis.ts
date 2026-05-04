@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { analyseCode } from "./code-analysis.service";
+import { analyseCode } from "../services/code-analysis.service";
 import { isAbortError } from "@/api/pollJob";
 import type { CodeAnalysisRequest } from "@/api/models";
 
