@@ -5,3 +5,4 @@ export { EmptyResourceState } from "./EmptyResourceState";
 export { ResourceCollectionPage } from "./ResourceCollectionPage";
 export { ResourceItemList } from "./ResourceItemList";
 export { ResourcePageHeader } from "./ResourcePageHeader";
+export { CreateEntityForm } from "./CreateResourceEntityForm";
