@@ -1,8 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Code } from "lucide-react";
 import type { QuestionTemplateResponse } from "@/api/models";
 import type { ReactNode } from "react";
 import { LinkMenu } from "@/shared/components";
+import { TemplateConfigSummary } from "./TemplateConfigSummary";
 
 interface QuestionTemplateContentProps {
     template: QuestionTemplateResponse;
@@ -59,30 +59,12 @@ export function QuestionTemplateContent({
                 )}
 
                 {/* Template Configuration */}
-                <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                        <Code className="h-3 w-3" />
-                        <span>Template Configuration</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs pl-5">
-                        <div>
-                            <span className="text-muted-foreground">Entry Function:</span>
-                            <span className="ml-1 font-mono">{template.entry_function}</span>
-                        </div>
-                        <div>
-                            <span className="text-muted-foreground">Output Type:</span>
-                            <span className="ml-1">{template.output_type}</span>
-                        </div>
-                        <div>
-                            <span className="text-muted-foreground">Question Type:</span>
-                            <span className="ml-1">{template.question_type}</span>
-                        </div>
-                        <div>
-                            <span className="text-muted-foreground">Distractors:</span>
-                            <span className="ml-1">{template.num_distractors}</span>
-                        </div>
-                    </div>
-                </div>
+                <TemplateConfigSummary
+                    entryFunction={template.entry_function}
+                    outputType={template.output_type}
+                    questionType={template.question_type}
+                    numDistractors={template.num_distractors}
+                />
             </CardContent>
         </Card>
     );
