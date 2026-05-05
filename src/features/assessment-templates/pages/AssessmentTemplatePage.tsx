@@ -21,7 +21,6 @@ import { queryKeys } from "@/api";
 import {
     AddQuestionTemplateModal,
     CreateFromTemplateModal,
-    LinkOrDuplicateTemplateModal,
     QuestionTemplateList,
     useQuestionTemplateSourceNavigation,
 } from "@/features/question-templates";
@@ -40,6 +39,7 @@ import {
 import type { CreateQuestionTemplateRequest, QuestionTemplateResponse } from "@/api/models";
 import { canEditResource, notifyMutationError } from "@/shared/utils/resourceUtils";
 import { questionTemplateResponseToCreateRequest } from "@/shared/utils/questionTemplateUtils";
+import { LinkOrDuplicateDialog } from "@/shared/components/resources";
 
 function AssessmentTemplatePage() {
     const { templateId } = useParams<{ templateId: string }>();
@@ -418,14 +418,14 @@ function AssessmentTemplatePage() {
                         canEdit={canEdit}
                     />
 
-                    <LinkOrDuplicateTemplateModal
+                    <LinkOrDuplicateDialog
                         open={showLinkOrDuplicateModal}
                         onOpenChange={setShowLinkOrDuplicateModal}
                         onLink={handleLinkTemplate}
                         onDuplicate={handleDuplicateTemplate}
                         isLoading={linkQuestionTemplate.isPending || addQuestionTemplate.isPending}
                     />
-
+                        
                     <InstantiateAssessmentModal
                         open={showInstantiateDialog}
                         onOpenChange={setShowInstantiateDialog}

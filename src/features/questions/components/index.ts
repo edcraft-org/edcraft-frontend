@@ -2,7 +2,6 @@ export { QuestionEditor } from "./QuestionEditor";
 export { EditQuestionModal } from "./EditQuestionModal";
 export { AddQuestionModal } from "./AddQuestionModal";
 export { QuestionBrowser } from "./QuestionBrowser";
-export { LinkOrDuplicateModal } from "./LinkOrDuplicateModal";
 export { QuestionCard } from "./QuestionCard";
 export { QuestionContent } from "./QuestionContent";
 export { QuestionActionsMenu } from "./QuestionActionsMenu";

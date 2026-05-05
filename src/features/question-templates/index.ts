@@ -1,7 +1,6 @@
 // Question Templates Feature Module
 export {
     QuestionTemplateCard,
-    LinkOrDuplicateTemplateModal,
     AddQuestionTemplateModal,
     CreateFromTemplateModal,
     QuestionTemplateList,

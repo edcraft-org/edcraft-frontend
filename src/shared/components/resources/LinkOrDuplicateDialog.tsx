@@ -1,5 +1,3 @@
-// LinkOrDuplicateTemplateModal - Choose whether to link or duplicate a question template when adding to assessment template
-
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -11,36 +9,61 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Link2, Copy } from "lucide-react";
 
-interface LinkOrDuplicateTemplateModalProps {
+interface OptionConfig {
+    title: string;
+    description: string;
+}
+
+interface LinkOrDuplicateDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onLink: () => void;
     onDuplicate: () => void;
     isLoading?: boolean;
+
+    // Customizable content
+    headerText?: string;
+    descriptionText?: string;
+
+    linkOption?: OptionConfig;
+    duplicateOption?: OptionConfig;
 }
 
-export function LinkOrDuplicateTemplateModal({
+export function LinkOrDuplicateDialog({
     open,
     onOpenChange,
     onLink,
     onDuplicate,
     isLoading,
-}: LinkOrDuplicateTemplateModalProps) {
+
+    headerText = "Link or Duplicate?",
+    descriptionText = "How would you like to add this item?",
+
+    linkOption = {
+        title: "Link",
+        description:
+            "Creates a linked copy. You can edit it independently, and sync from the source.",
+    },
+    duplicateOption = {
+        title: "Duplicate",
+        description: "Creates an independent copy.",
+    },
+}: LinkOrDuplicateDialogProps) {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
                         <Link2 className="h-5 w-5 text-blue-500" />
-                        Link or Duplicate?
+                        {headerText}
                     </AlertDialogTitle>
+
                     <AlertDialogDescription asChild>
                         <div className="space-y-3">
-                            <p className="text-sm text-muted-foreground">
-                                How would you like to add this question template?
-                            </p>
+                            <p className="text-sm text-muted-foreground">{descriptionText}</p>
 
                             <div className="space-y-3 pt-2">
+                                {/* Link */}
                                 <button
                                     onClick={onLink}
                                     disabled={isLoading}
@@ -48,25 +71,28 @@ export function LinkOrDuplicateTemplateModal({
                                 >
                                     <Link2 className="h-5 w-5 mt-0.5 text-blue-500" />
                                     <div>
-                                        <div className="font-medium text-sm">Link</div>
+                                        <div className="font-medium text-sm">
+                                            {linkOption.title}
+                                        </div>
                                         <p className="text-xs text-muted-foreground">
-                                            Creates a linked copy. You can edit it independently,
-                                            and sync from the source when needed.
+                                            {linkOption.description}
                                         </p>
                                     </div>
                                 </button>
 
+                                {/* Duplicate */}
                                 <button
-                                    onClick={() => onDuplicate()}
+                                    onClick={onDuplicate}
                                     disabled={isLoading}
                                     className="w-full flex items-start gap-3 p-3 rounded-md border text-left hover:bg-accent hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <Copy className="h-5 w-5 mt-0.5 text-green-500" />
                                     <div>
-                                        <div className="font-medium text-sm">Duplicate</div>
+                                        <div className="font-medium text-sm">
+                                            {duplicateOption.title}
+                                        </div>
                                         <p className="text-xs text-muted-foreground">
-                                            Creates an independent copy. Changes won't affect other
-                                            assessment templates or template banks.
+                                            {duplicateOption.description}
                                         </p>
                                     </div>
                                 </button>
@@ -74,6 +100,7 @@ export function LinkOrDuplicateTemplateModal({
                         </div>
                     </AlertDialogDescription>
                 </AlertDialogHeader>
+
                 <AlertDialogFooter>
                     <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
                 </AlertDialogFooter>

@@ -31,7 +31,6 @@ import { ExportButton } from "../components";
 import {
     AddQuestionModal,
     EditQuestionModal,
-    LinkOrDuplicateModal,
     QuestionList,
     useQuestionSourceNavigation,
     useUpdateQuestion,
@@ -40,6 +39,7 @@ import type { QuestionResponse, QuestionEditorData } from "@/types/frontend.type
 import type { CreateMCQRequest, CreateMRQRequest, CreateShortAnswerRequest } from "@/api/models";
 import { questionResponseToRequestData } from "@/shared/utils/questionUtils";
 import { canEditResource, notifyMutationError } from "@/shared/utils/resourceUtils";
+import { LinkOrDuplicateDialog } from "@/shared/components/resources";
 
 const CanvasExportModal = lazy(() =>
     import("@/features/canvas/components/CanvasExportModal").then((m) => ({
@@ -445,7 +445,7 @@ function AssessmentPage() {
                         isLoading={updateQuestion.isPending}
                     />
 
-                    <LinkOrDuplicateModal
+                    <LinkOrDuplicateDialog
                         open={showLinkOrDuplicateModal}
                         onOpenChange={setShowLinkOrDuplicateModal}
                         onLink={handleLinkQuestion}

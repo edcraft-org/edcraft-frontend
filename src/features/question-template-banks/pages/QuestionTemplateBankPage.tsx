@@ -26,13 +26,13 @@ import {
 import {
     AddQuestionTemplateModal,
     CreateFromTemplateModal,
-    LinkOrDuplicateTemplateModal,
     QuestionTemplateList,
     useQuestionTemplateSourceNavigation,
 } from "@/features/question-templates";
 import type { QuestionTemplateResponse, CreateQuestionTemplateRequest } from "@/api/models";
 import { canEditResource, notifyMutationError } from "@/shared/utils/resourceUtils";
 import { questionTemplateResponseToCreateRequest } from "@/shared/utils/questionTemplateUtils";
+import { LinkOrDuplicateDialog } from "@/shared/components/resources";
 
 function QuestionTemplateBankPage() {
     const { templateBankId } = useParams<{ templateBankId: string }>();
@@ -309,7 +309,7 @@ function QuestionTemplateBankPage() {
                         canEdit={canEdit}
                     />
 
-                    <LinkOrDuplicateTemplateModal
+                    <LinkOrDuplicateDialog
                         open={showLinkOrDuplicateModal}
                         onOpenChange={setShowLinkOrDuplicateModal}
                         onLink={handleLinkTemplate}
