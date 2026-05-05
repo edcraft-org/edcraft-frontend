@@ -1,12 +1,6 @@
 export { FolderTree } from "./FolderTree";
-export { CreateResourceModal } from "./CreateResourceModal";
-export { CreateFolderModal } from "./CreateFolderModal";
-export { CreateAssessmentModal } from "./CreateAssessmentModal";
-export { CreateAssessmentTemplateModal } from "./CreateAssessmentTemplateModal";
-export { CreateQuestionBankModal } from "./CreateQuestionBankModal";
-export { CreateQuestionTemplateBankModal } from "./CreateQuestionTemplateBankModal";
 export { RenameModal } from "./RenameModal";
 export { MoveModal } from "./MoveModal";
 export { FolderBreadcrumbs } from "./FolderBreadcrumbs";
-export { NewResourceDropdown } from "./NewResourceDropdown";
-export { ResourceCard } from "./ResourceCard";
+export { NewCollectionDropdown } from "./NewCollectionDropdown";
+export { CollectionCard } from "./CollectionCard";

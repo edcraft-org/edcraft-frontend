@@ -14,7 +14,7 @@ import {
     Plus,
 } from "lucide-react";
 
-interface NewResourceDropdownProps {
+interface NewCollectionDropdownProps {
     onCreateFolder: () => void;
     onCreateAssessment: () => void;
     onCreateTemplate: () => void;
@@ -22,13 +22,13 @@ interface NewResourceDropdownProps {
     onCreateQuestionTemplateBank: () => void;
 }
 
-export function NewResourceDropdown({
+export function NewCollectionDropdown({
     onCreateFolder,
     onCreateAssessment,
     onCreateTemplate,
     onCreateQuestionBank,
     onCreateQuestionTemplateBank,
-}: NewResourceDropdownProps) {
+}: NewCollectionDropdownProps) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>

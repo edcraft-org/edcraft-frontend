@@ -34,6 +34,7 @@ import {
 } from "@/features/question-banks/hooks/useQuestionBanks";
 import { generatedQuestionToRequestData } from "@/shared/utils/questionUtils";
 import type { Question, QuestionTemplateResponse } from "@/api/models";
+import { TemplateConfigSummary } from "./TemplateConfigSummary";
 
 // Schema for the form
 const templateFormSchema = z.object({
@@ -264,34 +265,12 @@ export function CreateFromTemplateModal({
                                     <CardDescription>{template.description}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
-                                    <div className="grid grid-cols-2 gap-2 text-sm">
-                                        <div>
-                                            <span className="text-muted-foreground">
-                                                Entry Function:
-                                            </span>
-                                            <span className="ml-2 font-mono">
-                                                {template.entry_function}
-                                            </span>
-                                        </div>
-                                        <div>
-                                            <span className="text-muted-foreground">
-                                                Output Type:
-                                            </span>
-                                            <span className="ml-2">{template.output_type}</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-muted-foreground">
-                                                Question Type:
-                                            </span>
-                                            <span className="ml-2">{template.question_type}</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-muted-foreground">
-                                                Distractors:
-                                            </span>
-                                            <span className="ml-2">{template.num_distractors}</span>
-                                        </div>
-                                    </div>
+                                    <TemplateConfigSummary
+                                        entryFunction={template.entry_function}
+                                        outputType={template.output_type}
+                                        questionType={template.question_type}
+                                        numDistractors={template.num_distractors}
+                                    />
                                 </CardContent>
                             </Card>
 

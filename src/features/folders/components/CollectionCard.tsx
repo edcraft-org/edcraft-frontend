@@ -24,7 +24,7 @@ interface Resource {
     description?: string | null;
 }
 
-interface ResourceCardProps {
+interface CollectionCardProps {
     resource: Resource;
     onClick: () => void;
     onRename: () => void;
@@ -32,7 +32,7 @@ interface ResourceCardProps {
     onDelete: () => void;
 }
 
-export function ResourceCard({ resource, onClick, onRename, onMove, onDelete }: ResourceCardProps) {
+export function CollectionCard({ resource, onClick, onRename, onMove, onDelete }: CollectionCardProps) {
     const getIcon = () => {
         switch (resource.resourceType) {
             case "folder":

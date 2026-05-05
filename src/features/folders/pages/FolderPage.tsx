@@ -9,16 +9,11 @@ import { PageSkeleton } from "@/shared/components/feedback/LoadingSkeleton";
 import { ROUTES } from "@/router/paths";
 import { Folder as FolderIcon } from "lucide-react";
 import {
-    CreateFolderModal,
-    CreateAssessmentModal,
-    CreateAssessmentTemplateModal,
-    CreateQuestionBankModal,
-    CreateQuestionTemplateBankModal,
     RenameModal,
     MoveModal,
     FolderBreadcrumbs,
-    NewResourceDropdown,
-    ResourceCard,
+    NewCollectionDropdown,
+    CollectionCard,
 } from "../components";
 import { DeleteConfirmationDialog } from "@/shared/components";
 import {
@@ -50,6 +45,14 @@ import {
     useUpdateQuestionTemplateBank,
     useDeleteQuestionTemplateBank,
 } from "@/features/question-template-banks/hooks/useQuestionTemplateBanks";
+import {
+    CreateResourceModal,
+    createFolderConfig,
+    createAssessmentConfig,
+    createAssessmentTemplateConfig,
+    createQuestionBankConfig,
+    createQuestionTemplateBankConfig,
+} from "@/shared/components/resources";
 
 function FolderPage() {
     const { folderId: rawFolderId } = useParams<{ folderId: string }>();
@@ -524,7 +527,7 @@ function FolderPage() {
                         <p className="text-muted-foreground mt-1">{contents?.description}</p>
                     )}
                 </div>
-                <NewResourceDropdown
+                <NewCollectionDropdown
                     onCreateFolder={() => setShowCreateFolder(true)}
                     onCreateAssessment={() => setShowCreateAssessment(true)}
                     onCreateTemplate={() => setShowCreateTemplate(true)}
@@ -545,7 +548,7 @@ function FolderPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {allResources.map((resource) => (
-                        <ResourceCard
+                        <CollectionCard
                             key={resource.id}
                             resource={resource}
                             onClick={() => handleResourceClick(resource)}
@@ -558,39 +561,44 @@ function FolderPage() {
             )}
 
             {/* Modals */}
-            <CreateFolderModal
+            <CreateResourceModal
                 open={showCreateFolder}
                 onOpenChange={setShowCreateFolder}
                 onSubmit={handleCreateFolder}
                 isLoading={createFolder.isPending}
+                config={createFolderConfig}
             />
 
-            <CreateAssessmentModal
+            <CreateResourceModal
                 open={showCreateAssessment}
                 onOpenChange={setShowCreateAssessment}
                 onSubmit={handleCreateAssessment}
                 isLoading={createAssessment.isPending}
+                config={createAssessmentConfig}
             />
 
-            <CreateAssessmentTemplateModal
+            <CreateResourceModal
                 open={showCreateTemplate}
                 onOpenChange={setShowCreateTemplate}
                 onSubmit={handleCreateAssessmentTemplate}
                 isLoading={createAssessmentTemplate.isPending}
+                config={createAssessmentTemplateConfig}
             />
 
-            <CreateQuestionBankModal
+            <CreateResourceModal
                 open={showCreateQuestionBank}
                 onOpenChange={setShowCreateQuestionBank}
                 onSubmit={handleCreateQuestionBank}
                 isLoading={createQuestionBank.isPending}
+                config={createQuestionBankConfig}
             />
 
-            <CreateQuestionTemplateBankModal
+            <CreateResourceModal
                 open={showCreateQuestionTemplateBank}
                 onOpenChange={setShowCreateQuestionTemplateBank}
                 onSubmit={handleCreateQuestionTemplateBank}
                 isLoading={createQuestionTemplateBank.isPending}
+                config={createQuestionTemplateBankConfig}
             />
 
             {/* Action Modals */}
