@@ -247,6 +247,51 @@ The API base URL is configured via environment variables. Update `.env` to point
 VITE_API_BASE_URL=<backend_url>
 ```
 
+## Future Enhancements
+
+### Target Selector Improvements
+
+The current target selector workflow can be improved to make it more intuitive and less confusing for users.
+
+### Builder Explainability
+
+Improve transparency in how answers are generated.
+
+* Step-by-step explanation of how answers are derived
+* Visualization of execution trace evaluation
+* Display of intermediate values and selected targets
+
+### Advanced Target Selector Mode
+
+Introduce an advanced mode for experienced users who want finer control over question generation.
+
+* More direct access to the underlying query engine
+* Support for composing more complex target expressions
+
+### Assessment Instantiation UX Improvements
+
+Simplify the assessment instantiation workflow.
+
+Current workflow:
+
+* Each template input is filled in step-by-step
+
+Planned improvement:
+
+* Replace the multi-step process with a single consolidated form page
+* Allow users to provide inputs for all templates in one view
+
+### Input Data Configuration Improvements
+
+Improve input data configuration experience.
+
+* Automatically identify the input type when typed inputs are provided
+* Have default configurations based on the detected input type
+
+### Frontend Testing
+
+Add comprehensive frontend testing coverage to improve reliability and maintainability.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
