@@ -1,0 +1,110 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { ApiError } from "@/api/axiosInstance";
+import AiAuthoringJobPage from "../pages/AiAuthoringJobPage";
+import {
+    createAuthoringJob,
+    decideAuthoringApproval,
+    generateAuthoringBatch,
+    getAuthoringCapabilities,
+    getAuthoringJob,
+    getAuthoringPreview,
+    getAuthoringReview,
+} from "../services/ai-authoring.service";
+import {
+    approvedReview,
+    batch,
+    capabilities,
+    completedJob,
+    preview,
+} from "./fixtures";
+
+vi.mock("../services/ai-authoring.service", () => ({
+    getAuthoringCapabilities: vi.fn(),
+    createAuthoringJob: vi.fn(),
+    listAuthoringJobs: vi.fn(),
+    getAuthoringJob: vi.fn(),
+    getAuthoringReview: vi.fn(),
+    getAuthoringPreview: vi.fn(),
+    decideAuthoringApproval: vi.fn(),
+    generateAuthoringBatch: vi.fn(),
+}));
+
+vi.mock("../components/PreviewQuestion", () => ({
+    PreviewQuestion: ({ instance }: { instance: { seed: number } }) => (
+        <div>Preview for seed {instance.seed}</div>
+    ),
+}));
+
+function renderJobPage() {
+    const client = new QueryClient({
+        defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    render(
+        <QueryClientProvider client={client}>
+            <MemoryRouter initialEntries={["/ai-authoring/job-1"]}>
+                <Routes>
+                    <Route path="/ai-authoring/:jobId" element={<AiAuthoringJobPage />} />
+                </Routes>
+            </MemoryRouter>
+        </QueryClientProvider>,
+    );
+}
+
+describe("AiAuthoringJobPage", () => {
+    beforeEach(() => {
+        vi.mocked(getAuthoringJob).mockResolvedValue(completedJob);
+        vi.mocked(getAuthoringReview).mockResolvedValue(approvedReview);
+        vi.mocked(getAuthoringCapabilities).mockResolvedValue(capabilities);
+        vi.mocked(getAuthoringPreview).mockResolvedValue(preview);
+        vi.mocked(generateAuthoringBatch).mockResolvedValue(batch);
+        vi.mocked(decideAuthoringApproval).mockResolvedValue({
+            decision: "approved",
+            artifact_sha256: "a".repeat(64),
+            reviewer: "teacher@example.com",
+            note: null,
+            decided_at: "2026-11-03T00:00:00Z",
+        });
+    });
+
+    afterEach(cleanup);
+
+    it("resumes the job from the URL without creating another job", async () => {
+        renderJobPage();
+
+        expect(await screen.findByText("Job progress")).toBeInTheDocument();
+        expect(await screen.findByText("Review checked artifact")).toBeInTheDocument();
+        expect(getAuthoringJob).toHaveBeenCalledWith("job-1");
+        expect(getAuthoringReview).toHaveBeenCalledWith("job-1");
+        expect(createAuthoringJob).not.toHaveBeenCalled();
+        expect(screen.getByText("/ai-authoring/job-1")).toBeInTheDocument();
+    });
+
+    it("refetches review and clears generated output after a stale 409", async () => {
+        vi.mocked(generateAuthoringBatch)
+            .mockResolvedValueOnce(batch)
+            .mockRejectedValueOnce(new ApiError(409, "The artifact changed."));
+        const user = userEvent.setup();
+        renderJobPage();
+
+        await screen.findByText("Review checked artifact");
+        await user.click(screen.getByRole("button", { name: "Generate batch" }));
+        expect(await screen.findByText(/Requested 3 · actual 3/)).toBeInTheDocument();
+        const reviewCallsBefore = vi.mocked(getAuthoringReview).mock.calls.length;
+
+        await user.click(screen.getByRole("button", { name: "Generate another batch" }));
+
+        expect(await screen.findByText("Artifact changed")).toBeInTheDocument();
+        await waitFor(() =>
+            expect(vi.mocked(getAuthoringReview).mock.calls.length).toBeGreaterThan(
+                reviewCallsBefore,
+            ),
+        );
+        await waitFor(() =>
+            expect(screen.queryByText(/Requested 3 · actual 3/)).not.toBeInTheDocument(),
+        );
+    });
+});

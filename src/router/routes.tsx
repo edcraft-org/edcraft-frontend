@@ -19,6 +19,10 @@ const QuestionBankPage = lazy(() => import("@/features/question-banks/pages/Ques
 const QuestionTemplateBankPage = lazy(
     () => import("@/features/question-template-banks/pages/QuestionTemplateBankPage"),
 );
+const AiAuthoringPage = lazy(() => import("@/features/ai-authoring/pages/AiAuthoringPage"));
+const AiAuthoringJobPage = lazy(
+    () => import("@/features/ai-authoring/pages/AiAuthoringJobPage"),
+);
 const TemplateBuilderPage = lazy(
     () => import("@/features/question-template-builder/pages/TemplateBuilderPage"),
 );
@@ -143,6 +147,14 @@ export const router = createBrowserRouter([
                     {
                         path: "folders/:folderId",
                         element: lazyRoute(FolderPage),
+                    },
+                    {
+                        path: "ai-authoring",
+                        element: lazyRoute(AiAuthoringPage),
+                    },
+                    {
+                        path: "ai-authoring/:jobId",
+                        element: lazyRoute(AiAuthoringJobPage),
                     },
                 ],
             },

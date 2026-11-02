@@ -10,9 +10,9 @@
  * Complete schema for user responses.
  */
 export interface UserResponse {
-  id: string;
-  email: string;
-  name: string;
   created_at: string;
+  email: string;
+  id: string;
+  name: string;
   updated_at: string;
 }

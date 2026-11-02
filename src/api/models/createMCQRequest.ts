@@ -11,12 +11,12 @@ import type { MCQData } from './mCQData';
  * Schema for creating a new MCQ question.
  */
 export interface CreateMCQRequest {
-  template_id?: string | null;
+  data: MCQData;
   /**
    * @minLength 1
    * @maxLength 5000
    */
   question_text: string;
   question_type?: 'mcq';
-  data: MCQData;
+  template_id?: string | null;
 }

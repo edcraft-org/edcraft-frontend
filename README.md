@@ -61,6 +61,18 @@ When you instantiate an assessment from a template:
 3. EdCraft executes all templates with the provided inputs
 4. Generates a complete assessment with all questions
 
+### AI Authoring
+
+Author a checked code question with a server-configured model, review the evidence, approve the exact artifact, and export a deterministic JSON batch. The workflow is protected and requires the normal EdCraft sign-in.
+
+1. Open **AI Authoring** in the header.
+2. Enter a prompt and choose the difficulty, number of distractors and (under Advanced) a configured model profile.
+3. Follow the job's phase and attempt progress; reopen owned jobs from the recent list or by URL.
+4. Review the prompt, technical and advisory checks, sampling limits and seeded preview. Advisory difficulty/relevance findings do not block approval; technical failures do.
+5. After approval, choose a base seed and quantity, generate the batch, check actual/distinct counts and warnings, then download the JSON batch.
+
+Model connections, judge configuration and generation limits come from the backend. The frontend never asks for API keys or provider endpoints.
+
 ### Resource Management
 
 Organize all resources in a hierarchical folder structure. Organize questions and question templates into banks.
@@ -203,7 +215,8 @@ docker run -d \
 - `npm run dev` - Start development server with hot reload
 - `npm run build` - Type-check and build for production
 - `npm run lint` - Run ESLint for code quality
-- `npm run api:generate` - Generate API client from OpenAPI specification
+- `npm test` - Run the focused Vitest + Testing Library suite
+- `npm run api:generate` - Generate API client from the backend OpenAPI specification
 
 ## Project Structure
 
@@ -229,15 +242,17 @@ The application uses Orval to automatically generate a type-safe TypeScript API 
 
 ### Regenerating the API Client
 
-When the backend API changes:
+When the backend API changes, start the backend (or point Orval at a saved `openapi.json`) and run:
 
 ```bash
 npm run api:generate
 ```
 
-This reads `orval.config.ts` and generates:
-- API client methods in `src/api/client.ts`
+This reads `orval.config.ts` and regenerates:
+- API client methods in `src/api/edcraftClient.ts`
 - TypeScript types in `src/api/models/`
+
+Do not hand-edit generated files. The AI authoring feature wraps the generated client in `src/features/ai-authoring/services/ai-authoring.service.ts`; set `input.target` in a temporary Orval config to regenerate from a file when a live backend is unavailable.
 
 ### API Configuration
 

@@ -11,12 +11,12 @@ import type { ShortAnswerData } from './shortAnswerData';
  * Schema for creating a new short answer question.
  */
 export interface CreateShortAnswerRequest {
-  template_id?: string | null;
+  data: ShortAnswerData;
   /**
    * @minLength 1
    * @maxLength 5000
    */
   question_text: string;
   question_type?: 'short_answer';
-  data: ShortAnswerData;
+  template_id?: string | null;
 }
