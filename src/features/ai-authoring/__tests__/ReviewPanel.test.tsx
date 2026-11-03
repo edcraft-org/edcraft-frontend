@@ -94,7 +94,7 @@ describe("ReviewPanel", () => {
         expect(screen.getByText("4 choices")).toBeInTheDocument();
         expect(screen.getByText("Difficulty differs")).toBeInTheDocument();
         expect(screen.getByText("Relevance was not checked")).toBeInTheDocument();
-        expect(screen.getAllByText(/does not block approval/i).length).toBeGreaterThan(0);
+        expect(screen.getByText(/never block approval/i)).toBeInTheDocument();
 
         const advisory = screen.getByText("Difficulty differs").closest("[data-advisory]");
         expect(advisory).toHaveClass("border-amber-500/40");
@@ -113,12 +113,22 @@ describe("ReviewPanel", () => {
         expect(screen.getByRole("button", { name: "Approve question" })).toBeEnabled();
     });
 
+    it("keeps the reviewer identifier out of the primary approval summary", async () => {
+        renderPanel(approvedReview);
+
+        expect(await screen.findByText(/Approved on/)).toBeInTheDocument();
+        expect(screen.queryByText(approval.reviewer)).not.toBeInTheDocument();
+
+        const details = await openTechnicalDetails();
+        expect(details).toHaveTextContent(approval.reviewer);
+    });
+
     it("blocks approval and explains why when a technical check fails", async () => {
         renderPanel(technicalFailureReview);
 
         expect(
             await screen.findByText(
-                /The technical check "Sample examples" failed.*create a new question/i,
+                /The technical check "Answers and wrong choices" needs attention.*Create a new question/i,
             ),
         ).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "Approve question" })).toBeDisabled();
@@ -213,12 +223,13 @@ describe("ReviewPanel", () => {
         });
 
         expect(await screen.findByText("Potential relevance mismatch")).toBeInTheDocument();
-        expect(screen.getAllByText("Off topic.").length).toBeGreaterThan(0);
+        expect(screen.queryByText("Off topic.")).not.toBeInTheDocument();
         expect(screen.queryByText("Not relevant")).not.toBeInTheDocument();
 
         const details = await openTechnicalDetails();
-        expect(within(details).getByText("0.42")).toBeInTheDocument();
-        expect(within(details).getByText("0.50")).toBeInTheDocument();
+        expect(details).toHaveTextContent("0.42");
+        expect(details).toHaveTextContent("0.5");
+        expect(details).toHaveTextContent("Off topic.");
     });
 
     it("shows advisory difficulty confidence and its source only in technical details", async () => {
@@ -233,8 +244,8 @@ describe("ReviewPanel", () => {
 
         expect(screen.queryByText(/Advisory estimate confidence/)).not.toBeInTheDocument();
         const details = await openTechnicalDetails();
-        expect(within(details).getByText("0.72")).toBeInTheDocument();
-        expect(within(details).getByText("self reported")).toBeInTheDocument();
+        expect(details).toHaveTextContent("0.72");
+        expect(details).toHaveTextContent("self_reported");
     });
 
     it("labels a historical candidate inside technical details", async () => {

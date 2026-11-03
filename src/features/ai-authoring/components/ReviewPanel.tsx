@@ -61,7 +61,7 @@ function difficultyAdvisory(outcome: AuthoringDifficultyOutcome | null | undefin
         return {
             title: "Difficulty was not checked",
             tone: "neutral" as const,
-            text: "This is advisory only and does not block approval.",
+            text: "No difficulty estimate was available.",
         };
     }
 
@@ -75,16 +75,16 @@ function difficultyAdvisory(outcome: AuthoringDifficultyOutcome | null | undefin
         return {
             title: "Difficulty differs",
             tone: "amber" as const,
-            text: `This question looks ${estimated} difficulty${
-                requested ? `; you asked for ${requested}` : ""
-            }. This is advisory only and does not block approval.`,
+            text: requested
+                ? `The model estimated ${estimated}; you asked for ${requested}.`
+                : `The model estimated ${estimated}.`,
         };
     }
 
     return {
         title: "Difficulty matches your request",
         tone: "neutral" as const,
-        text: `This question looks ${estimated} difficulty. This is advisory only and does not block approval.`,
+        text: `The model estimated ${estimated}, matching your request.`,
     };
 }
 
@@ -93,20 +93,20 @@ function relevanceAdvisory(outcome: AuthoringRelevanceOutcome | null | undefined
         return {
             title: "Relevance looks good",
             tone: "neutral" as const,
-            text: "The review model judged this question related to your request. This is advisory only and does not block approval.",
+            text: "The review model judged this question related to your request.",
         };
     }
     if (outcome?.relevant === false) {
         return {
             title: "Potential relevance mismatch",
             tone: "amber" as const,
-            text: "The review model was not sure this question matches your request. This is advisory only and does not block approval.",
+            text: "The review model was not sure this question matches your request.",
         };
     }
     return {
         title: "Relevance was not checked",
         tone: "neutral" as const,
-        text: "This is advisory only and does not block approval.",
+        text: "No relevance judgement was available.",
     };
 }
 
@@ -166,36 +166,37 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
                                 </h3>
                                 <p className="text-xs text-muted-foreground">
                                     Difficulty and relevance notes are advisory and never block
-                                    approval.
+                                    approval. Technical details has the full evidence.
                                 </p>
                             </div>
                             <div className="space-y-2">
                                 <AdvisoryCard title={difficultyFeedback.title} tone={difficultyFeedback.tone}>
                                     <p className="text-muted-foreground">{difficultyFeedback.text}</p>
-                                    {difficulty?.reason && (
-                                        <p className="text-xs text-muted-foreground">
-                                            {difficulty.reason}
-                                        </p>
-                                    )}
                                 </AdvisoryCard>
                                 <AdvisoryCard title={relevanceFeedback.title} tone={relevanceFeedback.tone}>
                                     <p className="text-muted-foreground">{relevanceFeedback.text}</p>
-                                    {relevance?.reason && (
-                                        <p className="text-xs text-muted-foreground">
-                                            {relevance.reason}
-                                        </p>
-                                    )}
                                 </AdvisoryCard>
                             </div>
                         </section>
 
                         <ChecksPanel checks={review.checks ?? []} />
 
+                        <ApprovalControls
+                            jobId={jobId}
+                            review={review}
+                            blockers={blockers}
+                            canApprove={canApprove}
+                            onStaleArtifact={onStaleArtifact}
+                        />
+
                         {review.error && (
                             <Alert variant="destructive">
                                 <AlertCircle className="h-4 w-4" />
                                 <AlertTitle>Review problem</AlertTitle>
-                                <AlertDescription>{review.error.message}</AlertDescription>
+                                <AlertDescription>
+                                    The review reported a problem. Create a new question if this
+                                    persists.
+                                </AlertDescription>
                             </Alert>
                         )}
 
@@ -206,13 +207,6 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
                         <ReviewQuestionPreview
                             jobId={jobId}
                             artifactSha256={review.artifact_sha256}
-                            onStaleArtifact={onStaleArtifact}
-                        />
-                        <ApprovalControls
-                            jobId={jobId}
-                            review={review}
-                            blockers={blockers}
-                            canApprove={canApprove}
                             onStaleArtifact={onStaleArtifact}
                         />
                     </div>

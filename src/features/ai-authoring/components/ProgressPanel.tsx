@@ -1,113 +1,87 @@
 import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/router/paths";
 import { formatDate } from "../format";
 import type { AuthoringJob } from "../types";
 
-function stateLabel(job: AuthoringJob): string {
-    switch (job.state) {
-        case "queued":
-            return "Waiting to start";
-        case "running":
-            switch (job.progress?.phase) {
-                case "generating":
-                    return "Writing the question";
-                case "checking":
-                    return "Checking the question";
-                case "correcting":
-                    return "Improving the question";
-                case "finalizing":
-                    return "Finishing the question";
-                default:
-                    return "Creating the question";
-            }
-        case "completed":
-            return "Ready to review";
-        case "failed":
-            return "Could not be created";
+function activeStateLabel(job: AuthoringJob): string {
+    if (job.state === "queued") return "Waiting to start";
+    switch (job.progress?.phase) {
+        case "generating":
+            return "Writing the question";
+        case "checking":
+            return "Checking the question";
+        case "correcting":
+            return "Improving the question";
+        case "finalizing":
+            return "Finishing the question";
+        default:
+            return "Creating the question";
     }
 }
 
-function badgeLabel(job: AuthoringJob): string {
-    switch (job.state) {
-        case "queued":
-            return "Waiting";
-        case "running":
-            return "Creating";
-        case "completed":
-            return "Ready";
-        case "failed":
-            return "Failed";
-    }
-}
-
-function stateVariant(job: AuthoringJob): "default" | "secondary" | "destructive" | "outline" {
-    if (job.state === "completed") return "default";
-    if (job.state === "failed") return "destructive";
-    if (job.state === "running") return "secondary";
-    return "outline";
+function JobDetails({ job }: { job: AuthoringJob }) {
+    return (
+        <details className="ml-auto text-xs">
+            <summary className="cursor-pointer font-medium text-muted-foreground">
+                Job details
+            </summary>
+            <div className="mt-2 space-y-1">
+                <p className="break-all font-mono">{job.job_id}</p>
+                <p className="text-muted-foreground">
+                    {job.progress
+                        ? `${job.progress.phase} · attempt ${job.progress.attempt}`
+                        : "Phase not reported"}
+                </p>
+                <Link
+                    className="block break-all font-mono text-primary underline underline-offset-2"
+                    to={ROUTES.AI_AUTHORING_JOB(job.job_id)}
+                >
+                    {ROUTES.AI_AUTHORING_JOB(job.job_id)}
+                </Link>
+            </div>
+        </details>
+    );
 }
 
 export function ProgressPanel({ job }: { job: AuthoringJob }) {
-    const announcement = stateLabel(job);
+    if (job.state === "completed" || job.state === "failed") {
+        return (
+            <section
+                aria-label="Question progress"
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border bg-muted/30 px-3 py-2 text-sm"
+            >
+                <p role="status" aria-live="polite" aria-atomic="true" className="font-medium">
+                    {job.state === "completed" ? "Ready to review" : "Could not be created"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                    Created {formatDate(job.created_at)}
+                </p>
+                <JobDetails job={job} />
+            </section>
+        );
+    }
 
     return (
-        <Card aria-busy={job.state === "queued" || job.state === "running"}>
+        <Card aria-busy="true">
             <CardHeader className="gap-1">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <CardTitle>Question progress</CardTitle>
-                    <Badge variant={stateVariant(job)}>{badgeLabel(job)}</Badge>
-                </div>
+                <CardTitle>Question progress</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
                 <p role="status" aria-live="polite" aria-atomic="true" className="font-medium">
-                    {announcement}
+                    {activeStateLabel(job)}
                 </p>
-                {job.state === "queued" && (
+                {job.state === "queued" ? (
                     <p className="text-muted-foreground">
                         Your question is waiting for a turn. You can leave this page and reopen it
                         later.
                     </p>
-                )}
-                {job.state === "running" && !job.progress && (
-                    <p className="text-muted-foreground">Question creation is starting.</p>
-                )}
-                {job.state === "completed" && (
-                    <p className="text-muted-foreground">
-                        Review the question, then approve it if it is ready.
-                    </p>
+                ) : (
+                    !job.progress && (
+                        <p className="text-muted-foreground">Question creation is starting.</p>
+                    )
                 )}
                 <p className="text-xs text-muted-foreground">Created {formatDate(job.created_at)}</p>
-
-                <details className="rounded-md border p-3 text-xs">
-                    <summary className="cursor-pointer font-medium text-sm">Technical details</summary>
-                    <dl className="mt-3 grid gap-2 sm:grid-cols-2">
-                        <div>
-                            <dt className="font-medium text-muted-foreground">Job ID</dt>
-                            <dd className="break-all font-mono">{job.job_id}</dd>
-                        </div>
-                        <div>
-                            <dt className="font-medium text-muted-foreground">Phase</dt>
-                            <dd>
-                                {job.progress
-                                    ? `${job.progress.phase} · attempt ${job.progress.attempt}`
-                                    : "Not reported"}
-                            </dd>
-                        </div>
-                        <div className="sm:col-span-2">
-                            <dt className="font-medium text-muted-foreground">Resume URL</dt>
-                            <dd>
-                                <Link
-                                    className="break-all font-mono text-primary underline underline-offset-2"
-                                    to={ROUTES.AI_AUTHORING_JOB(job.job_id)}
-                                >
-                                    {ROUTES.AI_AUTHORING_JOB(job.job_id)}
-                                </Link>
-                            </dd>
-                        </div>
-                    </dl>
-                </details>
             </CardContent>
         </Card>
     );

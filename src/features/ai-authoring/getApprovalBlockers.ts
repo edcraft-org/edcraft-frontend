@@ -1,21 +1,15 @@
 import type { AuthoringCheck, AuthoringReview } from "./types";
 
+// Only real MCP tool names are mapped. Unrecognised tools fall back to their
+// raw identifier rather than inventing a friendly label.
 const FRIENDLY_CHECK_LABELS: Record<string, string> = {
-    python_syntax: "Code syntax",
-    sample_execution: "Sample examples",
-    template_validation: "Question template",
-    parameter_validation: "Question variations",
-    answer_validation: "Correct answer",
-    distractor_validation: "Wrong choices",
-    question_validation: "Question wording",
-    difficulty_assessment: "Difficulty estimate",
-    relevance_assessment: "Relevance",
+    code_require_features: "Required features",
+    code_validate_answers_and_distractors: "Answers and wrong choices",
+    code_verify_template_structure: "Question template",
 };
 
 export function friendlyCheckLabel(tool: string): string {
-    const known = FRIENDLY_CHECK_LABELS[tool];
-    if (known) return known;
-    return tool.replaceAll("_", " ");
+    return FRIENDLY_CHECK_LABELS[tool] ?? tool.replaceAll("_", " ");
 }
 
 export function checkLabel(check: AuthoringCheck): string {
@@ -59,15 +53,15 @@ export function getApprovalBlockers(review: AuthoringReview | null | undefined):
         const label = friendlyCheckLabel(check.tool);
         if (check.status === "error") {
             blockers.push(
-                `The technical check "${label}" could not run. Refresh the review or create a new question before approving.`,
+                `The technical check "${label}" could not run. Create a new question and try again.`,
             );
         } else if (check.status === "skipped") {
             blockers.push(
-                `The technical check "${label}" was not run. It must run before this question can be approved.`,
+                `The technical check "${label}" was not run. Create a new question so it can be checked.`,
             );
         } else {
             blockers.push(
-                `The technical check "${label}" failed. Fix the code or create a new question before approving.`,
+                `The technical check "${label}" needs attention. Create a new question and try again.`,
             );
         }
     }

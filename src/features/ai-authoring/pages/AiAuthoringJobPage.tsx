@@ -17,6 +17,14 @@ import {
     useAuthoringReview,
 } from "../hooks/useAiAuthoring";
 
+function LoadingCard({ children }: { children: string }) {
+    return (
+        <Card>
+            <CardContent className="py-6 text-sm text-muted-foreground">{children}</CardContent>
+        </Card>
+    );
+}
+
 export default function AiAuthoringJobPage() {
     const { jobId } = useParams<{ jobId: string }>();
     const queryClient = useQueryClient();
@@ -88,13 +96,7 @@ export default function AiAuthoringJobPage() {
                 </Button>
             </div>
 
-            {jobQuery.isPending && (
-                <Card>
-                    <CardContent className="py-6 text-sm text-muted-foreground">
-                        Loading your question…
-                    </CardContent>
-                </Card>
-            )}
+            {jobQuery.isPending && <LoadingCard>Loading your question…</LoadingCard>}
 
             {jobQuery.isError && (
                 <Alert variant="destructive">
@@ -177,11 +179,7 @@ export default function AiAuthoringJobPage() {
                     )}
 
                     {terminal && reviewQuery.isPending && (
-                        <Card>
-                            <CardContent className="py-6 text-sm text-muted-foreground">
-                                Loading the review…
-                            </CardContent>
-                        </Card>
+                        <LoadingCard>Loading the review…</LoadingCard>
                     )}
 
                     {terminal && reviewQuery.isError && (
@@ -211,7 +209,7 @@ export default function AiAuthoringJobPage() {
                     {terminal && review && (
                         <>
                             <ReviewPanel
-                                key={`review-${reviewEpoch}-${review.artifact_sha256 ?? "none"}`}
+                                key={`review-${jobId}-${reviewEpoch}`}
                                 jobId={jobId}
                                 review={review}
                                 result={job.result ?? null}
@@ -219,11 +217,7 @@ export default function AiAuthoringJobPage() {
                             />
 
                             {job.state === "completed" && capabilitiesQuery.isPending && (
-                                <Card>
-                                    <CardContent className="py-6 text-sm text-muted-foreground">
-                                        Loading question settings…
-                                    </CardContent>
-                                </Card>
+                                <LoadingCard>Loading question settings…</LoadingCard>
                             )}
 
                             {job.state === "completed" && capabilitiesQuery.isError && (
@@ -241,6 +235,7 @@ export default function AiAuthoringJobPage() {
 
                             {job.state === "completed" && capabilitiesQuery.data && (
                                 <GeneratePanel
+                                    key={`generate-${jobId}-${reviewEpoch}`}
                                     jobId={jobId}
                                     review={review}
                                     maxQuantity={capabilitiesQuery.data.max_quantity}

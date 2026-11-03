@@ -299,34 +299,13 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                                     )}
                                 />
 
-                                <div className="grid gap-3 text-sm sm:grid-cols-2">
-                                    <div>
-                                        <p className="text-xs font-medium text-muted-foreground">
-                                            Domain
-                                        </p>
-                                        <p>Code</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-medium text-muted-foreground">
-                                            Question type
-                                        </p>
-                                        <p>Multiple choice (MCQ)</p>
-                                    </div>
-                                </div>
-
                                 <div className="rounded-md border bg-muted/30 p-3 text-sm">
                                     <p className="font-medium">Review model (server configured)</p>
-                                    {capabilities.judge ? (
-                                        <p className="text-muted-foreground">
-                                            {capabilities.judge.label} ·{" "}
-                                            {capabilities.judge.provider}/
-                                            {capabilities.judge.model}
-                                        </p>
-                                    ) : (
-                                        <p className="text-muted-foreground">
-                                            Judge details are not configured.
-                                        </p>
-                                    )}
+                                    <p className="text-muted-foreground">
+                                        {capabilities.judge
+                                            ? `${capabilities.judge.label} · ${capabilities.judge.provider}/${capabilities.judge.model}`
+                                            : "Judge details are not configured."}
+                                    </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
                                         Difficulty and relevance judgments are advisory and separate
                                         from the question-writing model.

@@ -13,6 +13,7 @@ import { isApproved } from "../getApprovalBlockers";
 import { useGenerateAuthoringBatch } from "../hooks/useAiAuthoring";
 import type { AuthoringBatch, AuthoringReview, GenerationMetadata } from "../types";
 import { MAX_SEED, seedRangeError } from "../validation";
+import { EvidenceDetails } from "./EvidenceDetails";
 import { PreviewQuestion } from "./PreviewQuestion";
 
 interface GeneratePanelProps {
@@ -43,9 +44,11 @@ export function GeneratePanel({
 
     const artifactDigest = review.artifact_sha256;
     // A rejection can keep the same digest, so bind displayed output to the
-    // decision and decision timestamp as well as the artifact digest. This
-    // component owns invalidation; the page only refreshes queries.
+    // job, decision and decision timestamp as well as the artifact digest. This
+    // component owns approval changes; the page key handles navigation and
+    // global stale notifications.
     const approvalKey = [
+        jobId,
         artifactDigest ?? "",
         review.approval?.artifact_sha256 ?? "",
         review.approval?.decision ?? "unreviewed",
@@ -155,19 +158,9 @@ export function GeneratePanel({
                     <div className="rounded-md border bg-muted/30 p-3 text-sm">
                         <p className="font-medium">Last created set</p>
                         <p className="text-muted-foreground">
-                            {formatCountSummary(lastGeneration)}
-                        </p>
-                        {(lastGeneration.warnings ?? []).length > 0 && (
-                            <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted-foreground">
-                                {(lastGeneration.warnings ?? []).map((warning) => (
-                                    <li key={warning}>{warning}</li>
-                                ))}
-                            </ul>
-                        )}
-                        <p className="mt-2 text-xs text-muted-foreground">
-                            Saved {formatDate(lastGeneration.created_at)}. Only this summary is
-                            saved; the questions themselves are not stored. Create them again to
-                            download.
+                            {formatCountSummary(lastGeneration)} Saved{" "}
+                            {formatDate(lastGeneration.created_at)}. Only this summary is saved;
+                            create the questions again to download them.
                         </p>
                     </div>
                 )}
@@ -206,16 +199,19 @@ export function GeneratePanel({
                         <p className="text-xs text-muted-foreground">
                             {canPreviewSeeds
                                 ? `Seeds ${seed} through ${seed + quantity - 1}.`
-                                : `Whole numbers from 0 to ${MAX_SEED}; the last seed must stay in range.`}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                            The same starting seed and number of questions always produce the same
-                            questions.
+                                : `Whole numbers from 0 to ${MAX_SEED}; the last seed must stay in range.`}{" "}
+                            The same settings always produce the same questions.
                         </p>
                         {lastGeneration && (
                             <p className="text-xs text-muted-foreground">
                                 Last saved starting seed: {lastGeneration.base_seed}.
                             </p>
+                        )}
+                        {lastGeneration && (lastGeneration.warnings ?? []).length > 0 && (
+                            <EvidenceDetails
+                                summary="Last set warnings"
+                                value={lastGeneration.warnings}
+                            />
                         )}
                     </div>
                 </details>
@@ -263,17 +259,10 @@ export function GeneratePanel({
                         </div>
 
                         {(batch.warnings ?? []).length > 0 && (
-                            <Alert>
-                                <AlertCircle className="h-4 w-4" />
-                                <AlertTitle>Notes about this set</AlertTitle>
-                                <AlertDescription>
-                                    <ul className="list-disc space-y-1 pl-4">
-                                        {(batch.warnings ?? []).map((warning) => (
-                                            <li key={warning}>{warning}</li>
-                                        ))}
-                                    </ul>
-                                </AlertDescription>
-                            </Alert>
+                            <EvidenceDetails
+                                summary="Raw warnings for this set"
+                                value={batch.warnings}
+                            />
                         )}
 
                         {batch.questions.length === 0 ? (
@@ -282,10 +271,6 @@ export function GeneratePanel({
                             </p>
                         ) : (
                             <div className="space-y-3">
-                                <p className="text-xs text-muted-foreground">
-                                    Open a question to review the code, choices, answer and
-                                    explanations.
-                                </p>
                                 {batch.questions.map((instance, index) => (
                                     <details
                                         key={`${instance.template_id}-${instance.seed}`}

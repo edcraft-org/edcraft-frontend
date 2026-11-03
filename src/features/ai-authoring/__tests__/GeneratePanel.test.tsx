@@ -241,7 +241,7 @@ describe("GeneratePanel", () => {
         expect(screen.getByText("Last created set")).toBeInTheDocument();
         expect(screen.getByText(/2 created, all different/)).toBeInTheDocument();
         expect(
-            screen.getByText(/Only this summary is saved; the questions themselves are not stored/),
+            screen.getByText(/Only this summary is saved/),
         ).toBeInTheDocument();
     });
 });

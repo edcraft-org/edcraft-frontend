@@ -16,7 +16,7 @@ describe("getApprovalBlockers", () => {
     it("blocks approval when a technical check fails", () => {
         const blockers = getApprovalBlockers(technicalFailureReview);
         expect(blockers).toContain(
-            'The technical check "Sample examples" failed. Fix the code or create a new question before approving.',
+            'The technical check "Answers and wrong choices" needs attention. Create a new question and try again.',
         );
     });
 

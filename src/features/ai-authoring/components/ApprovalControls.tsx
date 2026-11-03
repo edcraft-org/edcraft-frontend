@@ -76,16 +76,9 @@ export function ApprovalControls({
             {approval && (
                 <div className="rounded-md border bg-muted/30 p-3 text-sm">
                     <p>
-                        {capitalize(approval.decision)} by {approval.reviewer} on{" "}
-                        {formatDate(approval.decided_at)}
+                        {capitalize(approval.decision)} on {formatDate(approval.decided_at)}
                     </p>
                     {approval.note && <p className="mt-1">Note: {approval.note}</p>}
-                    {approval.decision === "rejected" && (
-                        <p className="mt-1 text-muted-foreground">
-                            A rejected question cannot be used to create more questions. You can
-                            approve this version again if it is still the current version.
-                        </p>
-                    )}
                 </div>
             )}
 
@@ -148,8 +141,8 @@ export function ApprovalControls({
                 </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-                Your decision applies to this exact version of the question. If the question
-                changes, review it again. Advisory findings do not prevent approval.
+                This decision applies to this exact version. If the question changes, review it
+                again; advisory findings never prevent approval.
             </p>
         </section>
     );
