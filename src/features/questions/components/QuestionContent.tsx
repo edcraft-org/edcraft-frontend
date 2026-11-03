@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 
 interface QuestionContentProps {
@@ -8,6 +8,12 @@ interface QuestionContentProps {
     correctIndices?: number[];
     answer?: unknown;
     hideAnswerButton?: boolean;
+    /**
+     * Optional display hook for structured values. Callers can supply their own
+     * renderer while this shared component stays unaware of domain-specific
+     * answer shapes. Without it, values keep the original text/JSON display.
+     */
+    renderValue?: (value: unknown) => ReactNode;
 }
 
 export function QuestionContent({
@@ -17,6 +23,7 @@ export function QuestionContent({
     correctIndices,
     answer,
     hideAnswerButton = false,
+    renderValue,
 }: QuestionContentProps) {
     const [showAnswer, setShowAnswer] = useState(false);
 
@@ -68,19 +75,21 @@ export function QuestionContent({
                                     : "bg-muted/50 border-border"
                             }`}
                         >
-                            <span className="font-semibold mr-2">{getOptionLabel(index)}.</span>
-                            <span
-                                className={
-                                    showAnswer && isCorrectOption(index)
-                                        ? "text-green-700 dark:text-green-400 font-medium"
-                                        : "text-foreground"
-                                }
-                            >
-                                {formatOption(option)}
-                            </span>
-                            {showAnswer && isCorrectOption(index) && (
-                                <span className="ml-2 text-green-600 dark:text-green-400">✓</span>
-                            )}
+                            <div className="flex flex-wrap items-start gap-2">
+                                <span className="font-semibold">{getOptionLabel(index)}.</span>
+                                <div
+                                    className={
+                                        showAnswer && isCorrectOption(index)
+                                            ? "text-green-700 dark:text-green-400 font-medium"
+                                            : "text-foreground"
+                                    }
+                                >
+                                    {renderValue ? renderValue(option) : formatOption(option)}
+                                </div>
+                                {showAnswer && isCorrectOption(index) && (
+                                    <span className="text-green-600 dark:text-green-400">✓</span>
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -119,9 +128,9 @@ export function QuestionContent({
                     {/* Show the actual answer text */}
                     {answer !== undefined && (
                         <div className="bg-background p-2 rounded border border-green-200 dark:border-green-800">
-                            <p className="text-foreground text-sm whitespace-pre-wrap">
-                                {formatAnswer(answer)}
-                            </p>
+                            <div className="text-foreground text-sm whitespace-pre-wrap">
+                                {renderValue ? renderValue(answer) : formatAnswer(answer)}
+                            </div>
                         </div>
                     )}
                 </div>

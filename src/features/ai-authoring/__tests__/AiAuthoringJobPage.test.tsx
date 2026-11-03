@@ -81,7 +81,7 @@ describe("AiAuthoringJobPage", () => {
     it("resumes the job from the URL without creating another job", async () => {
         renderJobPage();
 
-        expect(await screen.findByText("Job progress")).toBeInTheDocument();
+        expect(await screen.findByText("Ready to review")).toBeInTheDocument();
         expect(await screen.findByRole("heading", { name: "Technical checks" })).toBeInTheDocument();
         expect(getAuthoringJob).toHaveBeenCalledWith("job-1");
         expect(getAuthoringReview).toHaveBeenCalledWith("job-1");
@@ -97,20 +97,45 @@ describe("AiAuthoringJobPage", () => {
         renderJobPage();
 
         await screen.findByRole("heading", { name: "Technical checks" });
-        await user.click(screen.getByRole("button", { name: "Generate batch" }));
-        expect(await screen.findByText(/Requested 3 · actual 3/)).toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: "Create questions" }));
+        expect(await screen.findByText(/3 created, 2 different, 1 repeated/)).toBeInTheDocument();
         const reviewCallsBefore = vi.mocked(getAuthoringReview).mock.calls.length;
 
-        await user.click(screen.getByRole("button", { name: "Generate another batch" }));
+        await user.click(screen.getByRole("button", { name: "Create another set" }));
 
-        expect(await screen.findByText("Artifact changed")).toBeInTheDocument();
+        expect(await screen.findByText("The question changed")).toBeInTheDocument();
         await waitFor(() =>
             expect(vi.mocked(getAuthoringReview).mock.calls.length).toBeGreaterThan(
                 reviewCallsBefore,
             ),
         );
         await waitFor(() =>
-            expect(screen.queryByText(/Requested 3 · actual 3/)).not.toBeInTheDocument(),
+            expect(screen.queryByText(/3 created, 2 different/)).not.toBeInTheDocument(),
         );
+    });
+
+    it("clears batch output after a stale approval even when the review refresh fails", async () => {
+        const user = userEvent.setup();
+        renderJobPage();
+
+        await screen.findByRole("heading", { name: "Technical checks" });
+        await user.click(screen.getByRole("button", { name: "Create questions" }));
+        expect(await screen.findByText(/3 created, 2 different, 1 repeated/)).toBeInTheDocument();
+
+        // A cached review stays on screen while the refetch fails, so clearing
+        // output cannot rely on the review data disappearing.
+        vi.mocked(getAuthoringReview).mockRejectedValue(new ApiError(503, "Review unavailable."));
+        vi.mocked(decideAuthoringApproval).mockRejectedValue(
+            new ApiError(409, "The artifact digest is stale."),
+        );
+
+        await user.click(screen.getByRole("button", { name: "Approve this version again" }));
+
+        expect(await screen.findByText("The question changed")).toBeInTheDocument();
+        expect(await screen.findByText("Review could not be loaded")).toBeInTheDocument();
+        expect(screen.queryByText(/3 created, 2 different/)).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: "Download questions (JSON)" }),
+        ).not.toBeInTheDocument();
     });
 });

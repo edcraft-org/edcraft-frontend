@@ -83,7 +83,7 @@ describe("AI authoring owner-scoped cache", () => {
         await waitFor(() =>
             expect(screen.queryByText("Alice private prompt")).not.toBeInTheDocument(),
         );
-        expect(screen.getByText("Loading your recent jobs…")).toBeInTheDocument();
+        expect(screen.getByText("Loading your recent questions…")).toBeInTheDocument();
         expect(listAuthoringJobs).toHaveBeenCalledTimes(2);
 
         await act(async () => {
@@ -113,13 +113,15 @@ describe("AI authoring owner-scoped cache", () => {
         await waitFor(() =>
             expect(screen.queryByText("Alice private prompt")).not.toBeInTheDocument(),
         );
-        expect(screen.getByText("Loading your recent jobs…")).toBeInTheDocument();
+        expect(screen.getByText("Loading your recent questions…")).toBeInTheDocument();
 
         await act(async () => {
             jobsLoggedOut.reject(new ApiError(404, "No jobs found."));
         });
 
-        expect(await screen.findByText("Recent jobs could not be loaded")).toBeInTheDocument();
+        expect(
+            await screen.findByText("Recent questions could not be loaded"),
+        ).toBeInTheDocument();
         expect(screen.queryByText("Alice private prompt")).not.toBeInTheDocument();
     });
 });

@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { downloadAuthoringBatch } from "../download";
 import { getAuthoringErrorMessage, isStaleArtifactError } from "../errors";
-import { formatDate } from "../format";
+import { formatCountSummary, formatDate } from "../format";
 import { isApproved } from "../getApprovalBlockers";
 import { useGenerateAuthoringBatch } from "../hooks/useAiAuthoring";
 import type { AuthoringBatch, AuthoringReview, GenerationMetadata } from "../types";
 import { MAX_SEED, seedRangeError } from "../validation";
+import { EvidenceDetails } from "./EvidenceDetails";
 import { PreviewQuestion } from "./PreviewQuestion";
 
 interface GeneratePanelProps {
@@ -43,8 +44,11 @@ export function GeneratePanel({
 
     const artifactDigest = review.artifact_sha256;
     // A rejection can keep the same digest, so bind displayed output to the
-    // decision and decision timestamp as well as the artifact digest.
+    // job, decision and decision timestamp as well as the artifact digest. This
+    // component owns approval changes; the page key handles navigation and
+    // global stale notifications.
     const approvalKey = [
+        jobId,
         artifactDigest ?? "",
         review.approval?.artifact_sha256 ?? "",
         review.approval?.decision ?? "unreviewed",
@@ -62,14 +66,14 @@ export function GeneratePanel({
     const generate = () => {
         if (generation.isPending) return;
         if (!artifactDigest || !approved) {
-            setInputError("The current artifact is not approved for generation.");
+            setInputError("Approve this question before creating new questions.");
             return;
         }
 
         const quantity = Number(quantityInput);
         const seed = Number(seedInput);
         if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > maxQuantity) {
-            setInputError(`Quantity must be a whole number from 1 to ${maxQuantity}.`);
+            setInputError(`Choose a whole number of questions from 1 to ${maxQuantity}.`);
             return;
         }
         if (!seedInput.trim()) {
@@ -107,7 +111,7 @@ export function GeneratePanel({
                     setActionError(
                         getAuthoringErrorMessage(
                             error,
-                            "The question batch could not be generated.",
+                            "The questions could not be created.",
                         ),
                     );
                 },
@@ -127,9 +131,9 @@ export function GeneratePanel({
         <Card>
             <CardHeader className="gap-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <CardTitle>Generate and export</CardTitle>
+                    <CardTitle>Create questions</CardTitle>
                     <Badge variant={approved ? "default" : "outline"}>
-                        {approved ? "Approved artifact" : "Approval required"}
+                        {approved ? "Ready to create" : "Approval needed"}
                     </Badge>
                 </div>
             </CardHeader>
@@ -137,62 +141,52 @@ export function GeneratePanel({
                 {!approved ? (
                     <Alert>
                         <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Generation is locked</AlertTitle>
+                        <AlertTitle>Approval needed</AlertTitle>
                         <AlertDescription>
-                            Approve the current checked artifact before generating a batch. A
-                            rejected or stale artifact cannot be generated.
+                            Approve this question before creating more versions of it. A rejected
+                            question cannot be used to create new questions.
                         </AlertDescription>
                     </Alert>
                 ) : (
                     <p className="text-sm text-muted-foreground">
-                        Generation uses the approved artifact digest and consecutive deterministic
-                        seeds. No model is called.
+                        Questions are created from this approved version. The same settings always
+                        produce the same questions; no model is called.
                     </p>
                 )}
 
                 {lastGeneration && (
                     <div className="rounded-md border bg-muted/30 p-3 text-sm">
-                        <p className="font-medium">Last generated batch</p>
+                        <p className="font-medium">Last created set</p>
                         <p className="text-muted-foreground">
-                            Base seed {lastGeneration.base_seed} · requested{" "}
-                            {lastGeneration.requested_quantity} · actual{" "}
-                            {lastGeneration.actual_quantity} · distinct{" "}
-                            {lastGeneration.distinct_count} · duplicates{" "}
-                            {lastGeneration.duplicates}
-                        </p>
-                        {(lastGeneration.warnings ?? []).length > 0 && (
-                            <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted-foreground">
-                                {(lastGeneration.warnings ?? []).map((warning) => (
-                                    <li key={warning}>{warning}</li>
-                                ))}
-                            </ul>
-                        )}
-                        <p className="mt-2 text-xs text-muted-foreground">
-                            Persisted {formatDate(lastGeneration.created_at)}. Generate again to
-                            download a new batch.
+                            {formatCountSummary(lastGeneration)} Saved{" "}
+                            {formatDate(lastGeneration.created_at)}. Only this summary is saved;
+                            create the questions again to download them.
                         </p>
                     </div>
                 )}
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                        <Label htmlFor="generation-quantity">Quantity</Label>
-                        <Input
-                            id="generation-quantity"
-                            type="number"
-                            min={1}
-                            max={maxQuantity}
-                            step={1}
-                            value={quantityInput}
-                            onChange={(event) => setQuantityInput(event.target.value)}
-                            disabled={!approved || generation.isPending}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                            Whole numbers from 1 to {maxQuantity}.
-                        </p>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="generation-seed">Base seed</Label>
+                <div className="space-y-2">
+                    <Label htmlFor="generation-quantity">Number of questions</Label>
+                    <Input
+                        id="generation-quantity"
+                        type="number"
+                        min={1}
+                        max={maxQuantity}
+                        step={1}
+                        value={quantityInput}
+                        onChange={(event) => setQuantityInput(event.target.value)}
+                        disabled={!approved || generation.isPending}
+                        className="max-w-40"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                        Choose a whole number from 1 to {maxQuantity}.
+                    </p>
+                </div>
+
+                <details className="rounded-lg border p-4">
+                    <summary className="cursor-pointer text-sm font-medium">Advanced options</summary>
+                    <div className="mt-4 space-y-2">
+                        <Label htmlFor="generation-seed">Starting seed</Label>
                         <Input
                             id="generation-seed"
                             type="number"
@@ -200,14 +194,27 @@ export function GeneratePanel({
                             value={seedInput}
                             onChange={(event) => setSeedInput(event.target.value)}
                             disabled={!approved || generation.isPending}
+                            className="max-w-40"
                         />
                         <p className="text-xs text-muted-foreground">
                             {canPreviewSeeds
                                 ? `Seeds ${seed} through ${seed + quantity - 1}.`
-                                : `Whole numbers from 0 to ${MAX_SEED}; the last seed must stay in range.`}
+                                : `Whole numbers from 0 to ${MAX_SEED}; the last seed must stay in range.`}{" "}
+                            The same settings always produce the same questions.
                         </p>
+                        {lastGeneration && (
+                            <p className="text-xs text-muted-foreground">
+                                Last saved starting seed: {lastGeneration.base_seed}.
+                            </p>
+                        )}
+                        {lastGeneration && (lastGeneration.warnings ?? []).length > 0 && (
+                            <EvidenceDetails
+                                summary="Last set warnings"
+                                value={lastGeneration.warnings}
+                            />
+                        )}
                     </div>
-                </div>
+                </details>
 
                 {inputError && (
                     <p role="alert" className="text-sm text-destructive">
@@ -218,20 +225,16 @@ export function GeneratePanel({
                 {actionError && (
                     <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Generation failed</AlertTitle>
+                        <AlertTitle>Questions could not be created</AlertTitle>
                         <AlertDescription>{actionError}</AlertDescription>
                     </Alert>
                 )}
 
-                <Button
-                    type="button"
-                    onClick={generate}
-                    disabled={!approved || generation.isPending}
-                >
+                <Button type="button" onClick={generate} disabled={!approved || generation.isPending}>
                     {generation.isPending && (
                         <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                     )}
-                    {batch ? "Generate another batch" : "Generate batch"}
+                    {batch ? "Create another set" : "Create questions"}
                 </Button>
 
                 {batch && (
@@ -239,12 +242,10 @@ export function GeneratePanel({
                         <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                                 <h3 id="batch-heading" className="font-medium">
-                                    Generated draft batch
+                                    Your questions
                                 </h3>
                                 <p className="text-sm text-muted-foreground">
-                                    Requested {batch.requested_quantity} · actual{" "}
-                                    {batch.actual_quantity} · distinct {batch.distinct_count} ·
-                                    duplicates {batch.duplicates}
+                                    {formatCountSummary(batch)}
                                 </p>
                             </div>
                             <Button
@@ -253,37 +254,30 @@ export function GeneratePanel({
                                 onClick={() => downloadAuthoringBatch(batch)}
                             >
                                 <Download className="h-4 w-4" />
-                                Download JSON
+                                Download questions (JSON)
                             </Button>
                         </div>
 
                         {(batch.warnings ?? []).length > 0 && (
-                            <Alert>
-                                <AlertCircle className="h-4 w-4" />
-                                <AlertTitle>Batch warnings</AlertTitle>
-                                <AlertDescription>
-                                    <ul className="list-disc space-y-1 pl-4">
-                                        {(batch.warnings ?? []).map((warning) => (
-                                            <li key={warning}>{warning}</li>
-                                        ))}
-                                    </ul>
-                                </AlertDescription>
-                            </Alert>
+                            <EvidenceDetails
+                                summary="Raw warnings for this set"
+                                value={batch.warnings}
+                            />
                         )}
 
                         {batch.questions.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
-                                The batch contains no questions.
+                                No questions were created. Try a different starting seed.
                             </p>
                         ) : (
                             <div className="space-y-3">
-                                {batch.questions.map((instance) => (
+                                {batch.questions.map((instance, index) => (
                                     <details
                                         key={`${instance.template_id}-${instance.seed}`}
                                         className="rounded-md border p-3"
                                     >
                                         <summary className="cursor-pointer text-sm font-medium">
-                                            Question seed {instance.seed}
+                                            Question {index + 1}
                                         </summary>
                                         <div className="pt-3">
                                             <PreviewQuestion instance={instance} headingLevel="h4" />

@@ -17,6 +17,14 @@ import {
     useAuthoringReview,
 } from "../hooks/useAiAuthoring";
 
+function LoadingCard({ children }: { children: string }) {
+    return (
+        <Card>
+            <CardContent className="py-6 text-sm text-muted-foreground">{children}</CardContent>
+        </Card>
+    );
+}
+
 export default function AiAuthoringJobPage() {
     const { jobId } = useParams<{ jobId: string }>();
     const queryClient = useQueryClient();
@@ -31,7 +39,7 @@ export default function AiAuthoringJobPage() {
 
     const handleStaleArtifact = useCallback(() => {
         setStaleNotice(
-            "The checked artifact changed. The latest review evidence was requested and stale preview or batch output was cleared.",
+            "The checked question changed. The latest review is being loaded and any old preview or generated questions were cleared.",
         );
         setReviewEpoch((epoch) => epoch + 1);
         if (!jobId) return;
@@ -45,10 +53,10 @@ export default function AiAuthoringJobPage() {
             <div className="mx-auto w-full max-w-4xl p-4 md:p-6">
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>No authoring job selected</AlertTitle>
+                    <AlertTitle>No question selected</AlertTitle>
                     <AlertDescription>
                         <Link className="underline underline-offset-2" to={ROUTES.AI_AUTHORING}>
-                            Start a new authoring job
+                            Create a new question
                         </Link>
                     </AlertDescription>
                 </Alert>
@@ -69,9 +77,9 @@ export default function AiAuthoringJobPage() {
                         className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-2 hover:underline"
                     >
                         <ArrowLeft className="h-4 w-4" />
-                        New authoring job
+                        Start over
                     </Link>
-                    <h1 className="text-2xl font-semibold">AI authoring job</h1>
+                    <h1 className="text-2xl font-semibold">Create a code question</h1>
                 </div>
                 <Button
                     type="button"
@@ -88,27 +96,21 @@ export default function AiAuthoringJobPage() {
                 </Button>
             </div>
 
-            {jobQuery.isPending && (
-                <Card>
-                    <CardContent className="py-6 text-sm text-muted-foreground">
-                        Loading authoring job…
-                    </CardContent>
-                </Card>
-            )}
+            {jobQuery.isPending && <LoadingCard>Loading your question…</LoadingCard>}
 
             {jobQuery.isError && (
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>
                         {isNotFoundError(jobQuery.error)
-                            ? "Authoring job not found"
-                            : "Authoring job could not be loaded"}
+                            ? "Question not found"
+                            : "Question could not be loaded"}
                     </AlertTitle>
                     <AlertDescription className="space-y-2">
                         <p>
                             {getAuthoringErrorMessage(
                                 jobQuery.error,
-                                "The authoring job could not be loaded.",
+                                "The question could not be loaded.",
                             )}
                         </p>
                         {!isNotFoundError(jobQuery.error) && (
@@ -124,7 +126,7 @@ export default function AiAuthoringJobPage() {
                         )}
                         <p>
                             <Link className="underline underline-offset-2" to={ROUTES.AI_AUTHORING}>
-                                Start a new authoring job
+                                Create a new question
                             </Link>
                         </p>
                     </AlertDescription>
@@ -138,7 +140,7 @@ export default function AiAuthoringJobPage() {
                     {staleNotice && (
                         <Alert>
                             <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Artifact changed</AlertTitle>
+                            <AlertTitle>The question changed</AlertTitle>
                             <AlertDescription className="space-y-2">
                                 <p>{staleNotice}</p>
                                 <Button
@@ -156,20 +158,20 @@ export default function AiAuthoringJobPage() {
                     {job.state === "failed" && (
                         <Alert variant="destructive">
                             <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Authoring failed</AlertTitle>
+                            <AlertTitle>Question creation failed</AlertTitle>
                             <AlertDescription className="space-y-2">
                                 <p>
                                     {job.error?.message ??
                                         job.result?.error?.message ??
                                         review?.error?.message ??
-                                        "The authoring workflow stopped before a checked artifact was available."}
+                                        "The question could not be created."}
                                 </p>
                                 <p>
                                     <Link
                                         className="underline underline-offset-2"
                                         to={ROUTES.AI_AUTHORING}
                                     >
-                                        Try a new authoring job
+                                        Try creating a new question
                                     </Link>
                                 </p>
                             </AlertDescription>
@@ -177,22 +179,18 @@ export default function AiAuthoringJobPage() {
                     )}
 
                     {terminal && reviewQuery.isPending && (
-                        <Card>
-                            <CardContent className="py-6 text-sm text-muted-foreground">
-                                Loading review evidence…
-                            </CardContent>
-                        </Card>
+                        <LoadingCard>Loading the review…</LoadingCard>
                     )}
 
                     {terminal && reviewQuery.isError && (
                         <Alert variant="destructive">
                             <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Review evidence could not be loaded</AlertTitle>
+                            <AlertTitle>Review could not be loaded</AlertTitle>
                             <AlertDescription className="space-y-2">
                                 <p>
                                     {getAuthoringErrorMessage(
                                         reviewQuery.error,
-                                        "The review evidence could not be loaded.",
+                                        "The review could not be loaded.",
                                     )}
                                 </p>
                                 <Button
@@ -211,7 +209,7 @@ export default function AiAuthoringJobPage() {
                     {terminal && review && (
                         <>
                             <ReviewPanel
-                                key={`review-${reviewEpoch}-${review.artifact_sha256 ?? "none"}`}
+                                key={`review-${jobId}-${reviewEpoch}`}
                                 jobId={jobId}
                                 review={review}
                                 result={job.result ?? null}
@@ -219,21 +217,17 @@ export default function AiAuthoringJobPage() {
                             />
 
                             {job.state === "completed" && capabilitiesQuery.isPending && (
-                                <Card>
-                                    <CardContent className="py-6 text-sm text-muted-foreground">
-                                        Loading generation settings…
-                                    </CardContent>
-                                </Card>
+                                <LoadingCard>Loading question settings…</LoadingCard>
                             )}
 
                             {job.state === "completed" && capabilitiesQuery.isError && (
                                 <Alert variant="destructive">
                                     <AlertCircle className="h-4 w-4" />
-                                    <AlertTitle>Generation settings unavailable</AlertTitle>
+                                    <AlertTitle>Question settings unavailable</AlertTitle>
                                     <AlertDescription>
                                         {getAuthoringErrorMessage(
                                             capabilitiesQuery.error,
-                                            "The server generation limits could not be loaded.",
+                                            "The question settings could not be loaded.",
                                         )}
                                     </AlertDescription>
                                 </Alert>
@@ -241,7 +235,7 @@ export default function AiAuthoringJobPage() {
 
                             {job.state === "completed" && capabilitiesQuery.data && (
                                 <GeneratePanel
-                                    key={`generate-${reviewEpoch}-${review.artifact_sha256 ?? "none"}-${review.approval?.decision ?? "unreviewed"}-${review.approval?.decided_at ?? "none"}`}
+                                    key={`generate-${jobId}-${reviewEpoch}`}
                                     jobId={jobId}
                                     review={review}
                                     maxQuantity={capabilitiesQuery.data.max_quantity}

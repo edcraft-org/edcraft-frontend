@@ -36,11 +36,11 @@ const authoringSchema = z.object({
     prompt: z
         .string()
         .trim()
-        .min(1, "Enter a prompt for the authoring model.")
-        .max(4000, "The prompt must be 4000 characters or fewer."),
+        .min(1, "Describe the question you want to create.")
+        .max(4000, "Keep the request to 4000 characters or fewer."),
     difficulty: z.enum(["easy", "medium", "hard"]),
     num_distractors: z.union([z.literal(2), z.literal(3)]),
-    model_profile: z.string().min(1, "Choose a configured model profile."),
+    model_profile: z.string().min(1, "Choose a question-writing model."),
 });
 
 type AuthoringFormValues = z.infer<typeof authoringSchema>;
@@ -98,7 +98,7 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                 },
                 onError: (error) => {
                     setSubmitError(
-                        getAuthoringErrorMessage(error, "The authoring job could not be started."),
+                        getAuthoringErrorMessage(error, "The question could not be started."),
                     );
                 },
             },
@@ -109,11 +109,11 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>AI authoring is unavailable</CardTitle>
+                    <CardTitle>Question creation is unavailable</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground">
-                        The server has not enabled the code authoring domain.
+                        The server has not enabled code questions for this feature.
                     </p>
                 </CardContent>
             </Card>
@@ -124,12 +124,12 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>No authoring model configured</CardTitle>
+                    <CardTitle>No question-writing model configured</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground">
-                        An administrator must configure a server-side authoring model profile.
-                        This page never asks for API keys or provider endpoints.
+                        An administrator must configure a question-writing model. This page never
+                        asks for API keys or provider endpoints.
                     </p>
                 </CardContent>
             </Card>
@@ -139,14 +139,14 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Author a new code question</CardTitle>
+                <CardTitle>Create a code question</CardTitle>
             </CardHeader>
             <CardContent>
                 {submitError && (
                     <div ref={summaryRef} tabIndex={-1} className="mb-4">
                         <Alert variant="destructive">
                             <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>The job could not be started</AlertTitle>
+                            <AlertTitle>The question could not be started</AlertTitle>
                             <AlertDescription>{submitError}</AlertDescription>
                         </Alert>
                     </div>
@@ -163,18 +163,18 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                             name="prompt"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Prompt</FormLabel>
+                                    <FormLabel>Question prompt</FormLabel>
                                     <FormControl>
                                         <Textarea
                                             {...field}
                                             rows={7}
                                             maxLength={4000}
-                                            placeholder="Describe the programming concept, input shape and what students should reason about."
+                                            placeholder="Describe the programming concept and what students should reason about."
                                         />
                                     </FormControl>
                                     <FormDescription>
-                                        {prompt.length} / 4000 characters. The request is sent to the
-                                        configured server-side authoring model.
+                                        {prompt.length} / 4000 characters. The request is sent to a
+                                        configured model on the server.
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
@@ -223,35 +223,35 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                             name="num_distractors"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel id="distractors-label">Distractors</FormLabel>
+                                    <FormLabel id="choices-label">Answer choices</FormLabel>
                                     <FormControl>
                                         <RadioGroup
                                             value={String(field.value)}
                                             onValueChange={(value) =>
                                                 field.onChange(value === "2" ? 2 : 3)
                                             }
-                                            aria-labelledby="distractors-label"
+                                            aria-labelledby="choices-label"
                                             className="flex flex-wrap gap-4"
                                         >
                                             {[2, 3].map((count) => (
                                                 <div key={count} className="flex items-center gap-2">
                                                     <RadioGroupItem
-                                                        id={`distractors-${count}`}
+                                                        id={`choices-${count}`}
                                                         value={String(count)}
                                                     />
                                                     <Label
-                                                        htmlFor={`distractors-${count}`}
+                                                        htmlFor={`choices-${count}`}
                                                         className="font-normal"
                                                     >
-                                                        {count} distractors
+                                                        {count + 1} choices
                                                     </Label>
                                                 </div>
                                             ))}
                                         </RadioGroup>
                                     </FormControl>
                                     <FormDescription>
-                                        The generated question is multiple choice with one correct
-                                        answer.
+                                        One choice is correct; the others are plausible wrong
+                                        answers. The question is multiple choice.
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
@@ -268,7 +268,7 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                                     name="model_profile"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Authoring model profile</FormLabel>
+                                            <FormLabel>Question-writing model</FormLabel>
                                             <Select
                                                 value={field.value}
                                                 onValueChange={field.onChange}
@@ -291,7 +291,7 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                                                 </SelectContent>
                                             </Select>
                                             <FormDescription>
-                                                Profiles are configured by the server. No API keys or
+                                                Models are configured by the server. No API keys or
                                                 endpoint fields are stored in this browser.
                                             </FormDescription>
                                             <FormMessage />
@@ -299,37 +299,16 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                                     )}
                                 />
 
-                                <div className="grid gap-3 text-sm sm:grid-cols-2">
-                                    <div>
-                                        <p className="text-xs font-medium text-muted-foreground">
-                                            Domain
-                                        </p>
-                                        <p>Code</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-medium text-muted-foreground">
-                                            Question type
-                                        </p>
-                                        <p>Multiple choice (MCQ)</p>
-                                    </div>
-                                </div>
-
                                 <div className="rounded-md border bg-muted/30 p-3 text-sm">
-                                    <p className="font-medium">Review judge (server configured)</p>
-                                    {capabilities.judge ? (
-                                        <p className="text-muted-foreground">
-                                            {capabilities.judge.label} ·{" "}
-                                            {capabilities.judge.provider}/
-                                            {capabilities.judge.model}
-                                        </p>
-                                    ) : (
-                                        <p className="text-muted-foreground">
-                                            Judge details are not configured.
-                                        </p>
-                                    )}
+                                    <p className="font-medium">Review model (server configured)</p>
+                                    <p className="text-muted-foreground">
+                                        {capabilities.judge
+                                            ? `${capabilities.judge.label} · ${capabilities.judge.provider}/${capabilities.judge.model}`
+                                            : "Judge details are not configured."}
+                                    </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
                                         Difficulty and relevance judgments are advisory and separate
-                                        from the authoring model.
+                                        from the question-writing model.
                                     </p>
                                 </div>
                             </div>
@@ -344,11 +323,11 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                             ) : (
                                 <Sparkles className="h-4 w-4" aria-hidden="true" />
                             )}
-                            {createJob.isPending ? "Starting authoring job…" : "Start authoring job"}
+                            {createJob.isPending ? "Creating question…" : "Create question"}
                         </Button>
                         {difficultyOptions.length === 0 && (
                             <p className="text-sm text-destructive">
-                                The server did not publish any supported difficulty labels.
+                                The server did not publish any difficulty options.
                             </p>
                         )}
                     </form>

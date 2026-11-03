@@ -1,69 +1,87 @@
 import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/router/paths";
-import { capitalize, formatDate } from "../format";
+import { formatDate } from "../format";
 import type { AuthoringJob } from "../types";
 
-function stateLabel(job: AuthoringJob): string {
-    if (job.state === "running" && job.progress) {
-        return `Running — ${capitalize(job.progress.phase)}, attempt ${job.progress.attempt}`;
+function activeStateLabel(job: AuthoringJob): string {
+    if (job.state === "queued") return "Waiting to start";
+    switch (job.progress?.phase) {
+        case "generating":
+            return "Writing the question";
+        case "checking":
+            return "Checking the question";
+        case "correcting":
+            return "Improving the question";
+        case "finalizing":
+            return "Finishing the question";
+        default:
+            return "Creating the question";
     }
-    return capitalize(job.state);
 }
 
-function stateVariant(job: AuthoringJob): "default" | "secondary" | "destructive" | "outline" {
-    if (job.state === "completed") return "default";
-    if (job.state === "failed") return "destructive";
-    if (job.state === "running") return "secondary";
-    return "outline";
+function JobDetails({ job }: { job: AuthoringJob }) {
+    return (
+        <details className="ml-auto text-xs">
+            <summary className="cursor-pointer font-medium text-muted-foreground">
+                Job details
+            </summary>
+            <div className="mt-2 space-y-1">
+                <p className="break-all font-mono">{job.job_id}</p>
+                <p className="text-muted-foreground">
+                    {job.progress
+                        ? `${job.progress.phase} · attempt ${job.progress.attempt}`
+                        : "Phase not reported"}
+                </p>
+                <Link
+                    className="block break-all font-mono text-primary underline underline-offset-2"
+                    to={ROUTES.AI_AUTHORING_JOB(job.job_id)}
+                >
+                    {ROUTES.AI_AUTHORING_JOB(job.job_id)}
+                </Link>
+            </div>
+        </details>
+    );
 }
 
 export function ProgressPanel({ job }: { job: AuthoringJob }) {
-    const announcement = stateLabel(job);
+    if (job.state === "completed" || job.state === "failed") {
+        return (
+            <section
+                aria-label="Question progress"
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border bg-muted/30 px-3 py-2 text-sm"
+            >
+                <p role="status" aria-live="polite" aria-atomic="true" className="font-medium">
+                    {job.state === "completed" ? "Ready to review" : "Could not be created"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                    Created {formatDate(job.created_at)}
+                </p>
+                <JobDetails job={job} />
+            </section>
+        );
+    }
 
     return (
-        <Card aria-busy={job.state === "queued" || job.state === "running"}>
+        <Card aria-busy="true">
             <CardHeader className="gap-1">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <CardTitle>Job progress</CardTitle>
-                    <Badge variant={stateVariant(job)}>{capitalize(job.state)}</Badge>
-                </div>
+                <CardTitle>Question progress</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
                 <p role="status" aria-live="polite" aria-atomic="true" className="font-medium">
-                    {announcement}
+                    {activeStateLabel(job)}
                 </p>
-                {job.state === "queued" && (
+                {job.state === "queued" ? (
                     <p className="text-muted-foreground">
-                        The job is waiting for an authoring slot. You can leave this page and reopen
-                        the job later.
+                        Your question is waiting for a turn. You can leave this page and reopen it
+                        later.
                     </p>
+                ) : (
+                    !job.progress && (
+                        <p className="text-muted-foreground">Question creation is starting.</p>
+                    )
                 )}
-                {job.state === "running" && !job.progress && (
-                    <p className="text-muted-foreground">The authoring workflow is starting.</p>
-                )}
-                <dl className="grid gap-2 sm:grid-cols-2">
-                    <div>
-                        <dt className="text-xs font-medium text-muted-foreground">Job ID</dt>
-                        <dd className="break-all font-mono text-xs">{job.job_id}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-xs font-medium text-muted-foreground">Created</dt>
-                        <dd>{formatDate(job.created_at)}</dd>
-                    </div>
-                    <div className="sm:col-span-2">
-                        <dt className="text-xs font-medium text-muted-foreground">Resume URL</dt>
-                        <dd>
-                            <Link
-                                className="break-all font-mono text-xs text-primary underline underline-offset-2"
-                                to={ROUTES.AI_AUTHORING_JOB(job.job_id)}
-                            >
-                                {ROUTES.AI_AUTHORING_JOB(job.job_id)}
-                            </Link>
-                        </dd>
-                    </div>
-                </dl>
+                <p className="text-xs text-muted-foreground">Created {formatDate(job.created_at)}</p>
             </CardContent>
         </Card>
     );

@@ -42,7 +42,7 @@ describe("getAuthoringErrorMessage", () => {
             "Please sign in to continue.",
         );
         expect(getAuthoringErrorMessage(new ApiError(404, "nope"), "Fallback")).toBe(
-            "This authoring job was not found or is not yours.",
+            "This question was not found or is not yours.",
         );
     });
 });

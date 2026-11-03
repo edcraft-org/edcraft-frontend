@@ -22,7 +22,7 @@ export function makeUser(id: string, name = "Test User"): UserResponse {
 }
 
 const passedTechnicalCheck: AuthoringCheck = {
-    tool: "python_syntax",
+    tool: "code_require_features",
     status: "passed",
     advisory: false,
     findings: [],
@@ -44,7 +44,7 @@ const failedAdvisoryCheck: AuthoringCheck = {
 };
 
 const failedTechnicalCheck: AuthoringCheck = {
-    tool: "sample_execution",
+    tool: "code_validate_answers_and_distractors",
     status: "failed",
     advisory: false,
     findings: [
