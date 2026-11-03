@@ -116,7 +116,7 @@ export const approvedReview: AuthoringReview = {
             parameters: [
                 {
                     name: "values",
-                    kind: "number_list",
+                    kind: "integer_list",
                     values: [[1, 2], [3, 4]],
                 },
             ],
@@ -161,6 +161,7 @@ export const approvedReview: AuthoringReview = {
     candidate: null,
     difficulty: {
         advisory: true,
+        assessment_path: "decision",
         requested_difficulty: "easy",
         estimated_difficulty: "hard",
         confidence: null,
@@ -227,17 +228,17 @@ export const completedJob: AuthoringJob = {
         approval: "unreviewed",
         difficulty: approvedReview.difficulty,
         relevance: approvedReview.relevance,
-        checks: approvedReview.checks.map((check) => ({
+        checks: (approvedReview.checks ?? []).map((check) => ({
             tool: check.tool,
             status: check.status,
             advisory: check.advisory,
-            findings: check.findings.map((finding) => finding.message),
+            findings: (check.findings ?? []).map((finding) => finding.message),
         })),
-        warnings: approvedReview.warnings,
+        warnings: approvedReview.warnings ?? [],
         error: null,
     },
     created_at: "2026-11-03T00:00:00Z",
-    approval: approvedReview.approval,
+    approval: approvedReview.approval ?? null,
     error: null,
 };
 

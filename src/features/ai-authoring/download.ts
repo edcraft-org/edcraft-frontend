@@ -15,5 +15,6 @@ export function downloadAuthoringBatch(batch: AuthoringBatch): void {
     document.body.appendChild(link);
     link.click();
     link.remove();
-    URL.revokeObjectURL(url);
+    // Let the browser start the download before releasing the object URL.
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

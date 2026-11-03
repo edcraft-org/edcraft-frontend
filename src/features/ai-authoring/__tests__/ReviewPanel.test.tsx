@@ -115,6 +115,93 @@ describe("ReviewPanel", () => {
         await waitFor(() => expect(onStaleArtifact).toHaveBeenCalledOnce());
         expect(await screen.findByText(/artifact changed or is no longer usable/i)).toBeInTheDocument();
     });
+
+    it("renders a FastAPI 422 detail array as a readable message without crashing", async () => {
+        const error = new ApiError(422, "Unprocessable Entity");
+        Object.defineProperty(error, "detail", {
+            value: [
+                {
+                    loc: ["body", "seed"],
+                    msg: "Input should be greater than or equal to 0",
+                },
+            ],
+        });
+        vi.mocked(getAuthoringPreview).mockRejectedValue(error);
+
+        renderPanel(approvedReview);
+
+        expect(
+            await screen.findByText(
+                /body.seed: Input should be greater than or equal to 0/,
+                undefined,
+                { timeout: 5000 },
+            ),
+        ).toBeInTheDocument();
+        expect(screen.getByText("Review checked artifact")).toBeInTheDocument();
+    });
+
+    it("rejects an out-of-range preview seed inline without sending a request", async () => {
+        const user = userEvent.setup();
+        renderPanel(approvedReview);
+        await screen.findByText(previewInstanceQuestion());
+        const callsBefore = vi.mocked(getAuthoringPreview).mock.calls.length;
+
+        const seedInput = screen.getByLabelText("Preview seed");
+        await user.clear(seedInput);
+        await user.type(seedInput, "2147483648");
+        await user.click(screen.getByRole("button", { name: "Load preview" }));
+
+        expect(screen.getByText(/Enter a seed from 0 to 2147483647/)).toBeInTheDocument();
+        expect(vi.mocked(getAuthoringPreview).mock.calls.length).toBe(callsBefore);
+        expect(screen.getByText("Review checked artifact")).toBeInTheDocument();
+    });
+
+    it("shows the actual relevance verdict and advisory score", async () => {
+        renderPanel({
+            ...approvedReview,
+            relevance: {
+                advisory: true,
+                status: "assessed",
+                unavailable: false,
+                score: 0.42,
+                threshold: 0.5,
+                relevant: false,
+                reason: "Off topic.",
+                error_code: null,
+            },
+        });
+
+        expect(await screen.findByText("Not relevant")).toBeInTheDocument();
+        expect(
+            screen.getByText(/Advisory score 0.42 \(threshold 0.50\)/),
+        ).toBeInTheDocument();
+        expect(screen.getAllByText(/not a probability that an answer is correct/).length).toBeGreaterThan(
+            0,
+        );
+    });
+
+    it("shows advisory difficulty confidence and its source", async () => {
+        renderPanel({
+            ...approvedReview,
+            difficulty: {
+                ...approvedReview.difficulty!,
+                confidence: 0.72,
+                confidence_source: "self_reported",
+            },
+        });
+
+        expect(
+            await screen.findByText(/Advisory estimate confidence 0.72 \(self reported\)/),
+        ).toBeInTheDocument();
+    });
+
+    it("labels a historical candidate when attempts are visible", async () => {
+        renderPanel({ ...approvedReview, candidate_is_historical_attempt: true });
+
+        expect(
+            await screen.findByText(/historical attempt, not the selected checked artifact/),
+        ).toBeInTheDocument();
+    });
 });
 
 function previewInstanceQuestion(): string {

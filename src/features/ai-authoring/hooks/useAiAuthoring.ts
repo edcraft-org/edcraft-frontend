@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/api";
+import { nextJobPollingInterval } from "../polling";
 import {
     createAuthoringJob,
     decideAuthoringApproval,
@@ -37,10 +38,8 @@ export function useAuthoringJob(jobId: string | undefined) {
         queryFn: () => getAuthoringJob(jobId ?? ""),
         enabled: Boolean(jobId),
         retry: 1,
-        refetchInterval: (query) => {
-            const state = query.state.data?.state;
-            return state === "queued" || state === "running" ? 2000 : false;
-        },
+        refetchInterval: (query) =>
+            nextJobPollingInterval(query.state.data?.state, query.state.error),
         refetchIntervalInBackground: false,
     });
 }
@@ -93,8 +92,12 @@ export function useDecideAuthoringApproval() {
 }
 
 export function useGenerateAuthoringBatch() {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: ({ jobId, input }: { jobId: string; input: GenerateInput }) =>
             generateAuthoringBatch(jobId, input),
+        onSuccess: (_batch, { jobId }) => {
+            void queryClient.invalidateQueries({ queryKey: queryKeys.aiAuthoring.job(jobId) });
+        },
     });
 }

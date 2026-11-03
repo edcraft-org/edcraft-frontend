@@ -1,5 +1,36 @@
 import { ApiError } from "@/api/axiosInstance";
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
+}
+
+function formatValidationDetail(detail: unknown): string | null {
+    if (!Array.isArray(detail)) return null;
+    const messages = detail.flatMap((item) => {
+        if (!isRecord(item) || typeof item.msg !== "string" || !item.msg.trim()) return [];
+        const location = Array.isArray(item.loc)
+            ? item.loc
+                  .filter(
+                      (part): part is string | number =>
+                          typeof part === "string" || typeof part === "number",
+                  )
+                  .join(".")
+            : "";
+        return [location ? `${location}: ${item.msg}` : item.msg];
+    });
+    return messages.length > 0 ? messages.join("; ") : null;
+}
+
+function detailToString(detail: unknown): string | null {
+    if (typeof detail === "string" && detail.trim()) return detail;
+    const validation = formatValidationDetail(detail);
+    if (validation) return validation;
+    if (isRecord(detail) && typeof detail.message === "string" && detail.message.trim()) {
+        return detail.message;
+    }
+    return null;
+}
+
 export function getAuthoringErrorMessage(error: unknown, fallback: string): string {
     if (error instanceof ApiError) {
         if (error.status === 401) return "Please sign in to continue.";
@@ -10,9 +41,13 @@ export function getAuthoringErrorMessage(error: unknown, fallback: string): stri
         if (error.status === 429) {
             return "The authoring queue is full. Wait for a running job to finish and try again.";
         }
-        return error.detail || fallback;
+        // FastAPI validation responses carry a detail array, not a string. Keep
+        // the message boundary string-only so React never receives an object.
+        return detailToString(error.detail) ?? fallback;
     }
-    if (error instanceof Error && error.message) return error.message;
+    if (error instanceof Error) {
+        return detailToString(error.message) ?? fallback;
+    }
     return fallback;
 }
 
