@@ -61,8 +61,8 @@ export function ReviewQuestionPreview({
                         Question preview
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                        Variation {previewSeed + 1}. Each variation shows the same checked question
-                        with different generated values.
+                        Example {previewSeed + 1}. Try another example from this question template.
+                        Some examples may repeat.
                     </p>
                 </div>
                 <Button

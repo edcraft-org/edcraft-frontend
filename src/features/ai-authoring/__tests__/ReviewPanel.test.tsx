@@ -89,7 +89,7 @@ describe("ReviewPanel", () => {
         renderPanel(unapprovedReview);
 
         expect(await screen.findByText(previewInstanceQuestion())).toBeInTheDocument();
-        expect(screen.getByText("Variation 1. Each variation shows the same checked question with different generated values.")).toBeInTheDocument();
+        expect(screen.getByText(/^Example 1\./)).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "Show another variation" })).toBeEnabled();
         expect(screen.getByText("4 choices")).toBeInTheDocument();
         expect(screen.getByText("Difficulty differs")).toBeInTheDocument();

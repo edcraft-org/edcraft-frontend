@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PreviewQuestion } from "../components/PreviewQuestion";
+import { ReadableValue } from "../components/ReadableValue";
 import type { CodeQuestionInstance } from "../types";
 import { previewInstance } from "./fixtures";
 
@@ -39,6 +40,14 @@ const structuredInstance: CodeQuestionInstance = {
 
 describe("PreviewQuestion", () => {
     afterEach(cleanup);
+
+    it("distinguishes Python values from strings and missing data", () => {
+        render(<ReadableValue value={[null, "None", true, "True", 1, "1", "", undefined]} />);
+
+        for (const value of ["None", '"None"', "True", '"True"', "1", '"1"', '""', "Not provided"]) {
+            expect(screen.getByText(value, { exact: true })).toBeInTheDocument();
+        }
+    });
 
     it("shows readable choices, answer and rationales instead of quoted JSON", async () => {
         const user = userEvent.setup();

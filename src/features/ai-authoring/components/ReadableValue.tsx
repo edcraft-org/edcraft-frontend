@@ -7,6 +7,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function scalarLabel(value: unknown): string {
+    // Code authoring uses Python: keep values distinct from lookalike strings.
+    if (value === undefined) return "Not provided";
+    if (value === null) return "None";
+    if (typeof value === "string") return JSON.stringify(value);
+    if (typeof value === "boolean") return value ? "True" : "False";
+    return String(value);
+}
+
 /**
  * Renders generated values as readable text, lists and key/value pairs while
  * preserving their nested structure. Raw JSON stays available in technical
@@ -49,7 +58,7 @@ export function ReadableValue({ value, className }: ReadableValueProps) {
 
     return (
         <span className={`whitespace-pre-wrap break-words text-sm ${className ?? ""}`}>
-            {value === null || value === undefined ? "—" : String(value)}
+            {scalarLabel(value)}
         </span>
     );
 }

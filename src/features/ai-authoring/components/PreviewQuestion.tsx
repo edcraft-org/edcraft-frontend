@@ -51,8 +51,7 @@ export function PreviewQuestion({ instance, headingLevel = "h4" }: PreviewQuesti
             </div>
 
             <p className="text-xs text-muted-foreground">
-                Read the code, then use Show Answer to check the correct choice and the explanations
-                for the wrong choices.
+                Read the code, then use Show Answer to check the correct choice.
             </p>
 
             <ReadOnlyCode code={question.code} label="Question code" />
