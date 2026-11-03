@@ -11,8 +11,8 @@ import type { JobResult } from './jobResult';
  * Returned by GET /jobs/{job_id} — current status and result when available.
  */
 export interface JobStatusResponse {
-  job_id: string;
-  status: string;
-  result?: JobResult | null;
   error?: string | null;
+  job_id: string;
+  result?: JobResult | null;
+  status: string;
 }

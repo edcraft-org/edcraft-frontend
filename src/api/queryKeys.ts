@@ -80,4 +80,15 @@ export const queryKeys = {
         courses: () => ["canvas", "courses"] as const,
         quizzes: (courseId: number) => ["canvas", "quizzes", courseId] as const,
     },
+
+    // AI authoring queries
+    aiAuthoring: {
+        capabilities: () => ["ai-authoring", "capabilities"] as const,
+        jobs: () => ["ai-authoring", "jobs"] as const,
+        job: (id: string) => ["ai-authoring", "job", id] as const,
+        review: (id: string) => ["ai-authoring", "job", id, "review"] as const,
+        previewRoot: (id: string) => ["ai-authoring", "job", id, "preview"] as const,
+        preview: (id: string, artifactSha256: string, seed: number) =>
+            ["ai-authoring", "job", id, "preview", artifactSha256, seed] as const,
+    },
 };

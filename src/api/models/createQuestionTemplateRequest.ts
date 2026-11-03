@@ -14,15 +14,15 @@ import type { TextTemplateType } from './textTemplateType';
  * Schema for creating a new question template.
  */
 export interface CreateQuestionTemplateRequest {
-  question_type: string;
-  question_text_template: string;
-  text_template_type: TextTemplateType;
-  description?: string | null;
   code: string;
+  code_info?: CodeInfoInput | null;
+  description?: string | null;
   entry_function: string;
+  input_data_config?: CreateQuestionTemplateRequestInputDataConfig;
   num_distractors: number;
   output_type: string;
+  question_text_template: string;
+  question_type: string;
   target_elements: CreateTargetElementRequest[];
-  input_data_config?: CreateQuestionTemplateRequestInputDataConfig;
-  code_info?: CodeInfoInput | null;
+  text_template_type: TextTemplateType;
 }

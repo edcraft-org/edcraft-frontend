@@ -7,6 +7,6 @@
  */
 
 export interface VerifyEmailResponse {
-  message: string;
   email: string;
+  message: string;
 }
