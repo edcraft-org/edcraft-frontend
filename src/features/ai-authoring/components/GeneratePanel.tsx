@@ -12,6 +12,7 @@ import { formatDate } from "../format";
 import { isApproved } from "../getApprovalBlockers";
 import { useGenerateAuthoringBatch } from "../hooks/useAiAuthoring";
 import type { AuthoringBatch, AuthoringReview, GenerationMetadata } from "../types";
+import { MAX_SEED, seedRangeError } from "../validation";
 import { PreviewQuestion } from "./PreviewQuestion";
 
 interface GeneratePanelProps {
@@ -71,8 +72,13 @@ export function GeneratePanel({
             setInputError(`Quantity must be a whole number from 1 to ${maxQuantity}.`);
             return;
         }
-        if (!Number.isSafeInteger(seed)) {
-            setInputError("Seed must be a whole number.");
+        if (!seedInput.trim()) {
+            setInputError(`Enter a seed from 0 to ${MAX_SEED}.`);
+            return;
+        }
+        const invalidSeedRange = seedRangeError(seed, quantity);
+        if (invalidSeedRange) {
+            setInputError(invalidSeedRange);
             return;
         }
 
@@ -112,10 +118,10 @@ export function GeneratePanel({
     const seed = Number(seedInput);
     const quantity = Number(quantityInput);
     const canPreviewSeeds =
-        Number.isSafeInteger(seed) &&
-        Number.isSafeInteger(quantity) &&
+        Number.isInteger(quantity) &&
         quantity >= 1 &&
-        quantity <= maxQuantity;
+        quantity <= maxQuantity &&
+        seedRangeError(seed, quantity) === null;
 
     return (
         <Card>
@@ -198,7 +204,7 @@ export function GeneratePanel({
                         <p className="text-xs text-muted-foreground">
                             {canPreviewSeeds
                                 ? `Seeds ${seed} through ${seed + quantity - 1}.`
-                                : "The first seed in the deterministic sequence."}
+                                : `Whole numbers from 0 to ${MAX_SEED}; the last seed must stay in range.`}
                         </p>
                     </div>
                 </div>

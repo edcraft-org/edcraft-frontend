@@ -16,12 +16,24 @@ import type {
     AuthoringResult,
     AuthoringReview,
     AuthoringDifficultyOutcome,
+    AuthoringRelevanceOutcome,
     ValidationLimits,
 } from "../types";
+import { MAX_SEED, seedError as validateSeed } from "../validation";
 import { ChecksPanel } from "./ChecksPanel";
 import { EvidenceDetails } from "./EvidenceDetails";
 import { PreviewQuestion } from "./PreviewQuestion";
 import { TemplateArtifact } from "./TemplateArtifact";
+
+function formatScore(value: number): string {
+    return Number.isInteger(value) ? String(value) : value.toFixed(2);
+}
+
+function relevanceVerdict(relevance: AuthoringRelevanceOutcome): string {
+    if (relevance.relevant === true) return "Relevant";
+    if (relevance.relevant === false) return "Not relevant";
+    return "Unavailable";
+}
 
 function DifficultyOutcomeSummary({
     outcome,
@@ -49,6 +61,15 @@ function DifficultyOutcomeSummary({
                 Advisory decision: {(outcome.decision ?? "unavailable").replaceAll("_", " ")}.
                 Difficulty assessments never block approval.
             </p>
+            {typeof outcome.confidence === "number" && (
+                <p className="text-xs text-muted-foreground">
+                    Advisory estimate confidence {formatScore(outcome.confidence)}
+                    {outcome.confidence_source
+                        ? ` (${outcome.confidence_source.replaceAll("_", " ")})`
+                        : ""}
+                    . This is not a probability that an answer is correct.
+                </p>
+            )}
             {outcome.reason && <p className="text-muted-foreground">{outcome.reason}</p>}
         </div>
     );
@@ -144,9 +165,14 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
     };
 
     const loadPreviewSeed = () => {
+        if (!seedInput.trim()) {
+            setSeedError(`Enter a seed from 0 to ${MAX_SEED}.`);
+            return;
+        }
         const parsed = Number(seedInput);
-        if (!Number.isSafeInteger(parsed)) {
-            setSeedError("Enter a whole-number preview seed.");
+        const error = validateSeed(parsed);
+        if (error) {
+            setSeedError(error);
             return;
         }
         setSeedError(null);
@@ -232,11 +258,23 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
                     </p>
                     <DifficultyOutcomeSummary outcome={difficulty} />
                     {relevance && (
-                        <p className="text-sm text-muted-foreground">
-                            Relevance advisory:{" "}
-                            {(relevance.status ?? "unavailable").replaceAll("_", " ")}
-                            {relevance.reason ? ` — ${relevance.reason}` : ""}
-                        </p>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                            <p>
+                                Relevance advisory:{" "}
+                                <span className="font-medium text-foreground">
+                                    {relevanceVerdict(relevance)}
+                                </span>
+                                {relevance.reason ? ` — ${relevance.reason}` : ""}
+                            </p>
+                            {typeof relevance.score === "number" &&
+                                typeof relevance.threshold === "number" && (
+                                    <p className="text-xs">
+                                        Advisory score {formatScore(relevance.score)} (threshold{" "}
+                                        {formatScore(relevance.threshold)}). This is a judge score,
+                                        not a probability that an answer is correct.
+                                    </p>
+                                )}
+                        </div>
                     )}
                 </section>
 
@@ -272,6 +310,12 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
                         summary={`Authoring attempts (${(review.attempts ?? []).length})`}
                         value={review.attempts ?? []}
                     />
+                    {review.candidate_is_historical_attempt && (
+                        <p className="text-xs text-muted-foreground">
+                            The displayed candidate is a historical attempt, not the selected
+                            checked artifact. Compare it with the attempts above before approving.
+                        </p>
+                    )}
                     <EvidenceDetails summary="Fixed plan" value={review.fixed_plan ?? []} />
                     <div className="space-y-2">
                         <h4 className="text-sm font-medium">Sampled-check limits</h4>

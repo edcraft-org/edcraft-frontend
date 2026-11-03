@@ -160,4 +160,35 @@ describe("GeneratePanel", () => {
         expect(screen.queryByText(/Requested 3 · actual 3/)).not.toBeInTheDocument();
         expect(await screen.findByText(/artifact changed or is no longer usable/i)).toBeInTheDocument();
     });
+
+    it("rejects an out-of-range seed inline without sending a request", async () => {
+        const user = userEvent.setup();
+        renderPanel();
+
+        const seed = screen.getByLabelText("Base seed");
+        await user.clear(seed);
+        await user.type(seed, "2147483648");
+        await user.click(screen.getByRole("button", { name: "Generate batch" }));
+
+        expect(screen.getByText(/Enter a seed from 0 to 2147483647/)).toBeInTheDocument();
+        expect(generateAuthoringBatch).not.toHaveBeenCalled();
+    });
+
+    it("rejects a batch whose last seed would overflow", async () => {
+        const user = userEvent.setup();
+        renderPanel();
+
+        const quantity = screen.getByLabelText("Quantity");
+        const seed = screen.getByLabelText("Base seed");
+        await user.clear(quantity);
+        await user.type(quantity, "5");
+        await user.clear(seed);
+        await user.type(seed, "2147483647");
+        await user.click(screen.getByRole("button", { name: "Generate batch" }));
+
+        expect(
+            screen.getByText(/The last seed \(2147483651\) exceeds 2147483647/),
+        ).toBeInTheDocument();
+        expect(generateAuthoringBatch).not.toHaveBeenCalled();
+    });
 });
