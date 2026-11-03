@@ -187,7 +187,7 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
         <Card>
             <CardHeader className="gap-2">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <CardTitle>Review checked artifact</CardTitle>
+                    <CardTitle>Review authoring result</CardTitle>
                     {approval ? (
                         <Badge
                             variant={approval.decision === "approved" ? "default" : "destructive"}
