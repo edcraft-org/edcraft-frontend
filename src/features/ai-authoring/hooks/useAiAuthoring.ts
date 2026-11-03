@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/api";
+import { useUserStore } from "@/shared/stores/user.store";
 import { nextJobPollingInterval } from "../polling";
 import {
     createAuthoringJob,
@@ -17,24 +18,33 @@ import type {
     GenerateInput,
 } from "../types";
 
+// Scope every AI query key to the current owner so cached data from a prior
+// account can never be selected while the new owner's request is in flight.
+function useOwnerId(): string | null {
+    return useUserStore((state) => state.user?.id ?? null);
+}
+
 export function useAuthoringCapabilities() {
+    const ownerId = useOwnerId();
     return useQuery({
-        queryKey: queryKeys.aiAuthoring.capabilities(),
+        queryKey: [...queryKeys.aiAuthoring.capabilities(), ownerId],
         queryFn: getAuthoringCapabilities,
         staleTime: 60_000,
     });
 }
 
 export function useAuthoringJobs() {
+    const ownerId = useOwnerId();
     return useQuery({
-        queryKey: queryKeys.aiAuthoring.jobs(),
+        queryKey: [...queryKeys.aiAuthoring.jobs(), ownerId],
         queryFn: listAuthoringJobs,
     });
 }
 
 export function useAuthoringJob(jobId: string | undefined) {
+    const ownerId = useOwnerId();
     return useQuery({
-        queryKey: queryKeys.aiAuthoring.job(jobId ?? ""),
+        queryKey: [...queryKeys.aiAuthoring.job(jobId ?? ""), ownerId],
         queryFn: () => getAuthoringJob(jobId ?? ""),
         enabled: Boolean(jobId),
         retry: 1,
@@ -45,8 +55,9 @@ export function useAuthoringJob(jobId: string | undefined) {
 }
 
 export function useAuthoringReview(jobId: string | undefined, enabled = true) {
+    const ownerId = useOwnerId();
     return useQuery({
-        queryKey: queryKeys.aiAuthoring.review(jobId ?? ""),
+        queryKey: [...queryKeys.aiAuthoring.review(jobId ?? ""), ownerId],
         queryFn: () => getAuthoringReview(jobId ?? ""),
         enabled: Boolean(jobId) && enabled,
         retry: 1,
@@ -58,8 +69,12 @@ export function useAuthoringPreview(
     artifactSha256: string | null | undefined,
     seed: number,
 ) {
+    const ownerId = useOwnerId();
     return useQuery({
-        queryKey: queryKeys.aiAuthoring.preview(jobId ?? "", artifactSha256 ?? "", seed),
+        queryKey: [
+            ...queryKeys.aiAuthoring.preview(jobId ?? "", artifactSha256 ?? "", seed),
+            ownerId,
+        ],
         queryFn: () => getAuthoringPreview(jobId ?? "", seed),
         enabled: Boolean(jobId && artifactSha256),
         retry: 1,
