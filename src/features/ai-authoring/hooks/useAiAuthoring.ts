@@ -99,8 +99,8 @@ export function useDecideAuthoringApproval() {
         mutationFn: ({ jobId, input }: { jobId: string; input: ApprovalInput }) =>
             decideAuthoringApproval(jobId, input),
         onSuccess: (_approval, { jobId }) => {
+            // The job key prefix also covers the review child key.
             void queryClient.invalidateQueries({ queryKey: queryKeys.aiAuthoring.job(jobId) });
-            void queryClient.invalidateQueries({ queryKey: queryKeys.aiAuthoring.review(jobId) });
             void queryClient.invalidateQueries({ queryKey: queryKeys.aiAuthoring.jobs() });
         },
     });

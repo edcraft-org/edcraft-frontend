@@ -99,30 +99,34 @@ export function ReviewQuestionPreview({
                             )}
                         </p>
                         <div className="flex flex-wrap gap-2">
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => void previewQuery.refetch()}
-                            >
-                                <RefreshCw className="h-4 w-4" />
-                                Retry preview
-                            </Button>
-                            {isStaleArtifactError(previewQuery.error) && (
+                            {isStaleArtifactError(previewQuery.error) ? (
                                 <Button
                                     type="button"
                                     size="sm"
                                     variant="outline"
                                     onClick={onStaleArtifact}
                                 >
+                                    <RefreshCw className="h-4 w-4" />
                                     Refresh review
+                                </Button>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => void previewQuery.refetch()}
+                                >
+                                    <RefreshCw className="h-4 w-4" />
+                                    Retry preview
                                 </Button>
                             )}
                         </div>
                     </AlertDescription>
                 </Alert>
             )}
-            {previewQuery.data && <PreviewQuestion instance={previewQuery.data.question} />}
+            {previewQuery.data && !previewQuery.isError && (
+                <PreviewQuestion instance={previewQuery.data.question} />
+            )}
 
             <details className="rounded-md border p-3 text-sm">
                 <summary className="cursor-pointer font-medium">Advanced preview options</summary>
