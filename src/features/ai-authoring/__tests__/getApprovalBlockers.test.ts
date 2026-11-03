@@ -29,6 +29,18 @@ describe("getApprovalBlockers", () => {
         expect(blockers).toContain("The question has no checked version to approve yet.");
     });
 
+    it("describes a failed review as stopped instead of still checking", () => {
+        expect(
+            getApprovalBlockers({
+                ...unapprovedReview,
+                state: "failed",
+                artifact_id: null,
+                artifact_sha256: null,
+                checks: [],
+            }),
+        ).toEqual(["Question creation stopped. Create a new question and try again."]);
+    });
+
     it("requires an approval bound to the current artifact digest", () => {
         expect(isApproved(approvedReview)).toBe(true);
         expect(isApproved(unapprovedReview)).toBe(false);

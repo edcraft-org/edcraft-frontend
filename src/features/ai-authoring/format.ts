@@ -9,10 +9,6 @@ export function formatValue(value: unknown): string {
     }
 }
 
-export function formatScore(value: number): string {
-    return Number.isInteger(value) ? String(value) : value.toFixed(2);
-}
-
 export function formatCountSummary(counts: {
     requested_quantity: number;
     actual_quantity: number;

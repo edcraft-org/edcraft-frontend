@@ -35,6 +35,9 @@ export function statusLabel(status: AuthoringCheck["status"]): string {
  */
 export function getApprovalBlockers(review: AuthoringReview | null | undefined): string[] {
     if (!review) return ["The review has not loaded."];
+    if (review.state === "failed") {
+        return ["Question creation stopped. Create a new question and try again."];
+    }
 
     const blockers: string[] = [];
     if (review.state !== "completed") {

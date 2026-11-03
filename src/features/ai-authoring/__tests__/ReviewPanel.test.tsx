@@ -186,7 +186,34 @@ describe("ReviewPanel", () => {
                 { timeout: 5000 },
             ),
         ).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Retry preview" })).toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: "Refresh review" }),
+        ).not.toBeInTheDocument();
         expect(screen.getByRole("heading", { name: "Technical checks" })).toBeInTheDocument();
+    });
+
+    it("clears a cached preview and offers only review refresh for a stale 409", async () => {
+        const user = userEvent.setup();
+        const { onStaleArtifact } = renderPanel(approvedReview);
+        expect(await screen.findByText(previewInstanceQuestion())).toBeInTheDocument();
+
+        vi.mocked(getAuthoringPreview).mockRejectedValue(
+            new ApiError(409, "The artifact digest is stale."),
+        );
+        await user.click(screen.getByText("Advanced preview options"));
+        await user.click(screen.getByRole("button", { name: "Load exact seed" }));
+
+        expect(
+            await screen.findByText("Preview could not be loaded", undefined, { timeout: 5000 }),
+        ).toBeInTheDocument();
+        expect(screen.queryByText(previewInstanceQuestion())).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: "Retry preview" }),
+        ).not.toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: "Refresh review" }));
+        expect(onStaleArtifact).toHaveBeenCalledOnce();
     });
 
     it("rejects an out-of-range exact preview seed without sending a request", async () => {

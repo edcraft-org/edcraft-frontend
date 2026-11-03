@@ -25,11 +25,14 @@ function LoadingCard({ children }: { children: string }) {
     );
 }
 
+const STALE_ARTIFACT_MESSAGE =
+    "The checked question changed. The latest review is being loaded and any old preview or generated questions were cleared.";
+
 export default function AiAuthoringJobPage() {
     const { jobId } = useParams<{ jobId: string }>();
     const queryClient = useQueryClient();
     const [reviewEpoch, setReviewEpoch] = useState(0);
-    const [staleNotice, setStaleNotice] = useState<string | null>(null);
+    const [staleJobId, setStaleJobId] = useState<string | null>(null);
 
     const jobQuery = useAuthoringJob(jobId);
     const reviewTerminal =
@@ -38,14 +41,12 @@ export default function AiAuthoringJobPage() {
     const capabilitiesQuery = useAuthoringCapabilities();
 
     const handleStaleArtifact = useCallback(() => {
-        setStaleNotice(
-            "The checked question changed. The latest review is being loaded and any old preview or generated questions were cleared.",
-        );
+        setStaleJobId(jobId ?? null);
         setReviewEpoch((epoch) => epoch + 1);
         if (!jobId) return;
         queryClient.removeQueries({ queryKey: queryKeys.aiAuthoring.previewRoot(jobId) });
+        // The job key prefix also covers the review and preview child keys.
         void queryClient.invalidateQueries({ queryKey: queryKeys.aiAuthoring.job(jobId) });
-        void queryClient.invalidateQueries({ queryKey: queryKeys.aiAuthoring.review(jobId) });
     }, [jobId, queryClient]);
 
     if (!jobId) {
@@ -137,17 +138,17 @@ export default function AiAuthoringJobPage() {
                 <>
                     <ProgressPanel job={job} />
 
-                    {staleNotice && (
+                    {staleJobId === jobId && (
                         <Alert>
                             <AlertCircle className="h-4 w-4" />
                             <AlertTitle>The question changed</AlertTitle>
                             <AlertDescription className="space-y-2">
-                                <p>{staleNotice}</p>
+                                <p>{STALE_ARTIFACT_MESSAGE}</p>
                                 <Button
                                     type="button"
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => setStaleNotice(null)}
+                                    onClick={() => setStaleJobId(null)}
                                 >
                                     Dismiss
                                 </Button>
@@ -206,7 +207,7 @@ export default function AiAuthoringJobPage() {
                         </Alert>
                     )}
 
-                    {terminal && review && (
+                    {terminal && review && !reviewQuery.isError && (
                         <>
                             <ReviewPanel
                                 key={`review-${jobId}-${reviewEpoch}`}
