@@ -33,6 +33,12 @@ vi.mock("../services/ai-authoring.service", () => ({
     generateAuthoringBatch: vi.fn(),
 }));
 
+vi.mock("../components/ReadOnlyCode", () => ({
+    ReadOnlyCode: ({ code, label }: { code: string; label: string }) => (
+        <pre aria-label={label}>{code}</pre>
+    ),
+}));
+
 vi.mock("../components/PreviewQuestion", () => ({
     PreviewQuestion: ({ instance }: { instance: { seed: number } }) => (
         <div>Preview for seed {instance.seed}</div>
@@ -76,7 +82,7 @@ describe("AiAuthoringJobPage", () => {
         renderJobPage();
 
         expect(await screen.findByText("Job progress")).toBeInTheDocument();
-        expect(await screen.findByText("Review checked artifact")).toBeInTheDocument();
+        expect(await screen.findByRole("heading", { name: "Technical checks" })).toBeInTheDocument();
         expect(getAuthoringJob).toHaveBeenCalledWith("job-1");
         expect(getAuthoringReview).toHaveBeenCalledWith("job-1");
         expect(createAuthoringJob).not.toHaveBeenCalled();
@@ -90,7 +96,7 @@ describe("AiAuthoringJobPage", () => {
         const user = userEvent.setup();
         renderJobPage();
 
-        await screen.findByText("Review checked artifact");
+        await screen.findByRole("heading", { name: "Technical checks" });
         await user.click(screen.getByRole("button", { name: "Generate batch" }));
         expect(await screen.findByText(/Requested 3 · actual 3/)).toBeInTheDocument();
         const reviewCallsBefore = vi.mocked(getAuthoringReview).mock.calls.length;

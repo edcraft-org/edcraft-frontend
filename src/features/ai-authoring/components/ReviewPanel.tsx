@@ -312,8 +312,8 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
                     />
                     {review.candidate_is_historical_attempt && (
                         <p className="text-xs text-muted-foreground">
-                            The displayed candidate is a historical attempt, not the selected
-                            checked artifact. Compare it with the attempts above before approving.
+                            Candidates in the authoring attempts are historical. The checked
+                            template and seeded preview below show the artifact being reviewed.
                         </p>
                     )}
                     <EvidenceDetails summary="Fixed plan" value={review.fixed_plan ?? []} />
