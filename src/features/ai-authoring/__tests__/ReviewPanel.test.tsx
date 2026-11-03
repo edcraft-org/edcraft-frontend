@@ -28,6 +28,12 @@ vi.mock("../services/ai-authoring.service", () => ({
     generateAuthoringBatch: vi.fn(),
 }));
 
+vi.mock("../components/ReadOnlyCode", () => ({
+    ReadOnlyCode: ({ code, label }: { code: string; label: string }) => (
+        <pre aria-label={label}>{code}</pre>
+    ),
+}));
+
 vi.mock("../components/PreviewQuestion", () => ({
     PreviewQuestion: ({ instance }: { instance: { question: { question: string } } }) => (
         <div>{instance.question.question}</div>
@@ -137,7 +143,7 @@ describe("ReviewPanel", () => {
                 { timeout: 5000 },
             ),
         ).toBeInTheDocument();
-        expect(screen.getByText("Review checked artifact")).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: "Technical checks" })).toBeInTheDocument();
     });
 
     it("rejects an out-of-range preview seed inline without sending a request", async () => {
@@ -153,7 +159,7 @@ describe("ReviewPanel", () => {
 
         expect(screen.getByText(/Enter a seed from 0 to 2147483647/)).toBeInTheDocument();
         expect(vi.mocked(getAuthoringPreview).mock.calls.length).toBe(callsBefore);
-        expect(screen.getByText("Review checked artifact")).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: "Technical checks" })).toBeInTheDocument();
     });
 
     it("shows the actual relevance verdict and advisory score", async () => {
@@ -199,7 +205,7 @@ describe("ReviewPanel", () => {
         renderPanel({ ...approvedReview, candidate_is_historical_attempt: true });
 
         expect(
-            await screen.findByText(/historical attempt, not the selected checked artifact/),
+            await screen.findByText(/Candidates in the authoring attempts are historical/),
         ).toBeInTheDocument();
     });
 });
