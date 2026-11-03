@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
@@ -67,6 +67,16 @@ function renderPanel(review: AuthoringReview, onStaleArtifact = vi.fn()) {
     return { onStaleArtifact };
 }
 
+async function openTechnicalDetails() {
+    const summary = await screen.findByText("Technical details");
+    const details = summary.closest("details");
+    expect(details).not.toBeNull();
+    if (!details) throw new Error("Technical details disclosure was not rendered.");
+    expect(details).not.toHaveAttribute("open");
+    await userEvent.setup().click(summary);
+    return details;
+}
+
 describe("ReviewPanel", () => {
     beforeEach(() => {
         vi.mocked(getAuthoringPreview).mockResolvedValue(preview);
@@ -75,22 +85,43 @@ describe("ReviewPanel", () => {
 
     afterEach(cleanup);
 
-    it("allows approval when only advisory checks fail", async () => {
+    it("allows approval when advisory feedback differs and keeps it amber", async () => {
         renderPanel(unapprovedReview);
 
         expect(await screen.findByText(previewInstanceQuestion())).toBeInTheDocument();
-        expect(screen.getByText(/Estimated difficulty:/)).toHaveTextContent(/hard/i);
-        expect(screen.getByText(/never block approval/i)).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Approve artifact" })).toBeEnabled();
+        expect(screen.getByText("Variation 1. Each variation shows the same checked question with different generated values.")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Show another variation" })).toBeEnabled();
+        expect(screen.getByText("4 choices")).toBeInTheDocument();
+        expect(screen.getByText("Difficulty differs")).toBeInTheDocument();
+        expect(screen.getByText("Relevance was not checked")).toBeInTheDocument();
+        expect(screen.getAllByText(/does not block approval/i).length).toBeGreaterThan(0);
+
+        const advisory = screen.getByText("Difficulty differs").closest("[data-advisory]");
+        expect(advisory).toHaveClass("border-amber-500/40");
+        expect(screen.getByRole("button", { name: "Approve question" })).toBeEnabled();
+    });
+
+    it("keeps raw identifiers inside a closed technical disclosure", async () => {
+        renderPanel(unapprovedReview);
+
+        const summary = await screen.findByText("Technical details");
+        const details = summary.closest("details");
+        expect(details).not.toHaveAttribute("open");
+        expect(
+            within(details as HTMLElement).getAllByText(unapprovedReview.artifact_sha256!).length,
+        ).toBeGreaterThan(0);
+        expect(screen.getByRole("button", { name: "Approve question" })).toBeEnabled();
     });
 
     it("blocks approval and explains why when a technical check fails", async () => {
         renderPanel(technicalFailureReview);
 
         expect(
-            await screen.findByText('Technical check "sample execution" did not pass.'),
+            await screen.findByText(
+                /The technical check "Sample examples" failed.*create a new question/i,
+            ),
         ).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Approve artifact" })).toBeDisabled();
+        expect(screen.getByRole("button", { name: "Approve question" })).toBeDisabled();
     });
 
     it("sends the exact artifact digest and optional note", async () => {
@@ -98,7 +129,7 @@ describe("ReviewPanel", () => {
         renderPanel(unapprovedReview);
 
         await user.type(screen.getByLabelText(/review note/i), "  Looks good  ");
-        await user.click(screen.getByRole("button", { name: "Approve artifact" }));
+        await user.click(screen.getByRole("button", { name: "Approve question" }));
 
         await waitFor(() => {
             expect(decideAuthoringApproval).toHaveBeenCalledWith("job-1", {
@@ -116,10 +147,12 @@ describe("ReviewPanel", () => {
         const user = userEvent.setup();
         const { onStaleArtifact } = renderPanel(approvedReview);
 
-        await user.click(screen.getByRole("button", { name: "Re-approve this artifact" }));
+        await user.click(screen.getByRole("button", { name: "Approve this version again" }));
 
         await waitFor(() => expect(onStaleArtifact).toHaveBeenCalledOnce());
-        expect(await screen.findByText(/artifact changed or is no longer usable/i)).toBeInTheDocument();
+        expect(
+            await screen.findByText(/changed or is no longer usable/i),
+        ).toBeInTheDocument();
     });
 
     it("renders a FastAPI 422 detail array as a readable message without crashing", async () => {
@@ -146,23 +179,25 @@ describe("ReviewPanel", () => {
         expect(screen.getByRole("heading", { name: "Technical checks" })).toBeInTheDocument();
     });
 
-    it("rejects an out-of-range preview seed inline without sending a request", async () => {
+    it("rejects an out-of-range exact preview seed without sending a request", async () => {
         const user = userEvent.setup();
         renderPanel(approvedReview);
         await screen.findByText(previewInstanceQuestion());
+
+        await user.click(screen.getByText("Advanced preview options"));
         const callsBefore = vi.mocked(getAuthoringPreview).mock.calls.length;
 
-        const seedInput = screen.getByLabelText("Preview seed");
+        const seedInput = screen.getByLabelText("Exact seed");
         await user.clear(seedInput);
         await user.type(seedInput, "2147483648");
-        await user.click(screen.getByRole("button", { name: "Load preview" }));
+        await user.click(screen.getByRole("button", { name: "Load exact seed" }));
 
         expect(screen.getByText(/Enter a seed from 0 to 2147483647/)).toBeInTheDocument();
         expect(vi.mocked(getAuthoringPreview).mock.calls.length).toBe(callsBefore);
         expect(screen.getByRole("heading", { name: "Technical checks" })).toBeInTheDocument();
     });
 
-    it("shows the actual relevance verdict and advisory score", async () => {
+    it("shows a plain relevance mismatch and keeps the score in technical details", async () => {
         renderPanel({
             ...approvedReview,
             relevance: {
@@ -177,16 +212,16 @@ describe("ReviewPanel", () => {
             },
         });
 
-        expect(await screen.findByText("Not relevant")).toBeInTheDocument();
-        expect(
-            screen.getByText(/Advisory score 0.42 \(threshold 0.50\)/),
-        ).toBeInTheDocument();
-        expect(screen.getAllByText(/not a probability that an answer is correct/).length).toBeGreaterThan(
-            0,
-        );
+        expect(await screen.findByText("Potential relevance mismatch")).toBeInTheDocument();
+        expect(screen.getAllByText("Off topic.").length).toBeGreaterThan(0);
+        expect(screen.queryByText("Not relevant")).not.toBeInTheDocument();
+
+        const details = await openTechnicalDetails();
+        expect(within(details).getByText("0.42")).toBeInTheDocument();
+        expect(within(details).getByText("0.50")).toBeInTheDocument();
     });
 
-    it("shows advisory difficulty confidence and its source", async () => {
+    it("shows advisory difficulty confidence and its source only in technical details", async () => {
         renderPanel({
             ...approvedReview,
             difficulty: {
@@ -196,16 +231,18 @@ describe("ReviewPanel", () => {
             },
         });
 
-        expect(
-            await screen.findByText(/Advisory estimate confidence 0.72 \(self reported\)/),
-        ).toBeInTheDocument();
+        expect(screen.queryByText(/Advisory estimate confidence/)).not.toBeInTheDocument();
+        const details = await openTechnicalDetails();
+        expect(within(details).getByText("0.72")).toBeInTheDocument();
+        expect(within(details).getByText("self reported")).toBeInTheDocument();
     });
 
-    it("labels a historical candidate when attempts are visible", async () => {
+    it("labels a historical candidate inside technical details", async () => {
         renderPanel({ ...approvedReview, candidate_is_historical_attempt: true });
 
+        const details = await openTechnicalDetails();
         expect(
-            await screen.findByText(/Candidates in the authoring attempts are historical/),
+            within(details).getByText(/Candidates in the authoring attempts are historical/),
         ).toBeInTheDocument();
     });
 });

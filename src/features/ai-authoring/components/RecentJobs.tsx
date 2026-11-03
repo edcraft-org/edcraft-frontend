@@ -17,28 +17,41 @@ function stateVariant(state: AuthoringJobState): "default" | "secondary" | "dest
     return "outline";
 }
 
+function stateLabel(state: AuthoringJobState): string {
+    switch (state) {
+        case "completed":
+            return "Ready to review";
+        case "failed":
+            return "Could not create";
+        case "running":
+            return "Creating";
+        case "queued":
+            return "Waiting";
+    }
+}
+
 export function RecentJobs() {
     const jobsQuery = useAuthoringJobs();
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Recent authoring jobs</CardTitle>
+                <CardTitle>Recent questions</CardTitle>
             </CardHeader>
             <CardContent>
                 {jobsQuery.isPending && (
-                    <p className="text-sm text-muted-foreground">Loading your recent jobs…</p>
+                    <p className="text-sm text-muted-foreground">Loading your recent questions…</p>
                 )}
 
                 {jobsQuery.isError && (
                     <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Recent jobs could not be loaded</AlertTitle>
+                        <AlertTitle>Recent questions could not be loaded</AlertTitle>
                         <AlertDescription className="space-y-2">
                             <p>
                                 {getAuthoringErrorMessage(
                                     jobsQuery.error,
-                                    "Your recent authoring jobs could not be loaded.",
+                                    "Your recent questions could not be loaded.",
                                 )}
                             </p>
                             <Button
@@ -56,7 +69,7 @@ export function RecentJobs() {
 
                 {jobsQuery.data?.length === 0 && (
                     <p className="text-sm text-muted-foreground">
-                        No authoring jobs yet. Start one with the form.
+                        No questions yet. Create one with the form.
                     </p>
                 )}
 
@@ -70,7 +83,7 @@ export function RecentJobs() {
                                 >
                                     <div className="min-w-0">
                                         <p className="truncate text-sm font-medium">
-                                            {job.prompt_preview || "Untitled request"}
+                                            {job.prompt_preview || "Untitled question"}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                             {capitalize(job.difficulty)} ·{" "}
@@ -86,11 +99,13 @@ export function RecentJobs() {
                                                         : "destructive"
                                                 }
                                             >
-                                                {capitalize(job.approval.decision)}
+                                                {job.approval.decision === "approved"
+                                                    ? "Approved"
+                                                    : "Rejected"}
                                             </Badge>
                                         )}
                                         <Badge variant={stateVariant(job.state)}>
-                                            {capitalize(job.state)}
+                                            {stateLabel(job.state)}
                                         </Badge>
                                     </div>
                                 </Link>

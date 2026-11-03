@@ -15,18 +15,18 @@ export default function AiAuthoringPage() {
             <header className="space-y-2">
                 <h1 className="flex items-center gap-2 text-2xl font-semibold">
                     <Sparkles className="h-6 w-6" aria-hidden="true" />
-                    AI Authoring
+                    Create a code question with AI
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                    Ask a configured model to author a checked code question, review the evidence,
-                    approve the exact artifact, then generate deterministic JSON for export.
+                    Describe the question you want, choose a difficulty, then review the question
+                    and download it when it is ready.
                 </p>
             </header>
 
             {capabilitiesQuery.isPending && (
                 <Card>
                     <CardContent className="py-6 text-sm text-muted-foreground">
-                        Loading server capabilities…
+                        Loading question settings…
                     </CardContent>
                 </Card>
             )}
@@ -34,12 +34,12 @@ export default function AiAuthoringPage() {
             {capabilitiesQuery.isError && (
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>AI authoring capabilities could not be loaded</AlertTitle>
+                    <AlertTitle>Question settings could not be loaded</AlertTitle>
                     <AlertDescription className="space-y-2">
                         <p>
                             {getAuthoringErrorMessage(
                                 capabilitiesQuery.error,
-                                "The server capabilities could not be loaded.",
+                                "The question settings could not be loaded.",
                             )}
                         </p>
                         <Button

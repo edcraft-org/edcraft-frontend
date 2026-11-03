@@ -9,6 +9,56 @@ export function formatValue(value: unknown): string {
     }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Friendly, unbracketed rendering for values an educator should read. Canonical
+ * JSON remains available through formatValue inside technical disclosures and
+ * in the exported batch.
+ */
+export function formatReadableValue(value: unknown): string {
+    if (value === null || value === undefined) return "—";
+    if (typeof value === "string") return value;
+    if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+        return String(value);
+    }
+    if (Array.isArray(value)) {
+        if (value.length === 0) return "Empty list";
+        return value.map((item) => formatReadableValue(item)).join(", ");
+    }
+    if (isRecord(value)) {
+        const entries = Object.entries(value);
+        if (entries.length === 0) return "Empty";
+        return entries
+            .map(([key, item]) => `${key}: ${formatReadableValue(item)}`)
+            .join("\n");
+    }
+    return String(value);
+}
+
+export function formatScore(value: number): string {
+    return Number.isInteger(value) ? String(value) : value.toFixed(2);
+}
+
+export function formatCountSummary(counts: {
+    requested_quantity: number;
+    actual_quantity: number;
+    distinct_count: number;
+    duplicates: number;
+}): string {
+    const different = `${counts.distinct_count} different`;
+    const repeated = counts.duplicates === 1 ? "1 repeated" : `${counts.duplicates} repeated`;
+    const created =
+        counts.actual_quantity === counts.requested_quantity
+            ? `${counts.actual_quantity} created`
+            : `${counts.actual_quantity} of ${counts.requested_quantity} created`;
+    return counts.duplicates > 0
+        ? `${created}, ${different}, ${repeated}.`
+        : `${created}, all different.`;
+}
+
 export function formatDate(value: string): string {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;

@@ -81,7 +81,7 @@ describe("AiAuthoringJobPage", () => {
     it("resumes the job from the URL without creating another job", async () => {
         renderJobPage();
 
-        expect(await screen.findByText("Job progress")).toBeInTheDocument();
+        expect(await screen.findByText("Question progress")).toBeInTheDocument();
         expect(await screen.findByRole("heading", { name: "Technical checks" })).toBeInTheDocument();
         expect(getAuthoringJob).toHaveBeenCalledWith("job-1");
         expect(getAuthoringReview).toHaveBeenCalledWith("job-1");
@@ -97,20 +97,20 @@ describe("AiAuthoringJobPage", () => {
         renderJobPage();
 
         await screen.findByRole("heading", { name: "Technical checks" });
-        await user.click(screen.getByRole("button", { name: "Generate batch" }));
-        expect(await screen.findByText(/Requested 3 · actual 3/)).toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: "Create questions" }));
+        expect(await screen.findByText(/3 created, 2 different, 1 repeated/)).toBeInTheDocument();
         const reviewCallsBefore = vi.mocked(getAuthoringReview).mock.calls.length;
 
-        await user.click(screen.getByRole("button", { name: "Generate another batch" }));
+        await user.click(screen.getByRole("button", { name: "Create another set" }));
 
-        expect(await screen.findByText("Artifact changed")).toBeInTheDocument();
+        expect(await screen.findByText("The question changed")).toBeInTheDocument();
         await waitFor(() =>
             expect(vi.mocked(getAuthoringReview).mock.calls.length).toBeGreaterThan(
                 reviewCallsBefore,
             ),
         );
         await waitFor(() =>
-            expect(screen.queryByText(/Requested 3 · actual 3/)).not.toBeInTheDocument(),
+            expect(screen.queryByText(/3 created, 2 different/)).not.toBeInTheDocument(),
         );
     });
 });

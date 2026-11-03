@@ -15,7 +15,9 @@ describe("getApprovalBlockers", () => {
 
     it("blocks approval when a technical check fails", () => {
         const blockers = getApprovalBlockers(technicalFailureReview);
-        expect(blockers).toContain('Technical check "sample execution" did not pass.');
+        expect(blockers).toContain(
+            'The technical check "Sample examples" failed. Fix the code or create a new question before approving.',
+        );
     });
 
     it("blocks approval without a checked artifact", () => {
@@ -24,7 +26,7 @@ describe("getApprovalBlockers", () => {
             artifact_id: null,
             artifact_sha256: null,
         });
-        expect(blockers).toContain("No checked artifact is available for approval.");
+        expect(blockers).toContain("The question has no checked version to approve yet.");
     });
 
     it("requires an approval bound to the current artifact digest", () => {
