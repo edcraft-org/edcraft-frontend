@@ -1,3 +1,4 @@
+import type { UserResponse } from "@/api/models";
 import type {
     AuthoringBatch,
     AuthoringCapabilities,
@@ -9,6 +10,16 @@ import type {
 } from "../types";
 
 const digest = "a".repeat(64);
+
+export function makeUser(id: string, name = "Test User"): UserResponse {
+    return {
+        id,
+        name,
+        email: `${id}@example.com`,
+        created_at: "2026-11-03T00:00:00Z",
+        updated_at: "2026-11-03T00:00:00Z",
+    };
+}
 
 const passedTechnicalCheck: AuthoringCheck = {
     tool: "python_syntax",
