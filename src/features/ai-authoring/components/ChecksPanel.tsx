@@ -3,6 +3,7 @@ import type { AuthoringCheck } from "../types";
 import { checkLabel, statusLabel } from "../getApprovalBlockers";
 
 function CheckRow({ check }: { check: AuthoringCheck }) {
+    const findings = check.findings ?? [];
     const StatusIcon =
         check.status === "passed"
             ? CheckCircle2
@@ -34,9 +35,9 @@ function CheckRow({ check }: { check: AuthoringCheck }) {
                 {check.error && (
                     <p className="text-sm text-destructive">{check.error}</p>
                 )}
-                {check.findings.length > 0 && (
+                {findings.length > 0 && (
                     <ul className="list-disc space-y-1 pl-4 text-sm text-muted-foreground">
-                        {check.findings.map((finding) => (
+                        {findings.map((finding) => (
                             <li key={`${finding.code}-${finding.field ?? ""}-${finding.message}`}>
                                 {finding.message}
                             </li>

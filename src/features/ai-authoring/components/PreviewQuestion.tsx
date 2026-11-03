@@ -12,18 +12,27 @@ interface PreviewQuestionProps {
 export function PreviewQuestion({ instance, headingLevel = "h4" }: PreviewQuestionProps) {
     const Heading = headingLevel;
     const { question } = instance;
+    const distractorReasons = question.distractor_reasons ?? [];
 
     return (
         <article className="space-y-4 rounded-lg border p-4">
             <div className="flex flex-wrap items-center gap-2">
                 <Heading className="font-medium">{question.question}</Heading>
                 <Badge variant="outline">Seed {instance.seed}</Badge>
-                <Badge variant="secondary">{question.question_type.toUpperCase()}</Badge>
+                <Badge variant="secondary">
+                    {(question.question_type ?? "mcq").toUpperCase()}
+                </Badge>
+                <Badge variant="outline">Draft — review before use</Badge>
             </div>
 
             <p className="text-sm text-muted-foreground">
                 Entry function <code className="font-mono">{question.entry_function}</code> ·
-                Answer target {question.answer_target.replaceAll("_", " ")}
+                Answer target {(question.answer_target ?? "return_value").replaceAll("_", " ")}
+            </p>
+
+            <p className="text-xs text-muted-foreground">
+                Generated instances are drafts. Review the code, parameters, answer and rationales
+                before using them.
             </p>
 
             <ReadOnlyCode code={question.code} label="Generated question code" />
@@ -57,8 +66,7 @@ export function PreviewQuestion({ instance, headingLevel = "h4" }: PreviewQuesti
                                     </div>
                                     <Separator className="my-2" />
                                     <p className="text-xs text-muted-foreground">
-                                        {question.distractor_reasons[index] ??
-                                            "No rationale provided."}
+                                        {distractorReasons[index] ?? "No rationale provided."}
                                     </p>
                                 </li>
                             ))}

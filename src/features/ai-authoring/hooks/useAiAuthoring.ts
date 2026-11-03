@@ -93,8 +93,12 @@ export function useDecideAuthoringApproval() {
 }
 
 export function useGenerateAuthoringBatch() {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: ({ jobId, input }: { jobId: string; input: GenerateInput }) =>
             generateAuthoringBatch(jobId, input),
+        onSuccess: (_batch, { jobId }) => {
+            void queryClient.invalidateQueries({ queryKey: queryKeys.aiAuthoring.job(jobId) });
+        },
     });
 }

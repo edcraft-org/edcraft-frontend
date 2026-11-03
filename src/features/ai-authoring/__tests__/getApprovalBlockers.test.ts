@@ -5,10 +5,12 @@ import { approvedReview, technicalFailureReview, unapprovedReview } from "./fixt
 describe("getApprovalBlockers", () => {
     it("ignores failed advisory checks when technical checks pass", () => {
         expect(getApprovalBlockers(unapprovedReview)).toEqual([]);
-        expect(unapprovedReview.checks.some((check) => check.advisory && check.status === "failed"))
-            .toBe(true);
-        expect(unapprovedReview.checks.some((check) => !check.advisory && check.status === "passed"))
-            .toBe(true);
+        expect((unapprovedReview.checks ?? []).some(
+            (check) => check.advisory && check.status === "failed",
+        )).toBe(true);
+        expect((unapprovedReview.checks ?? []).some(
+            (check) => !check.advisory && check.status === "passed",
+        )).toBe(true);
     });
 
     it("blocks approval when a technical check fails", () => {

@@ -46,8 +46,8 @@ function DifficultyOutcomeSummary({
                 </span>
             </p>
             <p className="text-muted-foreground">
-                Advisory decision: {outcome.decision.replaceAll("_", " ")}. Difficulty assessments
-                never block approval.
+                Advisory decision: {(outcome.decision ?? "unavailable").replaceAll("_", " ")}.
+                Difficulty assessments never block approval.
             </p>
             {outcome.reason && <p className="text-muted-foreground">{outcome.reason}</p>}
         </div>
@@ -206,6 +206,20 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
                                 {review.request.model_profile}
                             </dd>
                         </div>
+                        <div>
+                            <dt className="text-xs font-medium text-muted-foreground">
+                                Author provider
+                            </dt>
+                            <dd>{result?.provider ?? "Not reported"}</dd>
+                        </div>
+                        <div>
+                            <dt className="text-xs font-medium text-muted-foreground">
+                                Author model
+                            </dt>
+                            <dd className="break-all font-mono text-xs">
+                                {result?.model ?? "Not reported"}
+                            </dd>
+                        </div>
                     </dl>
                 </section>
 
@@ -219,21 +233,22 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
                     <DifficultyOutcomeSummary outcome={difficulty} />
                     {relevance && (
                         <p className="text-sm text-muted-foreground">
-                            Relevance advisory: {relevance.status.replaceAll("_", " ")}
+                            Relevance advisory:{" "}
+                            {(relevance.status ?? "unavailable").replaceAll("_", " ")}
                             {relevance.reason ? ` — ${relevance.reason}` : ""}
                         </p>
                     )}
                 </section>
 
-                <ChecksPanel checks={review.checks} />
+                <ChecksPanel checks={review.checks ?? []} />
 
-                {review.warnings.length > 0 && (
+                {(review.warnings ?? []).length > 0 && (
                     <Alert>
                         <AlertCircle className="h-4 w-4" />
                         <AlertTitle>Authoring warnings</AlertTitle>
                         <AlertDescription>
                             <ul className="list-disc space-y-1 pl-4">
-                                {review.warnings.map((warning) => (
+                                {(review.warnings ?? []).map((warning) => (
                                     <li key={warning}>{warning}</li>
                                 ))}
                             </ul>
@@ -254,13 +269,13 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
                         Checking evidence
                     </h3>
                     <EvidenceDetails
-                        summary={`Authoring attempts (${review.attempts.length})`}
-                        value={review.attempts}
+                        summary={`Authoring attempts (${(review.attempts ?? []).length})`}
+                        value={review.attempts ?? []}
                     />
-                    <EvidenceDetails summary="Fixed plan" value={review.fixed_plan} />
+                    <EvidenceDetails summary="Fixed plan" value={review.fixed_plan ?? []} />
                     <div className="space-y-2">
                         <h4 className="text-sm font-medium">Sampled-check limits</h4>
-                        <ValidationLimitsSummary limits={review.validation_limits} />
+                        <ValidationLimitsSummary limits={review.validation_limits ?? null} />
                     </div>
                     <p className="text-xs text-muted-foreground">
                         Library revision:{" "}

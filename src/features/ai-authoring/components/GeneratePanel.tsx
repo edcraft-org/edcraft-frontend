@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Download, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -8,15 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { downloadAuthoringBatch } from "../download";
 import { getAuthoringErrorMessage, isStaleArtifactError } from "../errors";
+import { formatDate } from "../format";
 import { isApproved } from "../getApprovalBlockers";
 import { useGenerateAuthoringBatch } from "../hooks/useAiAuthoring";
-import type { AuthoringBatch, AuthoringReview } from "../types";
+import type { AuthoringBatch, AuthoringReview, GenerationMetadata } from "../types";
 import { PreviewQuestion } from "./PreviewQuestion";
 
 interface GeneratePanelProps {
     jobId: string;
     review: AuthoringReview;
     maxQuantity: number;
+    lastGeneration: GenerationMetadata | null;
     onStaleArtifact: () => void;
 }
 
@@ -24,22 +26,37 @@ export function GeneratePanel({
     jobId,
     review,
     maxQuantity,
+    lastGeneration,
     onStaleArtifact,
 }: GeneratePanelProps) {
     const approved = isApproved(review);
     const [quantityInput, setQuantityInput] = useState(String(Math.min(5, maxQuantity)));
     const [seedInput, setSeedInput] = useState("0");
     const [inputError, setInputError] = useState<string | null>(null);
-    const [batch, setBatch] = useState<AuthoringBatch | null>(null);
+    const [batchState, setBatchState] = useState<{
+        approvalKey: string;
+        batch: AuthoringBatch;
+    } | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
     const generation = useGenerateAuthoringBatch();
 
     const artifactDigest = review.artifact_sha256;
-    const approvalDigest = review.approval?.artifact_sha256;
+    // A rejection can keep the same digest, so bind displayed output to the
+    // decision and decision timestamp as well as the artifact digest.
+    const approvalKey = [
+        artifactDigest ?? "",
+        review.approval?.artifact_sha256 ?? "",
+        review.approval?.decision ?? "unreviewed",
+        review.approval?.decided_at ?? "",
+    ].join(":");
+    const approvalKeyRef = useRef(approvalKey);
+    approvalKeyRef.current = approvalKey;
+    const batch = approved && batchState?.approvalKey === approvalKey ? batchState.batch : null;
 
     useEffect(() => {
-        setBatch(null);
-    }, [artifactDigest, approvalDigest]);
+        setBatchState(null);
+        setActionError(null);
+    }, [approvalKey]);
 
     const generate = () => {
         if (generation.isPending) return;
@@ -59,6 +76,7 @@ export function GeneratePanel({
             return;
         }
 
+        const requestApprovalKey = approvalKey;
         setInputError(null);
         setActionError(null);
         generation.mutate(
@@ -72,11 +90,12 @@ export function GeneratePanel({
             },
             {
                 onSuccess: (result) => {
-                    setBatch(result);
+                    if (approvalKeyRef.current !== requestApprovalKey) return;
+                    setBatchState({ approvalKey: requestApprovalKey, batch: result });
                 },
                 onError: (error) => {
                     if (isStaleArtifactError(error)) {
-                        setBatch(null);
+                        setBatchState(null);
                         onStaleArtifact();
                     }
                     setActionError(
@@ -123,6 +142,30 @@ export function GeneratePanel({
                         Generation uses the approved artifact digest and consecutive deterministic
                         seeds. No model is called.
                     </p>
+                )}
+
+                {lastGeneration && (
+                    <div className="rounded-md border bg-muted/30 p-3 text-sm">
+                        <p className="font-medium">Last generated batch</p>
+                        <p className="text-muted-foreground">
+                            Base seed {lastGeneration.base_seed} · requested{" "}
+                            {lastGeneration.requested_quantity} · actual{" "}
+                            {lastGeneration.actual_quantity} · distinct{" "}
+                            {lastGeneration.distinct_count} · duplicates{" "}
+                            {lastGeneration.duplicates}
+                        </p>
+                        {(lastGeneration.warnings ?? []).length > 0 && (
+                            <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted-foreground">
+                                {(lastGeneration.warnings ?? []).map((warning) => (
+                                    <li key={warning}>{warning}</li>
+                                ))}
+                            </ul>
+                        )}
+                        <p className="mt-2 text-xs text-muted-foreground">
+                            Persisted {formatDate(lastGeneration.created_at)}. Generate again to
+                            download a new batch.
+                        </p>
+                    </div>
                 )}
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -190,7 +233,7 @@ export function GeneratePanel({
                         <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                                 <h3 id="batch-heading" className="font-medium">
-                                    Generated batch
+                                    Generated draft batch
                                 </h3>
                                 <p className="text-sm text-muted-foreground">
                                     Requested {batch.requested_quantity} · actual{" "}
@@ -208,13 +251,13 @@ export function GeneratePanel({
                             </Button>
                         </div>
 
-                        {batch.warnings.length > 0 && (
+                        {(batch.warnings ?? []).length > 0 && (
                             <Alert>
                                 <AlertCircle className="h-4 w-4" />
                                 <AlertTitle>Batch warnings</AlertTitle>
                                 <AlertDescription>
                                     <ul className="list-disc space-y-1 pl-4">
-                                        {batch.warnings.map((warning) => (
+                                        {(batch.warnings ?? []).map((warning) => (
                                             <li key={warning}>{warning}</li>
                                         ))}
                                     </ul>

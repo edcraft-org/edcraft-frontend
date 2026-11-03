@@ -214,7 +214,7 @@ export default function AiAuthoringJobPage() {
                                 key={`review-${reviewEpoch}-${review.artifact_sha256 ?? "none"}`}
                                 jobId={jobId}
                                 review={review}
-                                result={job.result}
+                                result={job.result ?? null}
                                 onStaleArtifact={handleStaleArtifact}
                             />
 
@@ -241,10 +241,11 @@ export default function AiAuthoringJobPage() {
 
                             {job.state === "completed" && capabilitiesQuery.data && (
                                 <GeneratePanel
-                                    key={`generate-${reviewEpoch}-${review.artifact_sha256 ?? "none"}`}
+                                    key={`generate-${reviewEpoch}-${review.artifact_sha256 ?? "none"}-${review.approval?.decision ?? "unreviewed"}-${review.approval?.decided_at ?? "none"}`}
                                     jobId={jobId}
                                     review={review}
                                     maxQuantity={capabilitiesQuery.data.max_quantity}
+                                    lastGeneration={job.last_generation ?? null}
                                     onStaleArtifact={handleStaleArtifact}
                                 />
                             )}
