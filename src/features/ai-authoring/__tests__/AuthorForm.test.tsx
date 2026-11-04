@@ -135,6 +135,74 @@ describe("AuthorForm", () => {
         });
     });
 
+    it("defaults both advisory checks to the question model", () => {
+        renderForm(undefined, connectionCapabilities);
+
+        expect(screen.getByRole("combobox", { name: "Difficulty check" })).toHaveTextContent(
+            "Same as question model",
+        );
+        expect(screen.getByRole("combobox", { name: "Relevance check" })).toHaveTextContent(
+            "Same as question model",
+        );
+    });
+
+    it("submits a separate model for one advisory check", async () => {
+        const user = userEvent.setup();
+        renderForm(undefined, connectionCapabilities);
+
+        await user.click(screen.getByRole("combobox", { name: "Difficulty check" }));
+        await user.click(screen.getByRole("option", { name: /My OpenAI/ }));
+        const modelPickers = screen.getAllByRole("combobox", { name: "Model" });
+        expect(modelPickers).toHaveLength(2);
+        await user.click(modelPickers[1]);
+        await user.click(screen.getByRole("option", { name: "gpt-other" }));
+
+        await user.type(screen.getByLabelText("Prompt"), "Create a loop question.");
+        await user.click(screen.getByRole("button", { name: "Create question" }));
+
+        await waitFor(() => {
+            expect(createAuthoringJob).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    judges: {
+                        difficulty: {
+                            connection_id: "connection-1",
+                            model: "gpt-other",
+                        },
+                    },
+                }),
+            );
+        });
+    });
+
+    it("prefills advisory check models from a failed job", () => {
+        renderForm(
+            {
+                prompt: "Retry this.",
+                difficulty: "medium",
+                num_distractors: 3,
+                connection_id: "connection-1",
+                model: "gpt-test",
+                judges: {
+                    relevance: {
+                        connection_id: "connection-1",
+                        model: "gpt-other",
+                    },
+                },
+            },
+            connectionCapabilities,
+        );
+
+        expect(screen.getByRole("combobox", { name: "Difficulty check" })).toHaveTextContent(
+            "Same as question model",
+        );
+        expect(screen.getByRole("combobox", { name: "Relevance check" })).toHaveTextContent(
+            "My OpenAI",
+        );
+        expect(screen.getAllByRole("combobox", { name: "Model" })[1]).toHaveTextContent(
+            "gpt-other",
+        );
+    });
+
     it("prefills a connection selection from a failed job", () => {
         renderForm(
             {

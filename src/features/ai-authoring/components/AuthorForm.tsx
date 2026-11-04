@@ -25,8 +25,11 @@ import { getAuthoringErrorMessage } from "../errors";
 import { capitalize } from "../format";
 import { useCreateAuthoringJob } from "../hooks/useAiAuthoring";
 import {
+    buildJudgeSelections,
     buildModelRequest,
+    isInheritSource,
     parseModelSource,
+    resolveJudgeSelection,
     resolveModelSelection,
 } from "../modelSelection";
 import type {
@@ -47,6 +50,10 @@ const authoringSchema = z
         num_distractors: z.union([z.literal(2), z.literal(3)]),
         model_source: z.string().min(1, "Choose a question-writing model."),
         model: z.string(),
+        difficulty_source: z.string(),
+        difficulty_model: z.string(),
+        relevance_source: z.string(),
+        relevance_model: z.string(),
     })
     .superRefine((values, ctx) => {
         const source = parseModelSource(values.model_source);
@@ -56,6 +63,26 @@ const authoringSchema = z
                 path: ["model"],
                 message: "Choose a model for this connection.",
             });
+        }
+        for (const [sourceKey, modelKey] of [
+            ["difficulty_source", "difficulty_model"],
+            ["relevance_source", "relevance_model"],
+        ] as const) {
+            const selected = parseModelSource(values[sourceKey]);
+            if (selected?.kind === "connection" && !values[modelKey].trim()) {
+                ctx.addIssue({
+                    code: "custom",
+                    path: [modelKey],
+                    message: "Choose a model for this connection.",
+                });
+            }
+            if (!isInheritSource(values[sourceKey]) && !selected) {
+                ctx.addIssue({
+                    code: "custom",
+                    path: [sourceKey],
+                    message: "Choose a check model or inherit the question model.",
+                });
+            }
         }
     });
 
@@ -97,6 +124,16 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
         profileId: prefill?.model_profile,
         model: prefill?.model,
     });
+    const initialDifficultySelection = resolveJudgeSelection({
+        connections,
+        profiles,
+        selection: prefill?.judges?.difficulty,
+    });
+    const initialRelevanceSelection = resolveJudgeSelection({
+        connections,
+        profiles,
+        selection: prefill?.judges?.relevance,
+    });
     const prefilled = Boolean(prefill);
 
     const form = useForm<AuthoringFormValues>({
@@ -107,11 +144,19 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
             num_distractors: prefilledDistractors,
             model_source: initialSelection.source,
             model: initialSelection.model,
+            difficulty_source: initialDifficultySelection.source,
+            difficulty_model: initialDifficultySelection.model,
+            relevance_source: initialRelevanceSelection.source,
+            relevance_model: initialRelevanceSelection.model,
         },
     });
     const prompt = form.watch("prompt");
     const modelSource = form.watch("model_source");
     const model = form.watch("model");
+    const difficultySource = form.watch("difficulty_source");
+    const difficultyModel = form.watch("difficulty_model");
+    const relevanceSource = form.watch("relevance_source");
+    const relevanceModel = form.watch("relevance_model");
 
     useEffect(() => {
         if (submitError) summaryRef.current?.focus();
@@ -130,6 +175,16 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                 difficulty: values.difficulty,
                 num_distractors: values.num_distractors,
                 ...buildModelRequest(values.model_source, values.model),
+                judges: buildJudgeSelections(
+                    {
+                        source: values.difficulty_source,
+                        model: values.difficulty_model,
+                    },
+                    {
+                        source: values.relevance_source,
+                        model: values.relevance_model,
+                    },
+                ),
             },
             {
                 onSuccess: (job) => {
@@ -330,15 +385,73 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                                     disabled={createJob.isPending}
                                 />
 
-                                <div className="rounded-md border bg-muted/30 p-3 text-sm">
-                                    <p className="font-medium">Advisory checks</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        Difficulty and relevance use the selected question model.
-                                    </p>
-                                    <p className="mt-1 text-xs text-muted-foreground">
-                                        They are advisory and never block a technically checked
-                                        artifact.
-                                    </p>
+                                <div className="space-y-4 rounded-md border bg-muted/30 p-3">
+                                    <div>
+                                        <p className="text-sm font-medium">Advisory checks</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Keep the question model, or choose a separate model
+                                            when it cannot run the checks. They are advisory and
+                                            never block a technically checked artifact.
+                                        </p>
+                                    </div>
+                                    <ModelPicker
+                                        connections={connections}
+                                        profiles={profiles}
+                                        source={difficultySource}
+                                        model={difficultyModel}
+                                        onSourceChange={(source, nextModel) => {
+                                            form.setValue("difficulty_source", source, {
+                                                shouldValidate: true,
+                                            });
+                                            form.setValue("difficulty_model", nextModel, {
+                                                shouldValidate: true,
+                                            });
+                                        }}
+                                        onModelChange={(nextModel) =>
+                                            form.setValue("difficulty_model", nextModel, {
+                                                shouldValidate: true,
+                                            })
+                                        }
+                                        sourceError={
+                                            form.formState.errors.difficulty_source?.message
+                                        }
+                                        modelError={
+                                            form.formState.errors.difficulty_model?.message
+                                        }
+                                        disabled={createJob.isPending}
+                                        idPrefix="difficulty-check"
+                                        label="Difficulty check"
+                                        allowInherit
+                                    />
+                                    <ModelPicker
+                                        connections={connections}
+                                        profiles={profiles}
+                                        source={relevanceSource}
+                                        model={relevanceModel}
+                                        onSourceChange={(source, nextModel) => {
+                                            form.setValue("relevance_source", source, {
+                                                shouldValidate: true,
+                                            });
+                                            form.setValue("relevance_model", nextModel, {
+                                                shouldValidate: true,
+                                            });
+                                        }}
+                                        onModelChange={(nextModel) =>
+                                            form.setValue("relevance_model", nextModel, {
+                                                shouldValidate: true,
+                                            })
+                                        }
+                                        sourceError={
+                                            form.formState.errors.relevance_source?.message
+                                        }
+                                        modelError={
+                                            form.formState.errors.relevance_model?.message
+                                        }
+                                        disabled={createJob.isPending}
+                                        idPrefix="relevance-check"
+                                        label="Relevance check"
+                                        allowInherit
+                                    />
                                 </div>
                             </div>
                         </div>

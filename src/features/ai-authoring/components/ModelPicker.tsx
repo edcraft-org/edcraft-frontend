@@ -14,6 +14,7 @@ import { PROVIDER_LABELS } from "@/features/model-connections/types";
 import {
     connectionModel,
     connectionSource,
+    INHERIT_SOURCE,
     parseModelSource,
 } from "../modelSelection";
 import type { AuthoringModelProfile } from "../types";
@@ -29,6 +30,10 @@ interface ModelPickerProps {
     idPrefix?: string;
     sourceError?: string;
     modelError?: string;
+    label?: string;
+    /** Offer an explicit "use the question model" choice for advisory checks. */
+    allowInherit?: boolean;
+    inheritLabel?: string;
 }
 
 /**
@@ -47,6 +52,9 @@ export function ModelPicker({
     idPrefix = "authoring-model",
     sourceError,
     modelError,
+    label = "Question model",
+    allowInherit = false,
+    inheritLabel = "Same as question model",
 }: ModelPickerProps) {
     const parsed = parseModelSource(source);
     const selectedConnection =
@@ -74,7 +82,7 @@ export function ModelPicker({
     return (
         <div className="space-y-4">
             <div className="space-y-2">
-                <Label htmlFor={`${idPrefix}-source`}>Question model</Label>
+                <Label htmlFor={`${idPrefix}-source`}>{label}</Label>
                 <Select
                     value={source}
                     onValueChange={handleSourceChange}
@@ -84,6 +92,9 @@ export function ModelPicker({
                         <SelectValue placeholder="Choose a model" />
                     </SelectTrigger>
                     <SelectContent>
+                        {allowInherit && (
+                            <SelectItem value={INHERIT_SOURCE}>{inheritLabel}</SelectItem>
+                        )}
                         {connections.length > 0 && (
                             <SelectGroup>
                                 <SelectLabel>Your connections</SelectLabel>

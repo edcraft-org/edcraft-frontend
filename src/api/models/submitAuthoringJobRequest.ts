@@ -5,6 +5,7 @@
  * API for EdCraft Backend
  * OpenAPI spec version: 0.1.0
  */
+import type { AuthoringJudgeSelections } from './authoringJudgeSelections';
 import type { SubmitAuthoringJobRequestDifficulty } from './submitAuthoringJobRequestDifficulty';
 import type { SubmitAuthoringJobRequestNumDistractors } from './submitAuthoringJobRequestNumDistractors';
 
@@ -31,4 +32,5 @@ export interface SubmitAuthoringJobRequest {
    * @maxLength 4000
    */
   prompt: string;
+  judges?: AuthoringJudgeSelections | null;
 }

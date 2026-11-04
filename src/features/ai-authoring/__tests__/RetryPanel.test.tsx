@@ -180,6 +180,48 @@ describe("RetryPanel", () => {
         ).toBeInTheDocument();
     });
 
+    it("preserves advisory model overrides when retrying", async () => {
+        const user = userEvent.setup();
+        renderPanel(connectionCapabilities, {
+            ...request,
+            model_profile: null,
+            connection_id: "connection-1",
+            model: "gpt-test",
+            judges: {
+                relevance: {
+                    connection_id: "connection-1",
+                    model: "gpt-other",
+                },
+            },
+        });
+
+        expect(screen.getByRole("combobox", { name: "Relevance check" })).toHaveTextContent(
+            "My OpenAI",
+        );
+        expect(screen.getByRole("combobox", { name: "Difficulty check" })).toHaveTextContent(
+            "Same as question model",
+        );
+
+        await user.click(screen.getByRole("button", { name: "Retry question" }));
+
+        await waitFor(() => {
+            expect(createAuthoringJob).toHaveBeenCalledWith({
+                domain: "code",
+                prompt: request.prompt,
+                difficulty: request.difficulty,
+                num_distractors: request.num_distractors,
+                connection_id: "connection-1",
+                model: "gpt-test",
+                judges: {
+                    relevance: {
+                        connection_id: "connection-1",
+                        model: "gpt-other",
+                    },
+                },
+            });
+        });
+    });
+
     it("passes the request into the edit form", async () => {
         const user = userEvent.setup();
         renderPanel();

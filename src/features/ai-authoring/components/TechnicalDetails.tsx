@@ -34,6 +34,18 @@ export function TechnicalDetails({ review, result }: TechnicalDetailsProps) {
         ],
         ["Author provider", result?.provider],
         ["Author model", result?.model],
+        [
+            "Difficulty check model",
+            review.request.judges?.difficulty
+                ? modelLabel(review.request.judges.difficulty)
+                : "Same as question model",
+        ],
+        [
+            "Relevance check model",
+            review.request.judges?.relevance
+                ? modelLabel(review.request.judges.relevance)
+                : "Same as question model",
+        ],
         ["Review state", review.state],
     ]
         .map(([label, value]) => [label, present(value)] as const)

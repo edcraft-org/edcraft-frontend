@@ -10,8 +10,11 @@ import { getAuthoringErrorMessage } from "../errors";
 import { capitalize } from "../format";
 import { useCreateAuthoringJob } from "../hooks/useAiAuthoring";
 import {
+    buildJudgeSelections,
     buildModelRequest,
+    isModelSelectionComplete,
     parseModelSource,
+    resolveJudgeSelection,
     resolveModelSelection,
 } from "../modelSelection";
 import type {
@@ -40,8 +43,22 @@ export function RetryPanel({ request, capabilities }: RetryPanelProps) {
         profileId: request.model_profile,
         model: request.model,
     });
+    const initialDifficulty = resolveJudgeSelection({
+        connections,
+        profiles,
+        selection: request.judges?.difficulty,
+    });
+    const initialRelevance = resolveJudgeSelection({
+        connections,
+        profiles,
+        selection: request.judges?.relevance,
+    });
     const [modelSource, setModelSource] = useState(initial.source);
     const [model, setModel] = useState(initial.model);
+    const [difficultySource, setDifficultySource] = useState(initialDifficulty.source);
+    const [difficultyModel, setDifficultyModel] = useState(initialDifficulty.model);
+    const [relevanceSource, setRelevanceSource] = useState(initialRelevance.source);
+    const [relevanceModel, setRelevanceModel] = useState(initialRelevance.model);
 
     const source = parseModelSource(modelSource);
     const selectedConnection =
@@ -49,9 +66,15 @@ export function RetryPanel({ request, capabilities }: RetryPanelProps) {
             ? connections.find((connection) => connection.id === source.id)
             : undefined;
     const canRetry =
-        Boolean(modelSource) &&
-        (source?.kind !== "connection" || Boolean(model.trim())) &&
+        isModelSelectionComplete(modelSource, model) &&
+        isModelSelectionComplete(difficultySource, difficultyModel) &&
+        isModelSelectionComplete(relevanceSource, relevanceModel) &&
         !createJob.isPending;
+
+    const judges = buildJudgeSelections(
+        { source: difficultySource, model: difficultyModel },
+        { source: relevanceSource, model: relevanceModel },
+    );
     const originalConnectionMissing =
         Boolean(request.connection_id) &&
         !connections.some((connection) => connection.id === request.connection_id);
@@ -65,6 +88,7 @@ export function RetryPanel({ request, capabilities }: RetryPanelProps) {
         difficulty: request.difficulty,
         num_distractors: request.num_distractors,
         ...buildModelRequest(modelSource, model),
+        judges,
     };
 
     const retry = () => {
@@ -77,6 +101,7 @@ export function RetryPanel({ request, capabilities }: RetryPanelProps) {
                 difficulty: request.difficulty,
                 num_distractors: request.num_distractors,
                 ...buildModelRequest(modelSource, model),
+                judges,
             },
             {
                 onSuccess: (job) => {
@@ -113,21 +138,56 @@ export function RetryPanel({ request, capabilities }: RetryPanelProps) {
                     <Badge variant="outline">Code</Badge>
                 </div>
 
-                <div className="max-w-md">
+                <div className="max-w-md space-y-4">
                     {hasAnyModel ? (
-                        <ModelPicker
-                            connections={connections}
-                            profiles={profiles}
-                            source={modelSource}
-                            model={model}
-                            onSourceChange={(nextSource, nextModel) => {
-                                setModelSource(nextSource);
-                                setModel(nextModel);
-                            }}
-                            onModelChange={setModel}
-                            disabled={createJob.isPending}
-                            idPrefix="retry-model"
-                        />
+                        <>
+                            <ModelPicker
+                                connections={connections}
+                                profiles={profiles}
+                                source={modelSource}
+                                model={model}
+                                onSourceChange={(nextSource, nextModel) => {
+                                    setModelSource(nextSource);
+                                    setModel(nextModel);
+                                }}
+                                onModelChange={setModel}
+                                disabled={createJob.isPending}
+                                idPrefix="retry-model"
+                            />
+                            <div className="space-y-4 rounded-md border bg-muted/30 p-3">
+                                <p className="text-sm font-medium">Advisory checks</p>
+                                <ModelPicker
+                                    connections={connections}
+                                    profiles={profiles}
+                                    source={difficultySource}
+                                    model={difficultyModel}
+                                    onSourceChange={(nextSource, nextModel) => {
+                                        setDifficultySource(nextSource);
+                                        setDifficultyModel(nextModel);
+                                    }}
+                                    onModelChange={setDifficultyModel}
+                                    disabled={createJob.isPending}
+                                    idPrefix="retry-difficulty"
+                                    label="Difficulty check"
+                                    allowInherit
+                                />
+                                <ModelPicker
+                                    connections={connections}
+                                    profiles={profiles}
+                                    source={relevanceSource}
+                                    model={relevanceModel}
+                                    onSourceChange={(nextSource, nextModel) => {
+                                        setRelevanceSource(nextSource);
+                                        setRelevanceModel(nextModel);
+                                    }}
+                                    onModelChange={setRelevanceModel}
+                                    disabled={createJob.isPending}
+                                    idPrefix="retry-relevance"
+                                    label="Relevance check"
+                                    allowInherit
+                                />
+                            </div>
+                        </>
                     ) : (
                         <p className="text-xs text-destructive">
                             No question-writing model is configured.

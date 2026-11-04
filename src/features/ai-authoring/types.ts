@@ -4,6 +4,7 @@
 import type {
     ApprovalRequest,
     AuthoringCapabilitiesResponse,
+    AuthoringJudgeSelections,
     AuthoringJobStatusResponse,
     AuthoringJobStatusResponseState,
     AuthoringJobSummary as ApiAuthoringJobSummary,
@@ -61,4 +62,5 @@ export interface AuthoringRetryPrefill {
     model_profile?: string | null;
     connection_id?: string | null;
     model?: string | null;
+    judges?: AuthoringJudgeSelections | null;
 }

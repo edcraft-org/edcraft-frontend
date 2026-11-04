@@ -1,8 +1,15 @@
+import type {
+    AuthoringJudgeSelections,
+    AuthoringModelSelection,
+} from "@/api/models";
 import type { ProviderConnection } from "@/features/model-connections/types";
 import type { AuthoringModelProfile } from "./types";
 
 const CONNECTION_PREFIX = "connection:";
 const PROFILE_PREFIX = "profile:";
+
+/** Picker sentinel for "use the question's authoring model". */
+export const INHERIT_SOURCE = "inherit";
 
 export interface ParsedModelSource {
     kind: "connection" | "profile";
@@ -45,6 +52,10 @@ export function connectionModel(connection: ProviderConnection): string {
     return connection.default_model || connection.models[0] || "";
 }
 
+export function isInheritSource(source: string): boolean {
+    return source === INHERIT_SOURCE;
+}
+
 export function buildModelRequest(
     source: string,
     model: string,
@@ -57,6 +68,34 @@ export function buildModelRequest(
         return { model_profile: parsed.id };
     }
     return {};
+}
+
+/** A selected connection needs a non-blank model; inherit and profiles do not. */
+export function isModelSelectionComplete(source: string, model: string): boolean {
+    if (isInheritSource(source)) return true;
+    const parsed = parseModelSource(source);
+    if (!parsed) return false;
+    return parsed.kind !== "connection" || model.trim().length > 0;
+}
+
+/**
+ * Build the optional judge overrides. Inherit entries are omitted so the
+ * backend keeps following the question model.
+ */
+export function buildJudgeSelections(
+    difficulty: ModelSelection,
+    relevance: ModelSelection,
+): AuthoringJudgeSelections | undefined {
+    const selections: AuthoringJudgeSelections = {};
+    if (!isInheritSource(difficulty.source)) {
+        const request = buildModelRequest(difficulty.source, difficulty.model);
+        if (Object.keys(request).length > 0) selections.difficulty = request;
+    }
+    if (!isInheritSource(relevance.source)) {
+        const request = buildModelRequest(relevance.source, relevance.model);
+        if (Object.keys(request).length > 0) selections.relevance = request;
+    }
+    return Object.keys(selections).length > 0 ? selections : undefined;
 }
 
 interface ResolveModelSelectionInput {
@@ -107,4 +146,40 @@ export function resolveModelSelection({
     }
 
     return { source: "", model: "" };
+}
+
+interface ResolveJudgeSelectionInput {
+    connections: ProviderConnection[];
+    profiles: AuthoringModelProfile[];
+    selection?: AuthoringModelSelection | null;
+}
+
+/**
+ * Resolve one stored judge override, defaulting to inherit. A removed
+ * connection or profile also falls back to inherit so a retry can still start.
+ */
+export function resolveJudgeSelection({
+    connections,
+    profiles,
+    selection,
+}: ResolveJudgeSelectionInput): ModelSelection {
+    if (selection?.connection_id) {
+        const connection = connections.find(
+            (item) => item.id === selection.connection_id,
+        );
+        if (connection) {
+            return resolveModelSelection({
+                connections,
+                profiles,
+                connectionId: connection.id,
+                model: selection.model,
+            });
+        }
+    } else if (selection?.model_profile) {
+        const profile = profiles.find((item) => item.id === selection.model_profile);
+        if (profile) {
+            return { source: profileSource(profile.id), model: "" };
+        }
+    }
+    return { source: INHERIT_SOURCE, model: "" };
 }
