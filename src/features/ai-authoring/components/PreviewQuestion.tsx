@@ -10,10 +10,6 @@ interface PreviewQuestionProps {
     headingLevel?: "h3" | "h4";
 }
 
-function optionLabel(index: number): string {
-    return String.fromCharCode(65 + index);
-}
-
 function renderReadableValue(value: unknown) {
     return <ReadableValue value={value} />;
 }
@@ -39,10 +35,6 @@ export function PreviewQuestion({ instance, headingLevel = "h4" }: PreviewQuesti
         reason: undefined,
         correct: true,
     });
-    const wrongChoices = choices
-        .map((choice, index) => ({ ...choice, index }))
-        .filter((choice) => !choice.correct);
-
     return (
         <article className="space-y-4 rounded-lg border p-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
@@ -51,7 +43,7 @@ export function PreviewQuestion({ instance, headingLevel = "h4" }: PreviewQuesti
             </div>
 
             <p className="text-xs text-muted-foreground">
-                Read the code, then use Show Answer to check the correct choice.
+                The correct choice is highlighted below.
             </p>
 
             <ReadOnlyCode code={question.code} label="Question code" />
@@ -59,27 +51,16 @@ export function PreviewQuestion({ instance, headingLevel = "h4" }: PreviewQuesti
             <QuestionContent
                 questionType={question.question_type ?? "mcq"}
                 options={choices.map((choice) => choice.value)}
+                optionExplanations={choices.map((choice) =>
+                    choice.correct ? undefined : choice.reason,
+                )}
                 correctIndices={[correctIndex]}
                 answer={question.proposed_answer}
+                hideAnswerButton
+                showAnswerByDefault
+                hideAnswerSummary
                 renderValue={renderReadableValue}
             />
-
-            <section aria-label="Wrong choice explanations" className="space-y-2">
-                <h5 className="text-sm font-medium">Why the other choices are wrong</h5>
-                <ul className="space-y-2">
-                    {wrongChoices.map((choice) => (
-                        <li key={choice.index} className="rounded-md border p-2 text-sm">
-                            <div className="flex flex-wrap items-start gap-1">
-                                <span className="font-medium">{optionLabel(choice.index)}.</span>
-                                <ReadableValue value={choice.value} />
-                            </div>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                                {choice.reason ?? "No explanation provided."}
-                            </p>
-                        </li>
-                    ))}
-                </ul>
-            </section>
 
             <section aria-label="Question inputs" className="space-y-1">
                 <h5 className="text-sm font-medium">Inputs</h5>

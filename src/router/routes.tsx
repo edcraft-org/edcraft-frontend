@@ -23,6 +23,12 @@ const AiAuthoringPage = lazy(() => import("@/features/ai-authoring/pages/AiAutho
 const AiAuthoringJobPage = lazy(
     () => import("@/features/ai-authoring/pages/AiAuthoringJobPage"),
 );
+const AiAuthoringGeneratePage = lazy(
+    () => import("@/features/ai-authoring/pages/AiAuthoringGeneratePage"),
+);
+const ModelConnectionsPage = lazy(
+    () => import("@/features/model-connections/pages/ModelConnectionsPage"),
+);
 const TemplateBuilderPage = lazy(
     () => import("@/features/question-template-builder/pages/TemplateBuilderPage"),
 );
@@ -155,6 +161,14 @@ export const router = createBrowserRouter([
                     {
                         path: "ai-authoring/:jobId",
                         element: lazyRoute(AiAuthoringJobPage),
+                    },
+                    {
+                        path: "ai-authoring/:jobId/generate",
+                        element: lazyRoute(AiAuthoringGeneratePage),
+                    },
+                    {
+                        path: "settings/model-connections",
+                        element: lazyRoute(ModelConnectionsPage),
                     },
                 ],
             },

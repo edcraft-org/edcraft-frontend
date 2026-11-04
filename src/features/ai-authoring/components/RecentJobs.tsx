@@ -4,30 +4,42 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import { ROUTES } from "@/router/paths";
 import { getAuthoringErrorMessage } from "../errors";
 import { capitalize, formatDate } from "../format";
 import { useAuthoringJobs } from "../hooks/useAiAuthoring";
-import type { AuthoringJobState } from "../types";
+import type { AuthoringJobSummary, AuthoringJobState } from "../types";
 
-function stateVariant(state: AuthoringJobState): "default" | "secondary" | "destructive" | "outline" {
-    if (state === "completed") return "default";
-    if (state === "failed") return "destructive";
-    if (state === "running") return "secondary";
-    return "outline";
-}
+type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
-function stateLabel(state: AuthoringJobState): string {
+function summaryStatus(state: AuthoringJobState): { label: string; variant: BadgeVariant } {
     switch (state) {
         case "completed":
-            return "Ready to review";
+            return { label: "Completed", variant: "default" };
         case "failed":
-            return "Could not create";
+            return { label: "Failed", variant: "destructive" };
         case "running":
-            return "Creating";
+            return { label: "Creating", variant: "secondary" };
         case "queued":
-            return "Waiting";
+            return { label: "Waiting", variant: "outline" };
     }
+}
+
+function decisionBadge(job: AuthoringJobSummary) {
+    if (!job.approval) return <span className="text-muted-foreground">—</span>;
+    return (
+        <Badge variant={job.approval.decision === "approved" ? "default" : "destructive"}>
+            {job.approval.decision === "approved" ? "Approved" : "Rejected"}
+        </Badge>
+    );
 }
 
 export function RecentJobs() {
@@ -68,50 +80,59 @@ export function RecentJobs() {
                 )}
 
                 {jobsQuery.data?.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                        No questions yet. Create one with the form.
-                    </p>
+                    <p className="text-sm text-muted-foreground">No questions yet.</p>
                 )}
 
                 {jobsQuery.data && jobsQuery.data.length > 0 && (
-                    <ul className="divide-y">
-                        {jobsQuery.data.map((job) => (
-                            <li key={job.job_id}>
-                                <Link
-                                    to={ROUTES.AI_AUTHORING_JOB(job.job_id)}
-                                    className="flex flex-col gap-2 py-3 transition-colors hover:text-primary sm:flex-row sm:items-center sm:justify-between"
-                                >
-                                    <div className="min-w-0">
-                                        <p className="truncate text-sm font-medium">
-                                            {job.prompt_preview || "Untitled question"}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {capitalize(job.difficulty)} ·{" "}
-                                            {formatDate(job.created_at)}
-                                        </p>
-                                    </div>
-                                    <div className="flex shrink-0 items-center gap-2">
-                                        {job.approval && (
-                                            <Badge
-                                                variant={
-                                                    job.approval.decision === "approved"
-                                                        ? "default"
-                                                        : "destructive"
-                                                }
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Request</TableHead>
+                                <TableHead>Difficulty</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Decision</TableHead>
+                                <TableHead>Created</TableHead>
+                                <TableHead className="text-right">
+                                    <span className="sr-only">Open</span>
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {jobsQuery.data.map((job) => {
+                                const status = summaryStatus(job.state);
+                                return (
+                                    <TableRow key={job.job_id}>
+                                        <TableCell className="max-w-96 whitespace-normal">
+                                            <Link
+                                                to={ROUTES.AI_AUTHORING_JOB(job.job_id)}
+                                                className="line-clamp-2 font-medium underline-offset-2 hover:text-primary hover:underline"
                                             >
-                                                {job.approval.decision === "approved"
-                                                    ? "Approved"
-                                                    : "Rejected"}
-                                            </Badge>
-                                        )}
-                                        <Badge variant={stateVariant(job.state)}>
-                                            {stateLabel(job.state)}
-                                        </Badge>
-                                    </div>
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
+                                                {job.prompt_preview || "Untitled question"}
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground">
+                                            {capitalize(job.difficulty)}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant={status.variant}>{status.label}</Badge>
+                                        </TableCell>
+                                        <TableCell>{decisionBadge(job)}</TableCell>
+                                        <TableCell className="text-muted-foreground">
+                                            {formatDate(job.created_at)}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Link
+                                                to={ROUTES.AI_AUTHORING_JOB(job.job_id)}
+                                                className="text-sm font-medium underline-offset-2 hover:underline"
+                                            >
+                                                Open
+                                            </Link>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
                 )}
             </CardContent>
         </Card>

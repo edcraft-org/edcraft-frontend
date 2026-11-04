@@ -5,9 +5,15 @@ interface QuestionContentProps {
     questionText?: string;
     questionType: string;
     options?: unknown[];
+    /** Optional per-option explanation, shown under each option once revealed. */
+    optionExplanations?: Array<string | undefined>;
     correctIndices?: number[];
     answer?: unknown;
     hideAnswerButton?: boolean;
+    /** Start with the answer revealed. Useful for review-only previews. */
+    showAnswerByDefault?: boolean;
+    /** Skip the separate answer box; the correct options stay highlighted. */
+    hideAnswerSummary?: boolean;
     /**
      * Optional display hook for structured values. Callers can supply their own
      * renderer while this shared component stays unaware of domain-specific
@@ -20,12 +26,15 @@ export function QuestionContent({
     questionText,
     questionType,
     options,
+    optionExplanations,
     correctIndices,
     answer,
     hideAnswerButton = false,
+    showAnswerByDefault = false,
+    hideAnswerSummary = false,
     renderValue,
 }: QuestionContentProps) {
-    const [showAnswer, setShowAnswer] = useState(false);
+    const [showAnswer, setShowAnswer] = useState(showAnswerByDefault);
 
     // Convert option to string for display
     const formatOption = (option: unknown): string => {
@@ -90,6 +99,11 @@ export function QuestionContent({
                                     <span className="text-green-600 dark:text-green-400">✓</span>
                                 )}
                             </div>
+                            {showAnswer && optionExplanations?.[index] && (
+                                <p className="mt-2 border-t border-border/60 pt-2 text-xs text-muted-foreground">
+                                    {optionExplanations[index]}
+                                </p>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -109,7 +123,7 @@ export function QuestionContent({
             )}
 
             {/* Answer Section */}
-            {showAnswer && (
+            {showAnswer && !hideAnswerSummary && (
                 <div className="p-3 bg-green-50 dark:bg-green-950 border border-green-500 dark:border-green-700 rounded-md">
                     <h4 className="text-sm font-semibold text-green-800 dark:text-green-300 mb-2">
                         Answer:

@@ -14,7 +14,9 @@ import type { AuthoringRequestViewNumDistractors } from './authoringRequestViewN
 export interface AuthoringRequestView {
   difficulty: AuthoringRequestViewDifficulty;
   domain: 'code';
-  model_profile: string;
+  model_profile?: string | null;
+  connection_id?: string | null;
+  model?: string | null;
   num_distractors: AuthoringRequestViewNumDistractors;
   prompt: string;
 }

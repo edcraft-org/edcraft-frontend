@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { PreviewQuestion } from "../components/PreviewQuestion";
 import { ReadableValue } from "../components/ReadableValue";
 import type { CodeQuestionInstance } from "../types";
@@ -49,8 +48,7 @@ describe("PreviewQuestion", () => {
         }
     });
 
-    it("shows readable choices, answer and rationales instead of quoted JSON", async () => {
-        const user = userEvent.setup();
+    it("shows readable choices, the correct answer and rationales instead of quoted JSON", () => {
         const { container } = render(<PreviewQuestion instance={structuredInstance} />);
 
         expect(
@@ -61,12 +59,20 @@ describe("PreviewQuestion", () => {
         );
         expect(screen.getByText("Flattens the two rows.")).toBeInTheDocument();
         expect(screen.getByText("Does not add anything.")).toBeInTheDocument();
+        expect(
+            screen.queryByText("Why the other choices are wrong"),
+        ).not.toBeInTheDocument();
+        expect(screen.getByText("Flattens the two rows.").parentElement).toHaveClass(
+            "p-3",
+        );
         expect(container).not.toHaveTextContent('{"values":[[1,2],[3,4]]}');
         expect(container).not.toHaveTextContent('"[[1,2],[3,4]]"');
 
-        await user.click(screen.getByRole("button", { name: "Show Answer" }));
-
-        expect(screen.getByText(/Correct option/)).toHaveTextContent("A");
+        expect(screen.queryByRole("button", { name: "Show Answer" })).not.toBeInTheDocument();
+        expect(screen.queryByText("Answer:")).not.toBeInTheDocument();
+        expect(screen.queryByText(/Correct option/)).not.toBeInTheDocument();
+        const correctOption = screen.getByText("✓").closest("div.rounded-md");
+        expect(correctOption).toHaveClass("bg-green-50");
     });
 
     it("preserves nested array boundaries in readable values", () => {

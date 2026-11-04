@@ -1,4 +1,6 @@
 import type { AuthoringResult, AuthoringReview } from "../types";
+import { modelLabel } from "../format";
+import { AttemptsEvidence } from "./AttemptsEvidence";
 import { EvidenceDetails } from "./EvidenceDetails";
 
 interface TechnicalDetailsProps {
@@ -13,15 +15,23 @@ function present(value: string | number | null | undefined): string | null {
 
 /**
  * Optional developer/research evidence. The default review keeps this closed so
- * educators can approve from the question and concise checks alone. Complex
- * payloads use one shared JSON disclosure instead of bespoke layouts.
+ * educators can approve from the question and concise checks alone. Each payload
+ * is parsed into readable fields with the exact JSON one level deeper.
  */
 export function TechnicalDetails({ review, result }: TechnicalDetailsProps) {
     const metadata = [
         ["Artifact ID", review.artifact_id],
         ["Artifact digest (SHA-256)", review.artifact_sha256],
         ["Library revision", review.library_revision],
-        ["Model profile", review.request.model_profile],
+        ["Model", modelLabel(review.request)],
+        [
+            "Model source",
+            review.request.connection_id
+                ? "Connection"
+                : review.request.model_profile
+                  ? "Server profile"
+                  : null,
+        ],
         ["Author provider", result?.provider],
         ["Author model", result?.model],
         ["Review state", review.state],
@@ -31,18 +41,6 @@ export function TechnicalDetails({ review, result }: TechnicalDetailsProps) {
 
     const checks = review.checks ?? [];
     const attempts = review.attempts ?? [];
-    const evidence: Array<[string, unknown]> = [
-        [`Automated checks (${checks.length})`, checks],
-        [`Authoring attempts (${attempts.length})`, attempts],
-        ["Fixed plan", review.fixed_plan ?? []],
-        ["Difficulty advisory", review.difficulty ?? result?.difficulty],
-        ["Relevance advisory", review.relevance ?? result?.relevance],
-        ["Sampled-check limits", review.validation_limits ?? null],
-        ["Raw warnings", review.warnings ?? []],
-        ["Approval record", review.approval],
-        ["Review error", review.error],
-        ["Technically checked template artifact", review.template],
-    ];
 
     return (
         <details className="rounded-lg border bg-muted/30 p-4 text-sm">
@@ -63,9 +61,57 @@ export function TechnicalDetails({ review, result }: TechnicalDetailsProps) {
                         and seeded preview show the version being reviewed.
                     </p>
                 )}
-                {evidence.map(([summary, value]) => (
-                    <EvidenceDetails key={summary} summary={summary} value={value} />
-                ))}
+
+                <EvidenceDetails
+                    summary={`Automated checks (${checks.length})`}
+                    value={checks}
+                    variant="structured"
+                />
+                <AttemptsEvidence attempts={attempts} />
+                <EvidenceDetails
+                    summary="Fixed plan"
+                    value={review.fixed_plan ?? []}
+                    variant="structured"
+                />
+                <EvidenceDetails
+                    summary="Difficulty advisory"
+                    value={review.difficulty ?? result?.difficulty}
+                    variant="structured"
+                />
+                <EvidenceDetails
+                    summary="Relevance advisory"
+                    value={review.relevance ?? result?.relevance}
+                    variant="structured"
+                />
+                <EvidenceDetails
+                    summary="Sampled-check limits"
+                    value={review.validation_limits ?? null}
+                    variant="structured"
+                />
+                <EvidenceDetails
+                    summary="Raw warnings"
+                    value={review.warnings ?? []}
+                    variant="structured"
+                />
+                <EvidenceDetails
+                    summary="Approval record"
+                    value={review.approval}
+                    variant="structured"
+                />
+                <EvidenceDetails summary="Review error" value={review.error} variant="structured" />
+                <EvidenceDetails
+                    summary="Template details"
+                    value={
+                        review.template
+                            ? {
+                                  ...review.template.candidate,
+                                  template_id: review.template.template_id,
+                                  language: review.template.language,
+                              }
+                            : null
+                    }
+                    variant="structured"
+                />
             </div>
         </details>
     );

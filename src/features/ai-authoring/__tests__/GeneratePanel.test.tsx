@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
@@ -79,12 +79,6 @@ function renderPanel({
     };
 }
 
-async function openAdvancedOptions() {
-    const user = userEvent.setup();
-    await user.click(screen.getByText("Advanced options"));
-    return user;
-}
-
 describe("GeneratePanel", () => {
     beforeEach(() => {
         vi.mocked(generateAuthoringBatch).mockResolvedValue(batch);
@@ -92,13 +86,11 @@ describe("GeneratePanel", () => {
 
     afterEach(cleanup);
 
-    it("keeps the number of questions visible and starting seed under advanced options", () => {
+    it("keeps the number of questions and starting seed visible", () => {
         renderPanel();
 
         expect(screen.getByLabelText("Number of questions")).toBeVisible();
-        const advanced = screen.getByText("Advanced options").closest("details");
-        expect(advanced).not.toHaveAttribute("open");
-        expect(within(advanced as HTMLElement).getByLabelText("Starting seed")).toBeInTheDocument();
+        expect(screen.getByLabelText("Starting seed")).toBeVisible();
     });
 
     it("keeps generation disabled until the exact artifact is approved", () => {
@@ -112,7 +104,7 @@ describe("GeneratePanel", () => {
 
     it("sends the approved digest, deterministic seed and quantity unchanged", async () => {
         renderPanel();
-        const user = await openAdvancedOptions();
+        const user = userEvent.setup();
 
         const quantity = screen.getByLabelText("Number of questions");
         const seed = screen.getByLabelText("Starting seed");
@@ -206,7 +198,7 @@ describe("GeneratePanel", () => {
 
     it("rejects an out-of-range seed inline without sending a request", async () => {
         renderPanel();
-        const user = await openAdvancedOptions();
+        const user = userEvent.setup();
 
         const seed = screen.getByLabelText("Starting seed");
         await user.clear(seed);
@@ -219,7 +211,7 @@ describe("GeneratePanel", () => {
 
     it("rejects a batch whose last seed would overflow", async () => {
         renderPanel();
-        const user = await openAdvancedOptions();
+        const user = userEvent.setup();
 
         const quantity = screen.getByLabelText("Number of questions");
         const seed = screen.getByLabelText("Starting seed");
@@ -238,10 +230,8 @@ describe("GeneratePanel", () => {
     it("describes the persisted last set without claiming its questions are stored", () => {
         renderPanel({ lastGenerationMetadata: lastGeneration });
 
-        expect(screen.getByText("Last created set")).toBeInTheDocument();
+        expect(screen.getByText("Last generated set")).toBeInTheDocument();
         expect(screen.getByText(/2 created, all different/)).toBeInTheDocument();
-        expect(
-            screen.getByText(/Only this summary is saved/),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/seed 7/)).toBeInTheDocument();
     });
 });

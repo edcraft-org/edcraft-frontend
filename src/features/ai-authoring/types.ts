@@ -8,6 +8,7 @@ import type {
     AuthoringJobStatusResponseState,
     AuthoringJobSummary as ApiAuthoringJobSummary,
     AuthoringJobSubmittedResponse,
+    AuthoringModelProfile as ApiAuthoringModelProfile,
     AuthoringReviewResponse,
     AuthoringSummary,
     CodeQuestionInstance as ApiCodeQuestionInstance,
@@ -31,6 +32,7 @@ export type AuthoringJobState = AuthoringJobStatusResponseState;
 export type ApprovalDecision = StoredReviewerApproval["decision"];
 
 export type AuthoringCapabilities = AuthoringCapabilitiesResponse;
+export type AuthoringModelProfile = ApiAuthoringModelProfile;
 export type CreateAuthoringJobRequest = SubmitAuthoringJobRequest;
 export type CreatedAuthoringJob = AuthoringJobSubmittedResponse;
 export type AuthoringApproval = StoredReviewerApproval;
@@ -50,3 +52,13 @@ export type AuthoringBatch = GeneratedQuestionsBatch;
 export type ApprovalInput = ApprovalRequest;
 export type GenerateInput = GenerateRequest;
 export type GenerationMetadata = ApiGenerationMetadata;
+
+/** Values carried from a failed job into the start-page form. */
+export interface AuthoringRetryPrefill {
+    prompt: string;
+    difficulty: AuthoringDifficulty;
+    num_distractors: 2 | 3;
+    model_profile?: string | null;
+    connection_id?: string | null;
+    model?: string | null;
+}

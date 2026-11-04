@@ -11,16 +11,17 @@ export default function AiAuthoringPage() {
     const capabilitiesQuery = useAuthoringCapabilities();
 
     return (
-        <div className="mx-auto w-full max-w-5xl space-y-6 p-4 md:p-6">
-            <header className="space-y-2">
-                <h1 className="flex items-center gap-2 text-2xl font-semibold">
-                    <Sparkles className="h-6 w-6" aria-hidden="true" />
-                    Create a code question with AI
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                    Describe the question you want, choose a difficulty, then review the question
-                    and download it when it is ready.
-                </p>
+        <div className="mx-auto w-full max-w-[1440px] space-y-6 p-4 md:p-6">
+            <header className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h1 className="flex items-center gap-2 text-2xl font-semibold">
+                        <Sparkles className="h-6 w-6" aria-hidden="true" />
+                        AI Authoring
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                        Create, review and reuse code questions.
+                    </p>
+                </div>
             </header>
 
             {capabilitiesQuery.isPending && (

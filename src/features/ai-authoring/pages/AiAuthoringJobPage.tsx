@@ -1,15 +1,16 @@
 import { useCallback, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
+import { AlertCircle, ArrowLeft, RefreshCw, Sparkles } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { queryKeys } from "@/api";
 import { ROUTES } from "@/router/paths";
-import { GeneratePanel } from "../components/GeneratePanel";
 import { ProgressPanel } from "../components/ProgressPanel";
+import { RetryPanel } from "../components/RetryPanel";
 import { ReviewPanel } from "../components/ReviewPanel";
+import { TechnicalDetails } from "../components/TechnicalDetails";
 import { getAuthoringErrorMessage, isNotFoundError } from "../errors";
 import {
     useAuthoringCapabilities,
@@ -70,7 +71,7 @@ export default function AiAuthoringJobPage() {
     const terminal = reviewTerminal;
 
     return (
-        <div className="mx-auto w-full max-w-5xl space-y-6 p-4 md:p-6">
+        <div className="mx-auto w-full max-w-[1440px] space-y-6 p-4 md:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
                     <Link
@@ -78,23 +79,33 @@ export default function AiAuthoringJobPage() {
                         className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-2 hover:underline"
                     >
                         <ArrowLeft className="h-4 w-4" />
-                        Start over
+                        New request
                     </Link>
-                    <h1 className="text-2xl font-semibold">Create a code question</h1>
+                    <h1 className="text-2xl font-semibold">AI Authoring</h1>
                 </div>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                        void jobQuery.refetch();
-                        if (terminal) void reviewQuery.refetch();
-                    }}
-                    disabled={jobQuery.isFetching}
-                >
-                    <RefreshCw className={jobQuery.isFetching ? "animate-spin" : ""} />
-                    Refresh
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                    {job?.state === "completed" && (
+                        <Button asChild type="button" size="sm">
+                            <Link to={ROUTES.AI_AUTHORING_GENERATE(jobId)}>
+                                <Sparkles />
+                                Reuse and generate
+                            </Link>
+                        </Button>
+                    )}
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                            void jobQuery.refetch();
+                            if (terminal) void reviewQuery.refetch();
+                        }}
+                        disabled={jobQuery.isFetching}
+                    >
+                        <RefreshCw className={jobQuery.isFetching ? "animate-spin" : ""} />
+                        Refresh
+                    </Button>
+                </div>
             </div>
 
             {jobQuery.isPending && <LoadingCard>Loading your question…</LoadingCard>}
@@ -157,26 +168,46 @@ export default function AiAuthoringJobPage() {
                     )}
 
                     {job.state === "failed" && (
-                        <Alert variant="destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Question creation failed</AlertTitle>
-                            <AlertDescription className="space-y-2">
-                                <p>
+                        <>
+                            <Alert variant="destructive">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertTitle>Question creation failed</AlertTitle>
+                                <AlertDescription>
                                     {job.error?.message ??
                                         job.result?.error?.message ??
                                         review?.error?.message ??
                                         "The question could not be created."}
-                                </p>
-                                <p>
-                                    <Link
-                                        className="underline underline-offset-2"
-                                        to={ROUTES.AI_AUTHORING}
-                                    >
-                                        Try creating a new question
-                                    </Link>
-                                </p>
-                            </AlertDescription>
-                        </Alert>
+                                </AlertDescription>
+                            </Alert>
+
+                            {review?.request && capabilitiesQuery.isPending && (
+                                <LoadingCard>Loading model settings…</LoadingCard>
+                            )}
+
+                            {review?.request && capabilitiesQuery.isError && (
+                                <Alert variant="destructive">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertTitle>Question settings unavailable</AlertTitle>
+                                    <AlertDescription>
+                                        {getAuthoringErrorMessage(
+                                            capabilitiesQuery.error,
+                                            "The question settings could not be loaded.",
+                                        )}
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+
+                            {review?.request && capabilitiesQuery.data && (
+                                <RetryPanel
+                                    request={review.request}
+                                    capabilities={capabilitiesQuery.data}
+                                />
+                            )}
+
+                            {review && !reviewQuery.isError && (
+                                <TechnicalDetails review={review} result={job.result ?? null} />
+                            )}
+                        </>
                     )}
 
                     {terminal && reviewQuery.isPending && (
@@ -207,44 +238,14 @@ export default function AiAuthoringJobPage() {
                         </Alert>
                     )}
 
-                    {terminal && review && !reviewQuery.isError && (
-                        <>
-                            <ReviewPanel
-                                key={`review-${jobId}-${reviewEpoch}`}
-                                jobId={jobId}
-                                review={review}
-                                result={job.result ?? null}
-                                onStaleArtifact={handleStaleArtifact}
-                            />
-
-                            {job.state === "completed" && capabilitiesQuery.isPending && (
-                                <LoadingCard>Loading question settings…</LoadingCard>
-                            )}
-
-                            {job.state === "completed" && capabilitiesQuery.isError && (
-                                <Alert variant="destructive">
-                                    <AlertCircle className="h-4 w-4" />
-                                    <AlertTitle>Question settings unavailable</AlertTitle>
-                                    <AlertDescription>
-                                        {getAuthoringErrorMessage(
-                                            capabilitiesQuery.error,
-                                            "The question settings could not be loaded.",
-                                        )}
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-
-                            {job.state === "completed" && capabilitiesQuery.data && (
-                                <GeneratePanel
-                                    key={`generate-${jobId}-${reviewEpoch}`}
-                                    jobId={jobId}
-                                    review={review}
-                                    maxQuantity={capabilitiesQuery.data.max_quantity}
-                                    lastGeneration={job.last_generation ?? null}
-                                    onStaleArtifact={handleStaleArtifact}
-                                />
-                            )}
-                        </>
+                    {terminal && review && !reviewQuery.isError && job.state === "completed" && (
+                        <ReviewPanel
+                            key={`review-${jobId}-${reviewEpoch}`}
+                            jobId={jobId}
+                            review={review}
+                            result={job.result ?? null}
+                            onStaleArtifact={handleStaleArtifact}
+                        />
                     )}
                 </>
             )}

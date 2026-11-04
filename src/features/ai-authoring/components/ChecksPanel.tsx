@@ -25,8 +25,8 @@ export function ChecksPanel({ checks }: ChecksPanelProps) {
                 <p className="flex items-start gap-2 text-sm">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" aria-hidden="true" />
                     <span>
-                        All {technical.length} technical checks passed. They can catch some problems
-                        but cannot prove the question is correct.
+                        All {technical.length} technical checks passed. They cannot prove the
+                        question is correct.
                     </span>
                 </p>
             ) : (

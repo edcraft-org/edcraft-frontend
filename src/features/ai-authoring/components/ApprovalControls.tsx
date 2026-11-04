@@ -59,10 +59,10 @@ export function ApprovalControls({
     };
 
     return (
-        <section aria-labelledby="approval-heading" className="space-y-3 border-t pt-6">
+        <section aria-labelledby="approval-heading" className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 id="approval-heading" className="font-medium">
-                    Approve or reject
+                    Review decision
                 </h3>
                 {approval ? (
                     <Badge variant={approval.decision === "approved" ? "default" : "destructive"}>
@@ -102,7 +102,7 @@ export function ApprovalControls({
                     id="approval-note"
                     value={note}
                     onChange={(event) => setNote(event.target.value)}
-                    placeholder="Add a note for other reviewers."
+                    placeholder="Optional review note"
                     maxLength={2000}
                     rows={3}
                 />
@@ -141,8 +141,7 @@ export function ApprovalControls({
                 </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-                This decision applies to this exact version. If the question changes, review it
-                again; advisory findings never prevent approval.
+                Applies to this exact version. If the question changes, review it again.
             </p>
         </section>
     );

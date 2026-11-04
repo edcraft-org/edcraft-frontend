@@ -1,4 +1,4 @@
-import type { UserResponse } from "@/api/models";
+import type { ProviderConnectionResponse, UserResponse } from "@/api/models";
 import type {
     AuthoringBatch,
     AuthoringCapabilities,
@@ -74,6 +74,27 @@ export const capabilities: AuthoringCapabilities = {
         model: "configured-judge",
     },
     max_quantity: 50,
+};
+
+export const connection: ProviderConnectionResponse = {
+    id: "connection-1",
+    name: "My OpenAI",
+    kind: "openai",
+    base_url: "https://api.example.com/v1",
+    default_model: "gpt-test",
+    models: ["gpt-test", "gpt-other"],
+    enabled: true,
+    key_last4: "1234",
+    has_api_key: true,
+    verified_at: "2026-11-03T00:00:00Z",
+    created_at: "2026-11-03T00:00:00Z",
+    updated_at: "2026-11-03T00:00:00Z",
+};
+
+export const connectionCapabilities: AuthoringCapabilities = {
+    ...capabilities,
+    model_profiles: [],
+    connections: [connection],
 };
 
 export const previewInstance: CodeQuestionInstance = {
@@ -251,6 +272,39 @@ export const completedJob: AuthoringJob = {
     created_at: "2026-11-03T00:00:00Z",
     approval: approvedReview.approval ?? null,
     error: null,
+};
+
+export const failedJob: AuthoringJob = {
+    ...completedJob,
+    state: "failed",
+    progress: null,
+    result: null,
+    approval: null,
+    error: {
+        code: "AUTHORING_FAILED",
+        message: "The authoring model did not respond.",
+    },
+};
+
+export const failedReview: AuthoringReview = {
+    ...approvedReview,
+    state: "failed",
+    artifact_id: null,
+    artifact_sha256: null,
+    template: null,
+    checks: [],
+    attempts: [],
+    fixed_plan: [],
+    validation_limits: null,
+    candidate: null,
+    difficulty: null,
+    relevance: null,
+    warnings: [],
+    approval: null,
+    error: {
+        code: "AUTHORING_FAILED",
+        message: "The authoring model did not respond.",
+    },
 };
 
 export const batch: AuthoringBatch = {

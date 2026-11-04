@@ -18,7 +18,13 @@ export interface SubmitAuthoringJobRequest {
    * @minLength 1
    * @maxLength 64
    */
-  model_profile: string;
+  model_profile?: string | null;
+  connection_id?: string | null;
+  /**
+   * @minLength 1
+   * @maxLength 120
+   */
+  model?: string | null;
   num_distractors?: SubmitAuthoringJobRequestNumDistractors;
   /**
    * @minLength 1

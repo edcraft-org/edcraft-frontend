@@ -8,6 +8,7 @@
 import type { AuthoringCapabilitiesResponseDifficultyLabelsItem } from './authoringCapabilitiesResponseDifficultyLabelsItem';
 import type { AuthoringModelProfile } from './authoringModelProfile';
 import type { JudgeDisplay } from './judgeDisplay';
+import type { ProviderConnectionResponse } from './providerConnectionResponse';
 
 /**
  * Enabled domains and server-configured model choices.
@@ -18,4 +19,5 @@ export interface AuthoringCapabilitiesResponse {
   judge?: JudgeDisplay | null;
   max_quantity: number;
   model_profiles: AuthoringModelProfile[];
+  connections?: ProviderConnectionResponse[];
 }

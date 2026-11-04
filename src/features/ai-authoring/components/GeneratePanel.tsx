@@ -130,10 +130,22 @@ export function GeneratePanel({
     return (
         <Card>
             <CardHeader className="gap-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <CardTitle>Create questions</CardTitle>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                        <CardTitle>Generate questions</CardTitle>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            Artifact{" "}
+                            <span
+                                className="break-all font-mono"
+                                title={artifactDigest ?? undefined}
+                            >
+                                {review.artifact_id ?? "pending"}
+                                {artifactDigest ? ` · ${artifactDigest.slice(0, 8)}` : ""}
+                            </span>
+                        </p>
+                    </div>
                     <Badge variant={approved ? "default" : "outline"}>
-                        {approved ? "Ready to create" : "Approval needed"}
+                        {approved ? "Approved" : "Approval needed"}
                     </Badge>
                 </div>
             </CardHeader>
@@ -143,49 +155,43 @@ export function GeneratePanel({
                         <AlertCircle className="h-4 w-4" />
                         <AlertTitle>Approval needed</AlertTitle>
                         <AlertDescription>
-                            Approve this question before creating more versions of it. A rejected
-                            question cannot be used to create new questions.
+                            Approve this question before creating more versions of it.
                         </AlertDescription>
                     </Alert>
                 ) : (
-                    <p className="text-sm text-muted-foreground">
-                        Questions are created from this approved version. The same settings always
-                        produce the same questions; no model is called.
-                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        <Badge variant="outline">Deterministic</Badge>
+                        <Badge variant="outline">No model calls</Badge>
+                    </div>
                 )}
 
                 {lastGeneration && (
                     <div className="rounded-md border bg-muted/30 p-3 text-sm">
-                        <p className="font-medium">Last created set</p>
+                        <p className="font-medium">Last generated set</p>
                         <p className="text-muted-foreground">
-                            {formatCountSummary(lastGeneration)} Saved{" "}
-                            {formatDate(lastGeneration.created_at)}. Only this summary is saved;
-                            create the questions again to download them.
+                            {formatCountSummary(lastGeneration)} · seed{" "}
+                            {lastGeneration.base_seed} · {formatDate(lastGeneration.created_at)}
                         </p>
                     </div>
                 )}
 
-                <div className="space-y-2">
-                    <Label htmlFor="generation-quantity">Number of questions</Label>
-                    <Input
-                        id="generation-quantity"
-                        type="number"
-                        min={1}
-                        max={maxQuantity}
-                        step={1}
-                        value={quantityInput}
-                        onChange={(event) => setQuantityInput(event.target.value)}
-                        disabled={!approved || generation.isPending}
-                        className="max-w-40"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                        Choose a whole number from 1 to {maxQuantity}.
-                    </p>
-                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[12rem_12rem_auto] lg:items-end">
+                    <div className="space-y-2">
+                        <Label htmlFor="generation-quantity">Number of questions</Label>
+                        <Input
+                            id="generation-quantity"
+                            type="number"
+                            min={1}
+                            max={maxQuantity}
+                            step={1}
+                            value={quantityInput}
+                            onChange={(event) => setQuantityInput(event.target.value)}
+                            disabled={!approved || generation.isPending}
+                        />
+                        <p className="text-xs text-muted-foreground">1–{maxQuantity}</p>
+                    </div>
 
-                <details className="rounded-lg border p-4">
-                    <summary className="cursor-pointer text-sm font-medium">Advanced options</summary>
-                    <div className="mt-4 space-y-2">
+                    <div className="space-y-2">
                         <Label htmlFor="generation-seed">Starting seed</Label>
                         <Input
                             id="generation-seed"
@@ -194,27 +200,32 @@ export function GeneratePanel({
                             value={seedInput}
                             onChange={(event) => setSeedInput(event.target.value)}
                             disabled={!approved || generation.isPending}
-                            className="max-w-40"
                         />
                         <p className="text-xs text-muted-foreground">
                             {canPreviewSeeds
-                                ? `Seeds ${seed} through ${seed + quantity - 1}.`
-                                : `Whole numbers from 0 to ${MAX_SEED}; the last seed must stay in range.`}{" "}
-                            The same settings always produce the same questions.
+                                ? `Seeds ${seed}–${seed + quantity - 1}`
+                                : `0–${MAX_SEED}`}
                         </p>
-                        {lastGeneration && (
-                            <p className="text-xs text-muted-foreground">
-                                Last saved starting seed: {lastGeneration.base_seed}.
-                            </p>
-                        )}
-                        {lastGeneration && (lastGeneration.warnings ?? []).length > 0 && (
-                            <EvidenceDetails
-                                summary="Last set warnings"
-                                value={lastGeneration.warnings}
-                            />
-                        )}
                     </div>
-                </details>
+
+                    <Button
+                        type="button"
+                        onClick={generate}
+                        disabled={!approved || generation.isPending}
+                    >
+                        {generation.isPending && (
+                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        )}
+                        {batch ? "Create another set" : "Create questions"}
+                    </Button>
+                </div>
+
+                {lastGeneration && (lastGeneration.warnings ?? []).length > 0 && (
+                    <EvidenceDetails
+                        summary="Last set warnings"
+                        value={lastGeneration.warnings}
+                    />
+                )}
 
                 {inputError && (
                     <p role="alert" className="text-sm text-destructive">
@@ -230,19 +241,12 @@ export function GeneratePanel({
                     </Alert>
                 )}
 
-                <Button type="button" onClick={generate} disabled={!approved || generation.isPending}>
-                    {generation.isPending && (
-                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                    )}
-                    {batch ? "Create another set" : "Create questions"}
-                </Button>
-
                 {batch && (
                     <section aria-labelledby="batch-heading" className="space-y-4 border-t pt-5">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                                 <h3 id="batch-heading" className="font-medium">
-                                    Your questions
+                                    Generated questions
                                 </h3>
                                 <p className="text-sm text-muted-foreground">
                                     {formatCountSummary(batch)}
@@ -270,14 +274,14 @@ export function GeneratePanel({
                                 No questions were created. Try a different starting seed.
                             </p>
                         ) : (
-                            <div className="space-y-3">
+                            <div className="grid gap-3 lg:grid-cols-2">
                                 {batch.questions.map((instance, index) => (
                                     <details
                                         key={`${instance.template_id}-${instance.seed}`}
                                         className="rounded-md border p-3"
                                     >
                                         <summary className="cursor-pointer text-sm font-medium">
-                                            Question {index + 1}
+                                            Question {index + 1} · seed {instance.seed}
                                         </summary>
                                         <div className="pt-3">
                                             <PreviewQuestion instance={instance} headingLevel="h4" />

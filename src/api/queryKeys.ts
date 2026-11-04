@@ -91,4 +91,9 @@ export const queryKeys = {
         preview: (id: string, artifactSha256: string, seed: number) =>
             ["ai-authoring", "job", id, "preview", artifactSha256, seed] as const,
     },
+
+    // User-owned model provider connections
+    providerConnections: {
+        all: () => ["provider-connections"] as const,
+    },
 };

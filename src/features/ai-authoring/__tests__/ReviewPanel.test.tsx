@@ -89,12 +89,10 @@ describe("ReviewPanel", () => {
         renderPanel(unapprovedReview);
 
         expect(await screen.findByText(previewInstanceQuestion())).toBeInTheDocument();
-        expect(screen.getByText(/^Example 1\./)).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Show another variation" })).toBeEnabled();
+        expect(screen.getByRole("button", { name: "Next variation" })).toBeEnabled();
         expect(screen.getByText("4 choices")).toBeInTheDocument();
         expect(screen.getByText("Difficulty differs")).toBeInTheDocument();
-        expect(screen.getByText("Relevance was not checked")).toBeInTheDocument();
-        expect(screen.getByText(/never block approval/i)).toBeInTheDocument();
+        expect(screen.getByText("Relevance not checked")).toBeInTheDocument();
 
         const advisory = screen.getByText("Difficulty differs").closest("[data-advisory]");
         expect(advisory).toHaveClass("border-amber-500/40");
@@ -117,7 +115,12 @@ describe("ReviewPanel", () => {
         renderPanel(approvedReview);
 
         expect(await screen.findByText(/Approved on/)).toBeInTheDocument();
-        expect(screen.queryByText(approval.reviewer)).not.toBeInTheDocument();
+        const technical = screen.getByText("Technical details").closest("details");
+        expect(technical).not.toBeNull();
+        expect(
+            within(technical as HTMLElement).getAllByText(approval.reviewer),
+        ).toHaveLength(1);
+        expect(screen.getAllByText(approval.reviewer)).toHaveLength(1);
 
         const details = await openTechnicalDetails();
         expect(details).toHaveTextContent(approval.reviewer);
@@ -186,14 +189,14 @@ describe("ReviewPanel", () => {
                 { timeout: 5000 },
             ),
         ).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Retry preview" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Retry sample" })).toBeInTheDocument();
         expect(
-            screen.queryByRole("button", { name: "Refresh review" }),
+            screen.queryByRole("button", { name: "Refresh evidence" }),
         ).not.toBeInTheDocument();
         expect(screen.getByRole("heading", { name: "Technical checks" })).toBeInTheDocument();
     });
 
-    it("clears a cached preview and offers only review refresh for a stale 409", async () => {
+    it("clears a cached preview and offers only evidence refresh for a stale 409", async () => {
         const user = userEvent.setup();
         const { onStaleArtifact } = renderPanel(approvedReview);
         expect(await screen.findByText(previewInstanceQuestion())).toBeInTheDocument();
@@ -201,18 +204,17 @@ describe("ReviewPanel", () => {
         vi.mocked(getAuthoringPreview).mockRejectedValue(
             new ApiError(409, "The artifact digest is stale."),
         );
-        await user.click(screen.getByText("Advanced preview options"));
-        await user.click(screen.getByRole("button", { name: "Load exact seed" }));
+        await user.click(screen.getByRole("button", { name: "Load" }));
 
         expect(
-            await screen.findByText("Preview could not be loaded", undefined, { timeout: 5000 }),
+            await screen.findByText("Sample could not be loaded", undefined, { timeout: 5000 }),
         ).toBeInTheDocument();
         expect(screen.queryByText(previewInstanceQuestion())).not.toBeInTheDocument();
         expect(
-            screen.queryByRole("button", { name: "Retry preview" }),
+            screen.queryByRole("button", { name: "Retry sample" }),
         ).not.toBeInTheDocument();
 
-        await user.click(screen.getByRole("button", { name: "Refresh review" }));
+        await user.click(screen.getByRole("button", { name: "Refresh evidence" }));
         expect(onStaleArtifact).toHaveBeenCalledOnce();
     });
 
@@ -221,20 +223,19 @@ describe("ReviewPanel", () => {
         renderPanel(approvedReview);
         await screen.findByText(previewInstanceQuestion());
 
-        await user.click(screen.getByText("Advanced preview options"));
         const callsBefore = vi.mocked(getAuthoringPreview).mock.calls.length;
 
-        const seedInput = screen.getByLabelText("Exact seed");
+        const seedInput = screen.getByLabelText("Seed");
         await user.clear(seedInput);
         await user.type(seedInput, "2147483648");
-        await user.click(screen.getByRole("button", { name: "Load exact seed" }));
+        await user.click(screen.getByRole("button", { name: "Load" }));
 
         expect(screen.getByText(/Enter a seed from 0 to 2147483647/)).toBeInTheDocument();
         expect(vi.mocked(getAuthoringPreview).mock.calls.length).toBe(callsBefore);
         expect(screen.getByRole("heading", { name: "Technical checks" })).toBeInTheDocument();
     });
 
-    it("shows a plain relevance mismatch and keeps the score in technical details", async () => {
+    it("shows the relevance score in the advisory and keeps the reason in technical details", async () => {
         renderPanel({
             ...approvedReview,
             relevance: {
@@ -250,29 +251,103 @@ describe("ReviewPanel", () => {
         });
 
         expect(await screen.findByText("Potential relevance mismatch")).toBeInTheDocument();
-        expect(screen.queryByText("Off topic.")).not.toBeInTheDocument();
+        const advisory = screen
+            .getByText("Potential relevance mismatch")
+            .closest("[data-advisory]");
+        expect(advisory).not.toBeNull();
+        expect(within(advisory as HTMLElement).getByText("0.42")).toBeInTheDocument();
+        expect(within(advisory as HTMLElement).getByText("Threshold 0.50")).toBeInTheDocument();
+        expect(within(advisory as HTMLElement).queryByText("Off topic.")).not.toBeInTheDocument();
         expect(screen.queryByText("Not relevant")).not.toBeInTheDocument();
 
         const details = await openTechnicalDetails();
-        expect(details).toHaveTextContent("0.42");
-        expect(details).toHaveTextContent("0.5");
         expect(details).toHaveTextContent("Off topic.");
     });
 
-    it("shows advisory difficulty confidence and its source only in technical details", async () => {
+    it("labels the reasoning fallback as the reasoning judge", async () => {
         renderPanel({
             ...approvedReview,
             difficulty: {
                 ...approvedReview.difficulty!,
+                assessment_path: "reasoning",
                 confidence: 0.72,
                 confidence_source: "self_reported",
             },
         });
 
-        expect(screen.queryByText(/Advisory estimate confidence/)).not.toBeInTheDocument();
+        const advisory = screen.getByText("Difficulty differs").closest("[data-advisory]");
+        expect(advisory).not.toBeNull();
+        expect(within(advisory as HTMLElement).getByText("72%")).toBeInTheDocument();
+        expect(
+            within(advisory as HTMLElement).getByText("Source: Reasoning judge"),
+        ).toBeInTheDocument();
+    });
+
+    it("labels the forced-choice path as the decision screen", async () => {
+        renderPanel({
+            ...approvedReview,
+            difficulty: {
+                ...approvedReview.difficulty!,
+                assessment_path: "decision",
+                confidence: 0.91,
+                confidence_source: "first_token_label_mass",
+            },
+        });
+
+        const advisory = screen.getByText("Difficulty differs").closest("[data-advisory]");
+        expect(advisory).not.toBeNull();
+        expect(
+            within(advisory as HTMLElement).getByText("Source: Decision screen"),
+        ).toBeInTheDocument();
+    });
+
+    it("renders the template as a question with code, question text and choices", async () => {
+        renderPanel(approvedReview);
+        await screen.findByText(previewInstanceQuestion());
+
+        const templateCard = screen
+            .getByText("Template", { selector: "[data-slot='card-title']" })
+            .closest("[data-slot='card']");
+        expect(templateCard).not.toBeNull();
+        const template = within(templateCard as HTMLElement);
+
+        expect(template.getByLabelText("Template code").textContent).toBe(
+            approvedReview.template!.candidate.code,
+        );
+        expect(
+            template.getByText(approvedReview.template!.candidate.question_template),
+        ).toBeInTheDocument();
+        expect(template.getAllByText("sum(values)").length).toBeGreaterThan(0);
+        expect(template.getAllByText("len(values)").length).toBeGreaterThan(0);
+        expect(template.getByText("Confuses the list length with its sum.")).toBeInTheDocument();
+        expect(
+            template.queryByText("Why the other choices are wrong"),
+        ).not.toBeInTheDocument();
+        expect(
+            template.getByText("Confuses the list length with its sum.").parentElement,
+        ).toHaveClass("p-3");
+        expect(
+            template.queryByRole("button", { name: "Show Answer" }),
+        ).not.toBeInTheDocument();
+        expect(template.getByText("✓")).toBeInTheDocument();
+        expect(template.queryByText("Answer:")).not.toBeInTheDocument();
+        expect(template.queryByText(/Correct option/)).not.toBeInTheDocument();
+        expect(template.queryByText("Template ID")).not.toBeInTheDocument();
+        expect(
+            template.queryByRole("columnheader", { name: "Values" }),
+        ).not.toBeInTheDocument();
+    });
+
+    it("keeps template metadata inside technical details", async () => {
+        renderPanel(approvedReview);
+        await screen.findByText(previewInstanceQuestion());
+
         const details = await openTechnicalDetails();
-        expect(details).toHaveTextContent("0.72");
-        expect(details).toHaveTextContent("self_reported");
+        expect(within(details).getByText("Template details")).toBeInTheDocument();
+        expect(
+            within(details).getAllByText(approvedReview.template!.template_id).length,
+        ).toBeGreaterThan(0);
+        expect(within(details).getByRole("columnheader", { name: "Name" })).toBeInTheDocument();
     });
 
     it("labels a historical candidate inside technical details", async () => {

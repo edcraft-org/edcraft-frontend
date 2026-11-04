@@ -36,6 +36,14 @@ export function capitalize(value: string): string {
     return value.length === 0 ? value : value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+/** Prefer the connection model, falling back to a legacy server profile. */
+export function modelLabel(request: {
+    model_profile?: string | null;
+    model?: string | null;
+}): string {
+    return request.model_profile ?? request.model ?? "Unknown model";
+}
+
 export function hasEvidence(value: unknown): boolean {
     if (value === null || value === undefined) return false;
     if (Array.isArray(value)) return value.length > 0;

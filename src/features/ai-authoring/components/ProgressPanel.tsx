@@ -1,24 +1,10 @@
 import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/router/paths";
 import { formatDate } from "../format";
+import { getJobStatus } from "../status";
 import type { AuthoringJob } from "../types";
-
-function activeStateLabel(job: AuthoringJob): string {
-    if (job.state === "queued") return "Waiting to start";
-    switch (job.progress?.phase) {
-        case "generating":
-            return "Writing the question";
-        case "checking":
-            return "Checking the question";
-        case "correcting":
-            return "Improving the question";
-        case "finalizing":
-            return "Finishing the question";
-        default:
-            return "Creating the question";
-    }
-}
 
 function JobDetails({ job }: { job: AuthoringJob }) {
     return (
@@ -45,14 +31,17 @@ function JobDetails({ job }: { job: AuthoringJob }) {
 }
 
 export function ProgressPanel({ job }: { job: AuthoringJob }) {
+    const status = getJobStatus(job);
+
     if (job.state === "completed" || job.state === "failed") {
         return (
             <section
                 aria-label="Question progress"
                 className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border bg-muted/30 px-3 py-2 text-sm"
             >
+                <Badge variant={status.variant}>{status.label}</Badge>
                 <p role="status" aria-live="polite" aria-atomic="true" className="font-medium">
-                    {job.state === "completed" ? "Ready to review" : "Could not be created"}
+                    {status.summary}
                 </p>
                 <p className="text-xs text-muted-foreground">
                     Created {formatDate(job.created_at)}
@@ -64,12 +53,13 @@ export function ProgressPanel({ job }: { job: AuthoringJob }) {
 
     return (
         <Card aria-busy="true">
-            <CardHeader className="gap-1">
+            <CardHeader className="flex-row items-center justify-between gap-2">
                 <CardTitle>Question progress</CardTitle>
+                <Badge variant={status.variant}>{status.label}</Badge>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
                 <p role="status" aria-live="polite" aria-atomic="true" className="font-medium">
-                    {activeStateLabel(job)}
+                    {status.summary}
                 </p>
                 {job.state === "queued" ? (
                     <p className="text-muted-foreground">

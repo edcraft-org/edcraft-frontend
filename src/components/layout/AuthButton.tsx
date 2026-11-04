@@ -9,11 +9,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User as UserIcon, LogOut, Settings } from "lucide-react";
+import { User as UserIcon, LogOut, Settings, KeyRound } from "lucide-react";
 import { useUserStore } from "@/shared/stores/user.store";
 import { useAuthDialogStore } from "@/shared/stores/auth-dialog.store";
 import { logout } from "@/features/auth/services/auth.service";
 import { CanvasSettingsDialog } from "@/features/canvas/components/CanvasSettingsDialog";
+import { ROUTES } from "@/router/paths";
 
 export function AuthButton() {
     const { user } = useUserStore();
@@ -49,6 +50,10 @@ export function AuthButton() {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => navigate(ROUTES.MODEL_CONNECTIONS)}>
+                        <KeyRound className="h-4 w-4 mr-2" />
+                        Model Connections
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowCanvasSettings(true)}>
                         <Settings className="h-4 w-4 mr-2" />
                         Canvas Settings
