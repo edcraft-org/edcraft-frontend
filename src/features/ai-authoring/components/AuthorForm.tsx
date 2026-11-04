@@ -331,14 +331,13 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                                 />
 
                                 <div className="rounded-md border bg-muted/30 p-3 text-sm">
-                                    <p className="font-medium">Review model</p>
-                                    <p className="break-words text-xs text-muted-foreground">
-                                        {capabilities.judge
-                                            ? `${capabilities.judge.label} · ${capabilities.judge.provider}/${capabilities.judge.model}`
-                                            : "Not configured."}
+                                    <p className="font-medium">Advisory checks</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Difficulty and relevance use the selected question model.
                                     </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        Difficulty and relevance are advisory.
+                                        They are advisory and never block a technically checked
+                                        artifact.
                                     </p>
                                 </div>
                             </div>
