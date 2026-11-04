@@ -74,7 +74,7 @@ describe("AuthorForm", () => {
             "Write a question about nested loops.",
         );
         expect(screen.getByRole("radio", { name: "Hard" })).toBeChecked();
-        expect(screen.getByRole("radio", { name: "3 choices" })).toBeChecked();
+        expect(screen.getByLabelText("Choices")).toHaveValue(3);
         expect(screen.getByText("Prefilled")).toBeInTheDocument();
         expect(screen.getByRole("combobox", { name: "Question model" })).toHaveTextContent(
             "Default authoring model",
@@ -86,7 +86,7 @@ describe("AuthorForm", () => {
 
         expect(screen.getByLabelText("Prompt")).toHaveValue("");
         expect(screen.getByRole("radio", { name: "Easy" })).toBeChecked();
-        expect(screen.getByRole("radio", { name: "4 choices" })).toBeChecked();
+        expect(screen.getByLabelText("Choices")).toHaveValue(4);
         expect(screen.queryByText("Prefilled")).not.toBeInTheDocument();
     });
 
@@ -114,6 +114,39 @@ describe("AuthorForm", () => {
                 model: "gpt-test",
             });
         });
+    });
+
+    it("submits a user-entered choice count", async () => {
+        const user = userEvent.setup();
+        renderForm(undefined, connectionCapabilities);
+
+        const choices = screen.getByLabelText("Choices");
+        await user.clear(choices);
+        await user.type(choices, "7");
+        await user.type(screen.getByLabelText("Prompt"), "Create a loop question.");
+        await user.click(screen.getByRole("button", { name: "Create question" }));
+
+        await waitFor(() => {
+            expect(createAuthoringJob).toHaveBeenCalledWith(
+                expect.objectContaining({ num_distractors: 6 }),
+            );
+        });
+    });
+
+    it("rejects a choice count outside the supported range", async () => {
+        const user = userEvent.setup();
+        renderForm(undefined, connectionCapabilities);
+
+        const choices = screen.getByLabelText("Choices");
+        await user.clear(choices);
+        await user.type(choices, "12");
+        await user.type(screen.getByLabelText("Prompt"), "Create a loop question.");
+        await user.click(screen.getByRole("button", { name: "Create question" }));
+
+        expect(
+            await screen.findByText("Enter at most 11 choices."),
+        ).toBeInTheDocument();
+        expect(createAuthoringJob).not.toHaveBeenCalled();
     });
 
     it("lets the user pick another discovered model", async () => {

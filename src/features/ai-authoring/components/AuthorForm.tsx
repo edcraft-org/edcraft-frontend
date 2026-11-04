@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,54 +40,60 @@ import type {
 } from "../types";
 import { ModelPicker } from "./ModelPicker";
 
-const authoringSchema = z
-    .object({
-        prompt: z
-            .string()
-            .trim()
-            .min(1, "Describe the question you want to create.")
-            .max(4000, "Keep the request to 4000 characters or fewer."),
-        difficulty: z.enum(["easy", "medium", "hard"]),
-        num_distractors: z.union([z.literal(2), z.literal(3)]),
-        model_source: z.string().min(1, "Choose a question-writing model."),
-        model: z.string(),
-        difficulty_source: z.string(),
-        difficulty_model: z.string(),
-        relevance_source: z.string(),
-        relevance_model: z.string(),
-    })
-    .superRefine((values, ctx) => {
-        const source = parseModelSource(values.model_source);
-        if (source?.kind === "connection" && !values.model.trim()) {
-            ctx.addIssue({
-                code: "custom",
-                path: ["model"],
-                message: "Choose a model for this connection.",
-            });
-        }
-        for (const [sourceKey, modelKey] of [
-            ["difficulty_source", "difficulty_model"],
-            ["relevance_source", "relevance_model"],
-        ] as const) {
-            const selected = parseModelSource(values[sourceKey]);
-            if (selected?.kind === "connection" && !values[modelKey].trim()) {
+function createAuthoringSchema(minChoices: number, maxChoices: number) {
+    return z
+        .object({
+            prompt: z
+                .string()
+                .trim()
+                .min(1, "Describe the question you want to create.")
+                .max(4000, "Keep the request to 4000 characters or fewer."),
+            difficulty: z.enum(["easy", "medium", "hard"]),
+            choices: z
+                .number()
+                .int("Enter a whole number of choices.")
+                .min(minChoices, `Enter at least ${minChoices} choices.`)
+                .max(maxChoices, `Enter at most ${maxChoices} choices.`),
+            model_source: z.string().min(1, "Choose a question-writing model."),
+            model: z.string(),
+            difficulty_source: z.string(),
+            difficulty_model: z.string(),
+            relevance_source: z.string(),
+            relevance_model: z.string(),
+        })
+        .superRefine((values, ctx) => {
+            const source = parseModelSource(values.model_source);
+            if (source?.kind === "connection" && !values.model.trim()) {
                 ctx.addIssue({
                     code: "custom",
-                    path: [modelKey],
+                    path: ["model"],
                     message: "Choose a model for this connection.",
                 });
             }
-            if (!isInheritSource(values[sourceKey]) && !selected) {
-                ctx.addIssue({
-                    code: "custom",
-                    path: [sourceKey],
-                    message: "Choose a check model or inherit the question model.",
-                });
+            for (const [sourceKey, modelKey] of [
+                ["difficulty_source", "difficulty_model"],
+                ["relevance_source", "relevance_model"],
+            ] as const) {
+                const selected = parseModelSource(values[sourceKey]);
+                if (selected?.kind === "connection" && !values[modelKey].trim()) {
+                    ctx.addIssue({
+                        code: "custom",
+                        path: [modelKey],
+                        message: "Choose a model for this connection.",
+                    });
+                }
+                if (!isInheritSource(values[sourceKey]) && !selected) {
+                    ctx.addIssue({
+                        code: "custom",
+                        path: [sourceKey],
+                        message: "Choose a check model or inherit the question model.",
+                    });
+                }
             }
-        }
-    });
+        });
+}
 
-type AuthoringFormValues = z.infer<typeof authoringSchema>;
+type AuthoringFormValues = z.infer<ReturnType<typeof createAuthoringSchema>>;
 
 const DIFFICULTY_ORDER: AuthoringDifficulty[] = ["easy", "medium", "hard"];
 
@@ -107,6 +114,13 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
     const defaultDifficulty = difficultyOptions[0] ?? "easy";
     const connections = capabilities.connections ?? [];
     const profiles = capabilities.model_profiles;
+    const minChoices = (capabilities.min_distractors ?? 1) + 1;
+    const maxChoices = (capabilities.max_distractors ?? 10) + 1;
+    const defaultChoices = (capabilities.default_distractors ?? 3) + 1;
+    const authoringSchema = useMemo(
+        () => createAuthoringSchema(minChoices, maxChoices),
+        [minChoices, maxChoices],
+    );
 
     const state = location.state as { authoringPrefill?: Partial<AuthoringRetryPrefill> } | null;
     const prefill = state?.authoringPrefill;
@@ -116,7 +130,13 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
         prefill?.difficulty && difficultyOptions.includes(prefill.difficulty)
             ? prefill.difficulty
             : defaultDifficulty;
-    const prefilledDistractors = prefill?.num_distractors === 2 ? 2 : 3;
+    const prefilledChoices =
+        typeof prefill?.num_distractors === "number"
+            ? Math.min(
+                  maxChoices,
+                  Math.max(minChoices, prefill.num_distractors + 1),
+              )
+            : defaultChoices;
     const initialSelection = resolveModelSelection({
         connections,
         profiles,
@@ -141,7 +161,7 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
         defaultValues: {
             prompt: prefilledPrompt,
             difficulty: prefilledDifficulty,
-            num_distractors: prefilledDistractors,
+            choices: prefilledChoices,
             model_source: initialSelection.source,
             model: initialSelection.model,
             difficulty_source: initialDifficultySelection.source,
@@ -173,7 +193,7 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                 domain: "code",
                 prompt: values.prompt,
                 difficulty: values.difficulty,
-                num_distractors: values.num_distractors,
+                num_distractors: values.choices - 1,
                 ...buildModelRequest(values.model_source, values.model),
                 judges: buildJudgeSelections(
                     {
@@ -325,38 +345,29 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
 
                                 <FormField
                                     control={form.control}
-                                    name="num_distractors"
+                                    name="choices"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel id="choices-label">Choices</FormLabel>
+                                            <FormLabel htmlFor="choices">Choices</FormLabel>
                                             <FormControl>
-                                                <RadioGroup
-                                                    value={String(field.value)}
-                                                    onValueChange={(value) =>
-                                                        field.onChange(value === "2" ? 2 : 3)
+                                                <Input
+                                                    id="choices"
+                                                    type="number"
+                                                    min={minChoices}
+                                                    max={maxChoices}
+                                                    step={1}
+                                                    {...field}
+                                                    onChange={(event) =>
+                                                        field.onChange(
+                                                            Number(event.target.value),
+                                                        )
                                                     }
-                                                    aria-labelledby="choices-label"
-                                                    className="flex flex-wrap gap-4 lg:flex-col lg:gap-2"
-                                                >
-                                                    {[2, 3].map((count) => (
-                                                        <div
-                                                            key={count}
-                                                            className="flex items-center gap-2"
-                                                        >
-                                                            <RadioGroupItem
-                                                                id={`choices-${count}`}
-                                                                value={String(count)}
-                                                            />
-                                                            <Label
-                                                                htmlFor={`choices-${count}`}
-                                                                className="font-normal"
-                                                            >
-                                                                {count + 1} choices
-                                                            </Label>
-                                                        </div>
-                                                    ))}
-                                                </RadioGroup>
+                                                />
                                             </FormControl>
+                                            <FormDescription>
+                                                {minChoices}–{maxChoices} options, including the
+                                                correct answer.
+                                            </FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}

@@ -58,7 +58,7 @@ export type GenerationMetadata = ApiGenerationMetadata;
 export interface AuthoringRetryPrefill {
     prompt: string;
     difficulty: AuthoringDifficulty;
-    num_distractors: 2 | 3;
+    num_distractors: number;
     model_profile?: string | null;
     connection_id?: string | null;
     model?: string | null;

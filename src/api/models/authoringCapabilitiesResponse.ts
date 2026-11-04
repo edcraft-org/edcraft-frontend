@@ -18,6 +18,9 @@ export interface AuthoringCapabilitiesResponse {
   enabled_domains: 'code'[];
   judge?: JudgeDisplay | null;
   max_quantity: number;
+  min_distractors: number;
+  max_distractors: number;
+  default_distractors: number;
   model_profiles: AuthoringModelProfile[];
   connections?: ProviderConnectionResponse[];
 }

@@ -7,7 +7,6 @@
  */
 import type { AuthoringJudgeSelections } from './authoringJudgeSelections';
 import type { SubmitAuthoringJobRequestDifficulty } from './submitAuthoringJobRequestDifficulty';
-import type { SubmitAuthoringJobRequestNumDistractors } from './submitAuthoringJobRequestNumDistractors';
 
 /**
  * One request to author a reusable code-question template.
@@ -26,7 +25,11 @@ export interface SubmitAuthoringJobRequest {
    * @maxLength 120
    */
   model?: string | null;
-  num_distractors?: SubmitAuthoringJobRequestNumDistractors;
+  /**
+   * @minimum 1
+   * @maximum 10
+   */
+  num_distractors?: number;
   /**
    * @minLength 1
    * @maxLength 4000

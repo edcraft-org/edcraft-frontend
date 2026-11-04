@@ -74,6 +74,9 @@ export const capabilities: AuthoringCapabilities = {
         model: "configured-judge",
     },
     max_quantity: 50,
+    min_distractors: 1,
+    max_distractors: 10,
+    default_distractors: 3,
 };
 
 export const connection: ProviderConnectionResponse = {

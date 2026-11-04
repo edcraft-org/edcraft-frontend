@@ -7,7 +7,6 @@
  */
 import type { AuthoringJudgeSelections } from './authoringJudgeSelections';
 import type { AuthoringRequestViewDifficulty } from './authoringRequestViewDifficulty';
-import type { AuthoringRequestViewNumDistractors } from './authoringRequestViewNumDistractors';
 
 /**
  * Original author request returned during review.
@@ -18,7 +17,11 @@ export interface AuthoringRequestView {
   model_profile?: string | null;
   connection_id?: string | null;
   model?: string | null;
-  num_distractors: AuthoringRequestViewNumDistractors;
+  /**
+   * @minimum 1
+   * @maximum 10
+   */
+  num_distractors: number;
   prompt: string;
   judges?: AuthoringJudgeSelections | null;
 }
