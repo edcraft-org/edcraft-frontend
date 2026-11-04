@@ -111,15 +111,6 @@ export default function ModelConnectionsPage() {
                 </Button>
             </header>
 
-            <Alert>
-                <KeyRound className="h-4 w-4" />
-                <AlertTitle>Your keys stay yours</AlertTitle>
-                <AlertDescription>
-                    Keys are encrypted at rest and used only for your own authoring jobs.
-                    The API never returns a saved key.
-                </AlertDescription>
-            </Alert>
-
             {connectionsQuery.isPending && (
                 <Card>
                     <CardContent className="py-6 text-sm text-muted-foreground">
