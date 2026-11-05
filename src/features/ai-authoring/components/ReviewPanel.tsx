@@ -307,7 +307,6 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
                                 <h3 className="leading-none font-semibold">Technical checks</h3>
                                 <Badge variant={status.variant}>{status.label}</Badge>
                             </div>
-                            <p className="text-xs text-muted-foreground">{status.summary}</p>
                             <p className="text-xs text-muted-foreground">
                                 Artifact{" "}
                                 <span
