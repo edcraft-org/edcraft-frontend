@@ -310,6 +310,30 @@ export const failedReview: AuthoringReview = {
     },
 };
 
+export const needsReviewJob: AuthoringJob = {
+    ...completedJob,
+    result: completedJob.result
+        ? {
+              ...completedJob.result,
+              status: "needs_review",
+              artifact_id: null,
+              error: {
+                  code: "TEMPLATE_CHECKS_FAILED",
+                  message: "The generated template failed technical checks.",
+              },
+          }
+        : null,
+};
+
+export const needsReviewReview: AuthoringReview = {
+    ...failedReview,
+    state: "completed",
+    error: {
+        code: "TEMPLATE_CHECKS_FAILED",
+        message: "The generated template failed technical checks.",
+    },
+};
+
 export const batch: AuthoringBatch = {
     format_version: "1",
     job_id: "job-1",

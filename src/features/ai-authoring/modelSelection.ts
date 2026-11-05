@@ -21,6 +21,10 @@ export interface ModelSelection {
     model: string;
 }
 
+export interface ResolvedSelection extends ModelSelection {
+    missing: boolean;
+}
+
 /** Fields submitted to the backend for the chosen model source. */
 export interface ModelRequestFields {
     model_profile?: string;
@@ -148,6 +152,53 @@ export function resolveModelSelection({
     return { source: "", model: "" };
 }
 
+/**
+ * Resolve a stored request selection exactly. Unlike the new-form fallback, a
+ * removed connection/profile or model must surface as missing so the user can
+ * choose a replacement instead of silently submitting a different model.
+ */
+export function resolveStoredModelSelection({
+    connections,
+    profiles,
+    connectionId,
+    profileId,
+    model,
+}: ResolveModelSelectionInput): ResolvedSelection {
+    if (connectionId) {
+        const connection = connections.find((item) => item.id === connectionId);
+        if (connection) {
+            const storedModel = model ?? "";
+            if (!storedModel || connection.models.includes(storedModel)) {
+                return {
+                    source: connectionSource(connection.id),
+                    model: storedModel,
+                    missing: false,
+                };
+            }
+        }
+        return { source: "", model: "", missing: true };
+    }
+
+    if (profileId) {
+        const profile = profiles.find((item) => item.id === profileId);
+        if (profile) {
+            return { source: profileSource(profile.id), model: "", missing: false };
+        }
+        return { source: "", model: "", missing: true };
+    }
+
+    return {
+        ...resolveModelSelection({
+            connections,
+            profiles,
+            connectionId,
+            profileId,
+            model,
+        }),
+        missing: false,
+    };
+}
+
 interface ResolveJudgeSelectionInput {
     connections: ProviderConnection[];
     profiles: AuthoringModelProfile[];
@@ -182,4 +233,28 @@ export function resolveJudgeSelection({
         }
     }
     return { source: INHERIT_SOURCE, model: "" };
+}
+
+/**
+ * Resolve a stored judge selection exactly. A judge that was explicitly
+ * configured must not silently fall back to inherit when its model is gone.
+ */
+export function resolveStoredJudgeSelection({
+    connections,
+    profiles,
+    selection,
+}: ResolveJudgeSelectionInput): ResolvedSelection {
+    if (!selection) {
+        return { source: INHERIT_SOURCE, model: "", missing: false };
+    }
+    if (!selection.connection_id && !selection.model_profile) {
+        return { source: INHERIT_SOURCE, model: "", missing: false };
+    }
+    return resolveStoredModelSelection({
+        connections,
+        profiles,
+        connectionId: selection.connection_id,
+        profileId: selection.model_profile,
+        model: selection.model,
+    });
 }

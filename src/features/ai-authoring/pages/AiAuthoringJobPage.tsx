@@ -69,6 +69,11 @@ export default function AiAuthoringJobPage() {
     const job = jobQuery.data;
     const review = reviewQuery.data;
     const terminal = reviewTerminal;
+    const needsReview =
+        job?.state === "completed" &&
+        job.result?.status === "needs_review" &&
+        !review?.artifact_sha256;
+    const recoverable = job?.state === "failed" || needsReview;
 
     return (
         <div className="mx-auto w-full max-w-[1440px] space-y-6 p-4 md:p-6">
@@ -167,18 +172,29 @@ export default function AiAuthoringJobPage() {
                         </Alert>
                     )}
 
-                    {job.state === "failed" && (
+                    {recoverable && (
                         <>
-                            <Alert variant="destructive">
-                                <AlertCircle className="h-4 w-4" />
-                                <AlertTitle>Question creation failed</AlertTitle>
-                                <AlertDescription>
-                                    {job.error?.message ??
-                                        job.result?.error?.message ??
-                                        review?.error?.message ??
-                                        "The question could not be created."}
-                                </AlertDescription>
-                            </Alert>
+                            {job.state === "failed" ? (
+                                <Alert variant="destructive">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertTitle>Question creation failed</AlertTitle>
+                                    <AlertDescription>
+                                        {job.error?.message ??
+                                            job.result?.error?.message ??
+                                            review?.error?.message ??
+                                            "The question could not be created."}
+                                    </AlertDescription>
+                                </Alert>
+                            ) : (
+                                <Alert>
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertTitle>Technical checks did not pass</AlertTitle>
+                                    <AlertDescription>
+                                        {job.result?.error?.message ??
+                                            "The model did not produce a template that passes technical checks. Retry, or rephrase the request."}
+                                    </AlertDescription>
+                                </Alert>
+                            )}
 
                             {review?.request && capabilitiesQuery.isPending && (
                                 <LoadingCard>Loading model settings…</LoadingCard>
@@ -199,12 +215,13 @@ export default function AiAuthoringJobPage() {
 
                             {review?.request && capabilitiesQuery.data && (
                                 <RetryPanel
+                                    key={`retry-${jobId}`}
                                     request={review.request}
                                     capabilities={capabilitiesQuery.data}
                                 />
                             )}
 
-                            {review && !reviewQuery.isError && (
+                            {job.state === "failed" && review && !reviewQuery.isError && (
                                 <TechnicalDetails review={review} result={job.result ?? null} />
                             )}
                         </>

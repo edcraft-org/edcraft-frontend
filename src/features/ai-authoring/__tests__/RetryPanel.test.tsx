@@ -120,7 +120,8 @@ describe("RetryPanel", () => {
         });
     });
 
-    it("falls back when the original model is no longer configured", () => {
+    it("shows an error and blocks retry when the original model is no longer configured", async () => {
+        const user = userEvent.setup();
         renderPanel({
             ...capabilities,
             model_profiles: [
@@ -134,8 +135,24 @@ describe("RetryPanel", () => {
         });
 
         expect(
-            screen.getByText(/The original model is no longer available/),
+            screen.getByText(
+                "The original question model is no longer available. Choose a model to continue.",
+            ),
         ).toBeInTheDocument();
+        const retry = screen.getByRole("button", { name: "Retry question" });
+        expect(retry).toBeDisabled();
+
+        await user.click(screen.getByLabelText("Question model"));
+        await user.click(screen.getByRole("option", { name: /Alternate authoring model/ }));
+
+        expect(retry).toBeEnabled();
+        await user.click(retry);
+
+        await waitFor(() => {
+            expect(createAuthoringJob).toHaveBeenCalledWith(
+                expect.objectContaining({ model_profile: "alternate" }),
+            );
+        });
     });
 
     it("retries with the original connection model", async () => {
@@ -167,7 +184,8 @@ describe("RetryPanel", () => {
         });
     });
 
-    it("falls back when the original connection is no longer available", () => {
+    it("shows an error and blocks retry when the original connection is no longer available", async () => {
+        const user = userEvent.setup();
         renderPanel(connectionCapabilities, {
             ...request,
             model_profile: null,
@@ -176,8 +194,68 @@ describe("RetryPanel", () => {
         });
 
         expect(
-            screen.getByText(/The original model is no longer available/),
+            screen.getByText(
+                "The original question model is no longer available. Choose a model to continue.",
+            ),
         ).toBeInTheDocument();
+        const retry = screen.getByRole("button", { name: "Retry question" });
+        expect(retry).toBeDisabled();
+
+        await user.click(screen.getByLabelText("Question model"));
+        await user.click(screen.getByRole("option", { name: /My OpenAI/ }));
+
+        expect(retry).toBeEnabled();
+        await user.click(retry);
+
+        await waitFor(() => {
+            expect(createAuthoringJob).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    connection_id: "connection-1",
+                    model: "gpt-test",
+                }),
+            );
+        });
+    });
+
+    it("lets the user clear a missing judge by inheriting the question model", async () => {
+        const user = userEvent.setup();
+        renderPanel(connectionCapabilities, {
+            ...request,
+            model_profile: null,
+            connection_id: "connection-1",
+            model: "gpt-test",
+            judges: {
+                relevance: {
+                    connection_id: "deleted-connection",
+                    model: "gpt-other",
+                },
+            },
+        });
+
+        expect(
+            screen.getByText(
+                "The relevance check model is no longer available. Choose a check model or select Same as question model.",
+            ),
+        ).toBeInTheDocument();
+        const retry = screen.getByRole("button", { name: "Retry question" });
+        expect(retry).toBeDisabled();
+
+        await user.click(screen.getByRole("combobox", { name: "Relevance check" }));
+        await user.click(screen.getByRole("option", { name: "Same as question model" }));
+
+        expect(retry).toBeEnabled();
+        await user.click(retry);
+
+        await waitFor(() => {
+            expect(createAuthoringJob).toHaveBeenCalledWith({
+                domain: "code",
+                prompt: request.prompt,
+                difficulty: request.difficulty,
+                num_distractors: request.num_distractors,
+                connection_id: "connection-1",
+                model: "gpt-test",
+            });
+        });
     });
 
     it("preserves advisory model overrides when retrying", async () => {

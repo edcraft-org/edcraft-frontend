@@ -19,6 +19,8 @@ import {
     completedJob,
     failedJob,
     failedReview,
+    needsReviewJob,
+    needsReviewReview,
     preview,
 } from "./fixtures";
 
@@ -123,6 +125,77 @@ describe("AiAuthoringJobPage", () => {
                 model_profile: "default",
             });
         });
+    });
+
+    it("offers retry when a completed job still needs review", async () => {
+        vi.mocked(getAuthoringJob).mockResolvedValue(needsReviewJob);
+        vi.mocked(getAuthoringReview).mockResolvedValue(needsReviewReview);
+        vi.mocked(createAuthoringJob).mockResolvedValue({
+            job_id: "job-2",
+            status_url: "/ai-authoring/jobs/job-2",
+        });
+        const user = userEvent.setup();
+        renderJobPage();
+
+        expect(await screen.findByText("Technical checks did not pass")).toBeInTheDocument();
+        expect(await screen.findByText("Retry request")).toBeInTheDocument();
+        expect(
+            screen.getAllByText("The generated template failed technical checks.").length,
+        ).toBeGreaterThan(0);
+
+        await user.click(screen.getByRole("button", { name: "Retry question" }));
+
+        await waitFor(() => {
+            expect(createAuthoringJob).toHaveBeenCalledWith({
+                domain: "code",
+                prompt: needsReviewReview.request.prompt,
+                difficulty: needsReviewReview.request.difficulty,
+                num_distractors: needsReviewReview.request.num_distractors,
+                model_profile: "default",
+            });
+        });
+    });
+
+    it("updates the retry picker when navigating between jobs", async () => {
+        const alternateProfile = {
+            id: "alternate",
+            label: "Alternate authoring model",
+            provider: "openai",
+            model: "other-model",
+        };
+        vi.mocked(getAuthoringCapabilities).mockResolvedValue({
+            ...capabilities,
+            model_profiles: [...capabilities.model_profiles, alternateProfile],
+        });
+        vi.mocked(getAuthoringJob).mockImplementation(async (id) =>
+            id === "job-1" ? failedJob : { ...failedJob, job_id: "job-2" },
+        );
+        vi.mocked(getAuthoringReview).mockImplementation(async (id) =>
+            id === "job-1"
+                ? failedReview
+                : {
+                      ...failedReview,
+                      job_id: "job-2",
+                      request: {
+                          ...failedReview.request,
+                          model_profile: "alternate",
+                      },
+                  },
+        );
+        const user = userEvent.setup();
+        renderJobPage();
+
+        expect(await screen.findByRole("combobox", { name: "Question model" })).toHaveTextContent(
+            "Default authoring model",
+        );
+
+        await user.click(screen.getByRole("button", { name: "Open job 2" }));
+
+        await waitFor(() =>
+            expect(screen.getByRole("combobox", { name: "Question model" })).toHaveTextContent(
+                "Alternate authoring model",
+            ),
+        );
     });
 
     it("hides cached review actions when the review refresh fails", async () => {

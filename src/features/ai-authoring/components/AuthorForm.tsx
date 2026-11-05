@@ -30,8 +30,8 @@ import {
     buildModelRequest,
     isInheritSource,
     parseModelSource,
-    resolveJudgeSelection,
-    resolveModelSelection,
+    resolveStoredJudgeSelection,
+    resolveStoredModelSelection,
 } from "../modelSelection";
 import type {
     AuthoringCapabilities,
@@ -137,23 +137,30 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                   Math.max(minChoices, prefill.num_distractors + 1),
               )
             : defaultChoices;
-    const initialSelection = resolveModelSelection({
+    const initialSelection = resolveStoredModelSelection({
         connections,
         profiles,
         connectionId: prefill?.connection_id,
         profileId: prefill?.model_profile,
         model: prefill?.model,
     });
-    const initialDifficultySelection = resolveJudgeSelection({
+    const initialDifficultySelection = resolveStoredJudgeSelection({
         connections,
         profiles,
         selection: prefill?.judges?.difficulty,
     });
-    const initialRelevanceSelection = resolveJudgeSelection({
+    const initialRelevanceSelection = resolveStoredJudgeSelection({
         connections,
         profiles,
         selection: prefill?.judges?.relevance,
     });
+    const [authorMissing, setAuthorMissing] = useState(initialSelection.missing);
+    const [difficultyMissing, setDifficultyMissing] = useState(
+        initialDifficultySelection.missing,
+    );
+    const [relevanceMissing, setRelevanceMissing] = useState(
+        initialRelevanceSelection.missing,
+    );
     const prefilled = Boolean(prefill);
 
     const form = useForm<AuthoringFormValues>({
@@ -275,6 +282,19 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                     </div>
                 )}
 
+                {(authorMissing || difficultyMissing || relevanceMissing) && (
+                    <div className="mb-4">
+                        <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Original model unavailable</AlertTitle>
+                            <AlertDescription>
+                                The original model is no longer available. Choose a model
+                                before creating the question.
+                            </AlertDescription>
+                        </Alert>
+                    </div>
+                )}
+
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} noValidate>
                         <div className="grid gap-6 lg:grid-cols-3">
@@ -385,12 +405,14 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                                         form.setValue("model", nextModel, {
                                             shouldValidate: true,
                                         });
+                                        setAuthorMissing(false);
                                     }}
-                                    onModelChange={(nextModel) =>
+                                    onModelChange={(nextModel) => {
                                         form.setValue("model", nextModel, {
                                             shouldValidate: true,
-                                        })
-                                    }
+                                        });
+                                        setAuthorMissing(false);
+                                    }}
                                     sourceError={form.formState.errors.model_source?.message}
                                     modelError={form.formState.errors.model?.message}
                                     disabled={createJob.isPending}
@@ -417,12 +439,14 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                                             form.setValue("difficulty_model", nextModel, {
                                                 shouldValidate: true,
                                             });
+                                            setDifficultyMissing(false);
                                         }}
-                                        onModelChange={(nextModel) =>
+                                        onModelChange={(nextModel) => {
                                             form.setValue("difficulty_model", nextModel, {
                                                 shouldValidate: true,
-                                            })
-                                        }
+                                            });
+                                            setDifficultyMissing(false);
+                                        }}
                                         sourceError={
                                             form.formState.errors.difficulty_source?.message
                                         }
@@ -446,12 +470,14 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                                             form.setValue("relevance_model", nextModel, {
                                                 shouldValidate: true,
                                             });
+                                            setRelevanceMissing(false);
                                         }}
-                                        onModelChange={(nextModel) =>
+                                        onModelChange={(nextModel) => {
                                             form.setValue("relevance_model", nextModel, {
                                                 shouldValidate: true,
-                                            })
-                                        }
+                                            });
+                                            setRelevanceMissing(false);
+                                        }}
                                         sourceError={
                                             form.formState.errors.relevance_source?.message
                                         }

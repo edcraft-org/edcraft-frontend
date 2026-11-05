@@ -14,8 +14,8 @@ import {
     buildModelRequest,
     isModelSelectionComplete,
     parseModelSource,
-    resolveJudgeSelection,
-    resolveModelSelection,
+    resolveStoredJudgeSelection,
+    resolveStoredModelSelection,
 } from "../modelSelection";
 import type {
     AuthoringCapabilities,
@@ -36,19 +36,19 @@ export function RetryPanel({ request, capabilities }: RetryPanelProps) {
 
     const connections = capabilities.connections ?? [];
     const profiles = capabilities.model_profiles;
-    const initial = resolveModelSelection({
+    const initial = resolveStoredModelSelection({
         connections,
         profiles,
         connectionId: request.connection_id,
         profileId: request.model_profile,
         model: request.model,
     });
-    const initialDifficulty = resolveJudgeSelection({
+    const initialDifficulty = resolveStoredJudgeSelection({
         connections,
         profiles,
         selection: request.judges?.difficulty,
     });
-    const initialRelevance = resolveJudgeSelection({
+    const initialRelevance = resolveStoredJudgeSelection({
         connections,
         profiles,
         selection: request.judges?.relevance,
@@ -59,6 +59,13 @@ export function RetryPanel({ request, capabilities }: RetryPanelProps) {
     const [difficultyModel, setDifficultyModel] = useState(initialDifficulty.model);
     const [relevanceSource, setRelevanceSource] = useState(initialRelevance.source);
     const [relevanceModel, setRelevanceModel] = useState(initialRelevance.model);
+    const [authorMissing, setAuthorMissing] = useState(initial.missing);
+    const [difficultyMissing, setDifficultyMissing] = useState(
+        initialDifficulty.missing,
+    );
+    const [relevanceMissing, setRelevanceMissing] = useState(
+        initialRelevance.missing,
+    );
 
     const source = parseModelSource(modelSource);
     const selectedConnection =
@@ -66,6 +73,9 @@ export function RetryPanel({ request, capabilities }: RetryPanelProps) {
             ? connections.find((connection) => connection.id === source.id)
             : undefined;
     const canRetry =
+        !authorMissing &&
+        !difficultyMissing &&
+        !relevanceMissing &&
         isModelSelectionComplete(modelSource, model) &&
         isModelSelectionComplete(difficultySource, difficultyModel) &&
         isModelSelectionComplete(relevanceSource, relevanceModel) &&
@@ -75,12 +85,6 @@ export function RetryPanel({ request, capabilities }: RetryPanelProps) {
         { source: difficultySource, model: difficultyModel },
         { source: relevanceSource, model: relevanceModel },
     );
-    const originalConnectionMissing =
-        Boolean(request.connection_id) &&
-        !connections.some((connection) => connection.id === request.connection_id);
-    const originalProfileMissing =
-        Boolean(request.model_profile) &&
-        !profiles.some((profile) => profile.id === request.model_profile);
     const hasAnyModel = connections.length > 0 || profiles.length > 0;
 
     const prefill: AuthoringRetryPrefill = {
@@ -149,8 +153,12 @@ export function RetryPanel({ request, capabilities }: RetryPanelProps) {
                                 onSourceChange={(nextSource, nextModel) => {
                                     setModelSource(nextSource);
                                     setModel(nextModel);
+                                    setAuthorMissing(false);
                                 }}
-                                onModelChange={setModel}
+                                onModelChange={(nextModel) => {
+                                    setModel(nextModel);
+                                    setAuthorMissing(false);
+                                }}
                                 disabled={createJob.isPending}
                                 idPrefix="retry-model"
                             />
@@ -164,8 +172,12 @@ export function RetryPanel({ request, capabilities }: RetryPanelProps) {
                                     onSourceChange={(nextSource, nextModel) => {
                                         setDifficultySource(nextSource);
                                         setDifficultyModel(nextModel);
+                                        setDifficultyMissing(false);
                                     }}
-                                    onModelChange={setDifficultyModel}
+                                    onModelChange={(nextModel) => {
+                                        setDifficultyModel(nextModel);
+                                        setDifficultyMissing(false);
+                                    }}
                                     disabled={createJob.isPending}
                                     idPrefix="retry-difficulty"
                                     label="Difficulty check"
@@ -179,8 +191,12 @@ export function RetryPanel({ request, capabilities }: RetryPanelProps) {
                                     onSourceChange={(nextSource, nextModel) => {
                                         setRelevanceSource(nextSource);
                                         setRelevanceModel(nextModel);
+                                        setRelevanceMissing(false);
                                     }}
-                                    onModelChange={setRelevanceModel}
+                                    onModelChange={(nextModel) => {
+                                        setRelevanceModel(nextModel);
+                                        setRelevanceMissing(false);
+                                    }}
                                     disabled={createJob.isPending}
                                     idPrefix="retry-relevance"
                                     label="Relevance check"
@@ -195,10 +211,37 @@ export function RetryPanel({ request, capabilities }: RetryPanelProps) {
                     )}
                 </div>
 
-                {(originalConnectionMissing || originalProfileMissing) && hasAnyModel && (
-                    <p className="text-xs text-amber-600">
-                        The original model is no longer available. Another model is selected.
-                    </p>
+                {authorMissing && hasAnyModel && (
+                    <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Question model unavailable</AlertTitle>
+                        <AlertDescription>
+                            The original question model is no longer available. Choose a model
+                            to continue.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                {difficultyMissing && hasAnyModel && (
+                    <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Difficulty check model unavailable</AlertTitle>
+                        <AlertDescription>
+                            The difficulty check model is no longer available. Choose a check
+                            model or select Same as question model.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                {relevanceMissing && hasAnyModel && (
+                    <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Relevance check model unavailable</AlertTitle>
+                        <AlertDescription>
+                            The relevance check model is no longer available. Choose a check
+                            model or select Same as question model.
+                        </AlertDescription>
+                    </Alert>
                 )}
 
                 {selectedConnection && (
