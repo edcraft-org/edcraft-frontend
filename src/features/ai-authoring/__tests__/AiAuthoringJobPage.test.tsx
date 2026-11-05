@@ -142,6 +142,9 @@ describe("AiAuthoringJobPage", () => {
         expect(
             screen.getAllByText("The generated template failed technical checks.").length,
         ).toBeGreaterThan(0);
+        expect(screen.getByText("Draft · checks failed")).toBeInTheDocument();
+        expect(screen.getByText(/This draft did not pass technical checks/)).toBeInTheDocument();
+        expect(screen.getByLabelText("Template code")).toHaveTextContent("def list_sum");
 
         await user.click(screen.getByRole("button", { name: "Retry question" }));
 

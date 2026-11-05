@@ -200,18 +200,32 @@ function RequestSection({ review }: { review: AuthoringReview }) {
     );
 }
 
-function TemplateSection({ template }: { template: ReviewTemplate | null | undefined }) {
+function TemplateSection({
+    template,
+    draft = false,
+}: {
+    template: ReviewTemplate | null | undefined;
+    draft?: boolean;
+}) {
     return (
         <Card>
             <CardHeader className="pb-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <CardTitle>Template</CardTitle>
                     {template && (
-                        <Badge variant="outline">{capitalize(template.language ?? "python")}</Badge>
+                        <Badge variant={draft ? "destructive" : "outline"}>
+                            {draft ? "Draft · checks failed" : capitalize(template.language ?? "python")}
+                        </Badge>
                     )}
                 </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+                {draft && (
+                    <p className="text-sm text-muted-foreground">
+                        This draft did not pass technical checks. Inspect it, then retry with a
+                        revised request or another model.
+                    </p>
+                )}
                 {!template ? (
                     <p className="text-sm text-muted-foreground">
                         A template appears after the question passes its technical checks.
@@ -232,12 +246,22 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
     const difficultyFeedback = difficultyAdvisory(difficulty);
     const relevanceFeedback = relevanceAdvisory(relevance);
     const status = getReviewStatus(review, result);
+    const draftTemplate: ReviewTemplate | null =
+        review.template ??
+        (review.candidate
+            ? {
+                  template_id: review.candidate.template_id,
+                  candidate: review.candidate,
+                  language: "python",
+              }
+            : null);
+    const showingDraft = !review.template && Boolean(review.candidate);
 
     return (
         <div className="grid gap-6 xl:grid-cols-12">
             <div className="space-y-6 xl:col-span-8">
                 <RequestSection review={review} />
-                <TemplateSection template={review.template} />
+                <TemplateSection template={draftTemplate} draft={showingDraft} />
                 <ReviewQuestionPreview
                     jobId={jobId}
                     artifactSha256={review.artifact_sha256}

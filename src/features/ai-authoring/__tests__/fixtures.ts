@@ -328,6 +328,19 @@ export const needsReviewJob: AuthoringJob = {
 export const needsReviewReview: AuthoringReview = {
     ...failedReview,
     state: "completed",
+    checks: [failedTechnicalCheck, failedAdvisoryCheck],
+    attempts: [
+        {
+            number: 1,
+            candidate: approvedReview.template?.candidate ?? null,
+            pending: [],
+            complete: true,
+            passed: false,
+            checks: [failedTechnicalCheck, failedAdvisoryCheck],
+        },
+    ],
+    candidate: approvedReview.template?.candidate ?? null,
+    candidate_is_historical_attempt: true,
     error: {
         code: "TEMPLATE_CHECKS_FAILED",
         message: "The generated template failed technical checks.",
