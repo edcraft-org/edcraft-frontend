@@ -18,5 +18,6 @@ export interface AuthoringJobSummary {
   difficulty: AuthoringJobSummaryDifficulty;
   job_id: string;
   prompt_preview: string;
+  result_status?: 'checked' | 'needs_review' | 'error' | null;
   state: AuthoringJobSummaryState;
 }

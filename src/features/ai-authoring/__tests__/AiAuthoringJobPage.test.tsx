@@ -138,6 +138,7 @@ describe("AiAuthoringJobPage", () => {
         renderJobPage();
 
         expect(await screen.findByText("Technical checks did not pass")).toBeInTheDocument();
+        expect(screen.getAllByText("Needs review").length).toBeGreaterThan(0);
         expect(await screen.findByText("Retry request")).toBeInTheDocument();
         expect(
             screen.getAllByText("The generated template failed technical checks.").length,

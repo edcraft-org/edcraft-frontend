@@ -16,12 +16,18 @@ import { ROUTES } from "@/router/paths";
 import { getAuthoringErrorMessage } from "../errors";
 import { capitalize, formatDate } from "../format";
 import { useAuthoringJobs } from "../hooks/useAiAuthoring";
-import type { AuthoringJobSummary, AuthoringJobState } from "../types";
+import type { AuthoringJobSummary } from "../types";
 
 type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
-function summaryStatus(state: AuthoringJobState): { label: string; variant: BadgeVariant } {
-    switch (state) {
+function summaryStatus(job: AuthoringJobSummary): { label: string; variant: BadgeVariant } {
+    if (job.result_status === "needs_review") {
+        return { label: "Needs review", variant: "secondary" };
+    }
+    if (job.result_status === "error") {
+        return { label: "Failed", variant: "destructive" };
+    }
+    switch (job.state) {
         case "completed":
             return { label: "Completed", variant: "default" };
         case "failed":
@@ -99,7 +105,7 @@ export function RecentJobs() {
                         </TableHeader>
                         <TableBody>
                             {jobsQuery.data.map((job) => {
-                                const status = summaryStatus(job.state);
+                                const status = summaryStatus(job);
                                 return (
                                     <TableRow key={job.job_id}>
                                         <TableCell className="max-w-96 whitespace-normal">
