@@ -4,7 +4,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { capitalize, modelLabel } from "../format";
-import { getApprovalBlockers } from "../getApprovalBlockers";
+import { filterActionableWarnings } from "../warnings";
+import { getApprovalBlockers, isApproved } from "../getApprovalBlockers";
 import { getReviewStatus } from "../status";
 import type {
     AuthoringDifficultyOutcome,
@@ -18,6 +19,7 @@ import { ChecksPanel } from "./ChecksPanel";
 import { ReviewQuestionPreview } from "./ReviewQuestionPreview";
 import { TechnicalDetails } from "./TechnicalDetails";
 import { TemplateQuestionPreview } from "./TemplateQuestionPreview";
+import { WarningsPanel } from "./WarningsPanel";
 
 interface ReviewPanelProps {
     jobId: string;
@@ -260,6 +262,11 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
     return (
         <div className="grid gap-6 xl:grid-cols-12">
             <div className="space-y-6 xl:col-span-8">
+                <WarningsPanel
+                    warnings={filterActionableWarnings(review.warnings, {
+                        approved: isApproved(review),
+                    })}
+                />
                 <RequestSection review={review} />
                 <TemplateSection template={draftTemplate} draft={showingDraft} />
                 <ReviewQuestionPreview
@@ -291,6 +298,31 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
                                     </AlertDescription>
                                 </Alert>
                             )}
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="gap-2 pb-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <h3 className="leading-none font-semibold">Technical checks</h3>
+                                <Badge variant={status.variant}>{status.label}</Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">{status.summary}</p>
+                            <p className="text-xs text-muted-foreground">
+                                Artifact{" "}
+                                <span
+                                    className="break-all font-mono"
+                                    title={review.artifact_sha256 ?? undefined}
+                                >
+                                    {review.artifact_id ?? "pending"}
+                                    {review.artifact_sha256
+                                        ? ` · ${review.artifact_sha256.slice(0, 8)}`
+                                        : ""}
+                                </span>
+                            </p>
+                        </CardHeader>
+                        <CardContent>
+                            <ChecksPanel checks={review.checks ?? []} />
                         </CardContent>
                     </Card>
 
@@ -340,31 +372,6 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
                                     />
                                 )}
                             </AdvisoryCard>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader className="gap-2 pb-3">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                                <CardTitle>Evidence</CardTitle>
-                                <Badge variant={status.variant}>{status.label}</Badge>
-                            </div>
-                            <p className="text-xs text-muted-foreground">{status.summary}</p>
-                            <p className="text-xs text-muted-foreground">
-                                Artifact{" "}
-                                <span
-                                    className="break-all font-mono"
-                                    title={review.artifact_sha256 ?? undefined}
-                                >
-                                    {review.artifact_id ?? "pending"}
-                                    {review.artifact_sha256
-                                        ? ` · ${review.artifact_sha256.slice(0, 8)}`
-                                        : ""}
-                                </span>
-                            </p>
-                        </CardHeader>
-                        <CardContent>
-                            <ChecksPanel checks={review.checks ?? []} />
                         </CardContent>
                     </Card>
                 </div>

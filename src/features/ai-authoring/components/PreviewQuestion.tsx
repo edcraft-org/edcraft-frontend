@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { QuestionContent } from "@/features/questions/components/QuestionContent";
 import type { CodeQuestionInstance } from "../types";
 import { EvidenceDetails } from "./EvidenceDetails";
+import { QuestionInputs } from "./QuestionInputs";
 import { ReadOnlyCode } from "./ReadOnlyCode";
 import { ReadableValue } from "./ReadableValue";
 
@@ -64,15 +65,10 @@ export function PreviewQuestion({ instance, headingLevel = "h4" }: PreviewQuesti
 
             <section aria-label="Question inputs" className="space-y-1">
                 <h5 className="text-sm font-medium">Inputs</h5>
-                <ReadableValue value={question.inputs} />
+                <QuestionInputs inputs={question.inputs} />
             </section>
 
-            <details className="rounded-md border bg-muted/30 p-3 text-sm">
-                <summary className="cursor-pointer font-medium">Technical details</summary>
-                <div className="mt-3">
-                    <EvidenceDetails summary="Raw question data" value={instance} />
-                </div>
-            </details>
+            <EvidenceDetails summary="Raw question data" value={instance} variant="structured" />
         </article>
     );
 }

@@ -358,6 +358,62 @@ describe("ReviewPanel", () => {
             within(details).getByText(/Candidates in the authoring attempts are historical/),
         ).toBeInTheDocument();
     });
+
+    it("shows exactly one Technical checks heading", async () => {
+        renderPanel(approvedReview);
+
+        expect(
+            await screen.findByRole("heading", { name: "Technical checks" }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getAllByRole("heading", { name: "Technical checks" }),
+        ).toHaveLength(1);
+    });
+
+    it("shows mismatch warnings for an unapproved review outside a disclosure", async () => {
+        renderPanel({
+            ...unapprovedReview,
+            warnings: ["DIFFICULTY_MISMATCH", "RELEVANCE_MISMATCH"],
+        });
+
+        const heading = await screen.findByRole("heading", { name: "Warnings" });
+        const panel = heading.closest("div");
+        expect(panel).not.toBeNull();
+        const warning = within(panel as HTMLElement).getByText("DIFFICULTY_MISMATCH");
+        expect(warning).toBeVisible();
+        expect(warning.closest("details")).toBeNull();
+        expect(
+            within(panel as HTMLElement).getByText("RELEVANCE_MISMATCH"),
+        ).toBeVisible();
+    });
+
+    it("hides mismatch-only warnings after approval", async () => {
+        renderPanel({
+            ...approvedReview,
+            warnings: ["DIFFICULTY_MISMATCH", "RELEVANCE_MISMATCH"],
+        });
+
+        expect(await screen.findByText(/Approved on/)).toBeInTheDocument();
+        expect(
+            screen.queryByRole("heading", { name: "Warnings" }),
+        ).not.toBeInTheDocument();
+    });
+
+    it("keeps duplicate warnings after approval", async () => {
+        renderPanel({
+            ...approvedReview,
+            warnings: ["Duplicate warning for RELEVANCE_MISMATCH"],
+        });
+
+        const heading = await screen.findByRole("heading", { name: "Warnings" });
+        const panel = heading.closest("div");
+        expect(panel).not.toBeNull();
+        expect(
+            within(panel as HTMLElement).getByText(
+                "Duplicate warning for RELEVANCE_MISMATCH",
+            ),
+        ).toBeVisible();
+    });
 });
 
 function previewInstanceQuestion(): string {

@@ -13,8 +13,9 @@ import { isApproved } from "../getApprovalBlockers";
 import { useGenerateAuthoringBatch } from "../hooks/useAiAuthoring";
 import type { AuthoringBatch, AuthoringReview, GenerationMetadata } from "../types";
 import { MAX_SEED, seedRangeError } from "../validation";
-import { EvidenceDetails } from "./EvidenceDetails";
+import { filterActionableWarnings } from "../warnings";
 import { PreviewQuestion } from "./PreviewQuestion";
+import { WarningsPanel } from "./WarningsPanel";
 
 interface GeneratePanelProps {
     jobId: string;
@@ -220,10 +221,11 @@ export function GeneratePanel({
                     </Button>
                 </div>
 
-                {lastGeneration && (lastGeneration.warnings ?? []).length > 0 && (
-                    <EvidenceDetails
-                        summary="Last set warnings"
-                        value={lastGeneration.warnings}
+                {lastGeneration && !batch && (
+                    <WarningsPanel
+                        warnings={filterActionableWarnings(lastGeneration.warnings, {
+                            approved: true,
+                        })}
                     />
                 )}
 
@@ -262,23 +264,23 @@ export function GeneratePanel({
                             </Button>
                         </div>
 
-                        {(batch.warnings ?? []).length > 0 && (
-                            <EvidenceDetails
-                                summary="Raw warnings for this set"
-                                value={batch.warnings}
-                            />
-                        )}
+                        <WarningsPanel
+                            warnings={filterActionableWarnings(batch.warnings, {
+                                approved: true,
+                            })}
+                        />
 
                         {batch.questions.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
                                 No questions were created. Try a different starting seed.
                             </p>
                         ) : (
-                            <div className="grid gap-3 lg:grid-cols-2">
+                            <div className="space-y-3">
                                 {batch.questions.map((instance, index) => (
                                     <details
                                         key={`${instance.template_id}-${instance.seed}`}
                                         className="rounded-md border p-3"
+                                        open
                                     >
                                         <summary className="cursor-pointer text-sm font-medium">
                                             Question {index + 1} · seed {instance.seed}

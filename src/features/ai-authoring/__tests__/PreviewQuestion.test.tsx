@@ -57,14 +57,15 @@ describe("PreviewQuestion", () => {
         expect(screen.getByLabelText("Question code").textContent).toBe(
             structuredInstance.question.code,
         );
-        expect(screen.getByText("Flattens the two rows.")).toBeInTheDocument();
-        expect(screen.getByText("Does not add anything.")).toBeInTheDocument();
+        expect(screen.getAllByText("Flattens the two rows.").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("Does not add anything.").length).toBeGreaterThan(0);
         expect(
             screen.queryByText("Why the other choices are wrong"),
         ).not.toBeInTheDocument();
-        expect(screen.getByText("Flattens the two rows.").parentElement).toHaveClass(
-            "p-3",
-        );
+        const explanation = screen
+            .getAllByText("Flattens the two rows.")
+            .find((element) => element.parentElement?.classList.contains("p-3"));
+        expect(explanation).toBeDefined();
         expect(container).not.toHaveTextContent('{"values":[[1,2],[3,4]]}');
         expect(container).not.toHaveTextContent('"[[1,2],[3,4]]"');
 
@@ -79,9 +80,9 @@ describe("PreviewQuestion", () => {
         render(<PreviewQuestion instance={structuredInstance} />);
 
         const inputs = screen.getByLabelText("Question inputs");
-        const matrixEntry = within(inputs).getByText("matrix").closest("div");
-        expect(matrixEntry).not.toBeNull();
-        const matrixLists = (matrixEntry as HTMLElement).querySelectorAll("ul");
+        const matrixRow = within(inputs).getByText("matrix").closest("tr");
+        expect(matrixRow).not.toBeNull();
+        const matrixLists = (matrixRow as HTMLElement).querySelectorAll("ul");
 
         // matrix -> outer list -> two inner row lists, not one flat list.
         expect(matrixLists).toHaveLength(3);
@@ -89,13 +90,35 @@ describe("PreviewQuestion", () => {
         expect(inputs).not.toHaveTextContent("1, 2, 3, 4");
     });
 
-    it("keeps raw instance data and identifiers in technical details", () => {
+    it("shows a flat record as an input and value table", () => {
+        const flatInstance: CodeQuestionInstance = {
+            ...structuredInstance,
+            question: {
+                ...structuredInstance.question,
+                inputs: { start: 2, end: 5 },
+            },
+        };
+
+        render(<PreviewQuestion instance={flatInstance} />);
+
+        const inputs = screen.getByLabelText("Question inputs");
+        expect(within(inputs).getByRole("columnheader", { name: "Input" })).toBeInTheDocument();
+        expect(within(inputs).getByRole("columnheader", { name: "Value" })).toBeInTheDocument();
+        expect(within(inputs).getByText("start")).toBeInTheDocument();
+        expect(within(inputs).getByText("end")).toBeInTheDocument();
+        expect(within(inputs).getByText("2")).toBeInTheDocument();
+        expect(within(inputs).getByText("5")).toBeInTheDocument();
+    });
+
+    it("shows one collapsed raw question data disclosure", () => {
         render(<PreviewQuestion instance={structuredInstance} />);
 
-        const summary = screen.getByText("Technical details");
-        const details = summary.closest("details");
+        const summaries = screen.getAllByText("Raw question data");
+        expect(summaries).toHaveLength(1);
+        const details = summaries[0].closest("details");
+        expect(details).not.toBeNull();
         expect(details).not.toHaveAttribute("open");
         expect(details).toHaveTextContent(structuredInstance.template_id);
-        expect(within(details as HTMLElement).getByText("Raw question data")).toBeInTheDocument();
+        expect(screen.queryByText("Technical details")).not.toBeInTheDocument();
     });
 });

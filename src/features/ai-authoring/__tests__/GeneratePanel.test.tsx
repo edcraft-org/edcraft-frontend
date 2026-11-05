@@ -234,4 +234,63 @@ describe("GeneratePanel", () => {
         expect(screen.getByText(/2 created, all different/)).toBeInTheDocument();
         expect(screen.getByText(/seed 7/)).toBeInTheDocument();
     });
+
+    it("shows last-set warnings without a disclosure and hides approved mismatches", () => {
+        renderPanel({
+            lastGenerationMetadata: {
+                ...lastGeneration,
+                warnings: [
+                    "Finite parameter domain produced 1 duplicate.",
+                    "DIFFICULTY_MISMATCH",
+                    "RELEVANCE_MISMATCH",
+                ],
+            },
+        });
+
+        expect(screen.getByRole("heading", { name: "Warnings" })).toBeInTheDocument();
+        const warning = screen.getByText("Finite parameter domain produced 1 duplicate.");
+        expect(warning).toBeVisible();
+        expect(warning.closest("details")).toBeNull();
+        expect(screen.queryByText("DIFFICULTY_MISMATCH")).not.toBeInTheDocument();
+        expect(screen.queryByText("RELEVANCE_MISMATCH")).not.toBeInTheDocument();
+    });
+
+    it("opens generated questions by default and shows batch warnings without a disclosure", async () => {
+        const user = userEvent.setup();
+        renderPanel();
+
+        await user.click(screen.getByRole("button", { name: "Create questions" }));
+
+        const warning = await screen.findByText("Finite parameter domain produced 1 duplicate.");
+        expect(warning).toBeVisible();
+        expect(warning.closest("details")).toBeNull();
+
+        const firstQuestion = screen.getByText(/Question 1 · seed 0/).closest("details");
+        expect(firstQuestion).not.toBeNull();
+        expect(firstQuestion).toHaveAttribute("open");
+    });
+
+    it("does not show last-set warnings alongside a new batch", async () => {
+        const user = userEvent.setup();
+        renderPanel({
+            lastGenerationMetadata: {
+                ...lastGeneration,
+                warnings: ["Old duplicate warning for the last set."],
+            },
+        });
+
+        expect(
+            screen.getByText("Old duplicate warning for the last set."),
+        ).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: "Create questions" }));
+
+        expect(
+            await screen.findByText("Finite parameter domain produced 1 duplicate."),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByText("Old duplicate warning for the last set."),
+        ).not.toBeInTheDocument();
+        expect(screen.getAllByRole("heading", { name: "Warnings" })).toHaveLength(1);
+    });
 });
