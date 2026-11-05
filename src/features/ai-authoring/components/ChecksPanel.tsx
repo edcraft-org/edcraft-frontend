@@ -56,17 +56,11 @@ export function ChecksPanel({ checks }: ChecksPanelProps) {
                                     />
                                 )}
                                 <div className="min-w-0 space-y-1">
-                                    <p className="text-sm">
-                                        <span className="font-medium">{checkLabel(check)}</span>{" "}
-                                        <span
-                                            className={
-                                                passed
-                                                    ? "text-muted-foreground"
-                                                    : "text-destructive"
-                                            }
-                                        >
-                                            {statusLabel(check.status)}
+                                    <p className="text-sm font-medium">
+                                        <span className="sr-only">
+                                            {statusLabel(check.status)}:{" "}
                                         </span>
+                                        {checkLabel(check)}
                                     </p>
                                     {description && (
                                         <p className="text-xs text-muted-foreground">

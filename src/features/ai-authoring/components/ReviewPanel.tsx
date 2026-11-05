@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { capitalize, modelLabel } from "../format";
 import { filterActionableWarnings } from "../warnings";
-import { getApprovalBlockers, isApproved } from "../getApprovalBlockers";
+import { getApprovalBlockers } from "../getApprovalBlockers";
 import { getReviewStatus } from "../status";
 import type {
     AuthoringDifficultyOutcome,
@@ -264,7 +264,7 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
             <div className="space-y-6 xl:col-span-8">
                 <WarningsPanel
                     warnings={filterActionableWarnings(review.warnings, {
-                        approved: isApproved(review),
+                        approved: true,
                     })}
                 />
                 <RequestSection review={review} />

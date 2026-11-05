@@ -49,7 +49,7 @@ const checks: AuthoringCheck[] = [
 describe("ChecksPanel", () => {
     afterEach(cleanup);
 
-    it("lists every technical check with labels, statuses and descriptions", () => {
+    it("lists every technical check with labels, screen-reader statuses and descriptions", () => {
         render(<ChecksPanel checks={checks} />);
 
         expect(screen.getByText("1 of 3 technical checks need attention.")).toBeInTheDocument();
@@ -57,8 +57,10 @@ describe("ChecksPanel", () => {
         expect(screen.getByText("Question template")).toBeInTheDocument();
         expect(screen.getByText("Required features")).toBeInTheDocument();
         expect(screen.getByText("Answers and wrong choices")).toBeInTheDocument();
-        expect(screen.getAllByText("Passed")).toHaveLength(2);
-        expect(screen.getByText("Needs attention")).toBeInTheDocument();
+        const passedStatuses = screen.getAllByText(/Passed:/);
+        expect(passedStatuses).toHaveLength(2);
+        for (const status of passedStatuses) expect(status).toHaveClass("sr-only");
+        expect(screen.getByText(/Needs attention:/)).toHaveClass("sr-only");
 
         expect(
             screen.getByText("The template is structurally valid and renders."),

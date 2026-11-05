@@ -370,21 +370,16 @@ describe("ReviewPanel", () => {
         ).toHaveLength(1);
     });
 
-    it("shows mismatch warnings for an unapproved review outside a disclosure", async () => {
+    it("keeps mismatch warnings out of the review page because advisories show them", async () => {
         renderPanel({
             ...unapprovedReview,
             warnings: ["DIFFICULTY_MISMATCH", "RELEVANCE_MISMATCH"],
         });
 
-        const heading = await screen.findByRole("heading", { name: "Warnings" });
-        const panel = heading.closest("div");
-        expect(panel).not.toBeNull();
-        const warning = within(panel as HTMLElement).getByText("DIFFICULTY_MISMATCH");
-        expect(warning).toBeVisible();
-        expect(warning.closest("details")).toBeNull();
+        expect(await screen.findByText("Difficulty differs")).toBeInTheDocument();
         expect(
-            within(panel as HTMLElement).getByText("RELEVANCE_MISMATCH"),
-        ).toBeVisible();
+            screen.queryByRole("heading", { name: "Warnings" }),
+        ).not.toBeInTheDocument();
     });
 
     it("hides mismatch-only warnings after approval", async () => {
