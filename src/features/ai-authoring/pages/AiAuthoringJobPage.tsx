@@ -52,7 +52,7 @@ export default function AiAuthoringJobPage() {
 
     if (!jobId) {
         return (
-            <div className="mx-auto w-full max-w-4xl p-4 md:p-6">
+            <div className="mx-auto w-full max-w-[1440px] p-4 md:p-6">
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No question selected</AlertTitle>
