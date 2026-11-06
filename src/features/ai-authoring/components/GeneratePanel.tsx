@@ -7,7 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { downloadAuthoringBatch } from "../download";
-import { getAuthoringErrorMessage, isStaleArtifactError } from "../errors";
+import {
+    getAuthoringErrorMessage,
+    isApprovalConflictError,
+    isStaleArtifactError,
+} from "../errors";
 import { formatCountSummary, formatDate } from "../format";
 import { isApproved } from "../getApprovalBlockers";
 import { useGenerateAuthoringBatch } from "../hooks/useAiAuthoring";
@@ -109,7 +113,7 @@ export function GeneratePanel({
                     setBatchState({ approvalKey: requestApprovalKey, batch: result });
                 },
                 onError: (error) => {
-                    if (isStaleArtifactError(error)) {
+                    if (isStaleArtifactError(error) || isApprovalConflictError(error)) {
                         setBatchState(null);
                         onStaleArtifact();
                     }

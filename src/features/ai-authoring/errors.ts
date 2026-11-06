@@ -62,6 +62,17 @@ export function isStaleArtifactError(error: unknown): boolean {
     return detail ? STALE_ARTIFACT_DETAIL.test(detail) : false;
 }
 
+// A revoked approval is a different 409: the cached review still describes the
+// artifact, but generation must stop until the artifact is approved again.
+const APPROVAL_CONFLICT_DETAIL =
+    /artifact (?:must|needs to|has to) be approved|artifact (?:is not|has not been) approved|artifact approval (?:was |has been )?revoked/i;
+
+export function isApprovalConflictError(error: unknown): boolean {
+    if (!(error instanceof ApiError) || error.status !== 409) return false;
+    const detail = detailToString(error.detail);
+    return detail ? APPROVAL_CONFLICT_DETAIL.test(detail) : false;
+}
+
 export function isNotFoundError(error: unknown): boolean {
     return error instanceof ApiError && error.status === 404;
 }

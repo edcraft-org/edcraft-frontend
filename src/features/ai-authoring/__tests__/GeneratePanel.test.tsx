@@ -196,6 +196,32 @@ describe("GeneratePanel", () => {
         ).toBeInTheDocument();
     });
 
+    it("hides a prior batch after a revoked-approval conflict", async () => {
+        const { ApiError } = await import("@/api/axiosInstance");
+        const user = userEvent.setup();
+        const { onStaleArtifact } = renderPanel();
+
+        await user.click(screen.getByRole("button", { name: "Create questions" }));
+        expect(await screen.findByText(/3 created, 2 different/)).toBeInTheDocument();
+
+        vi.mocked(generateAuthoringBatch).mockRejectedValue(
+            new ApiError(
+                409,
+                "The exact artifact must be approved before generating questions.",
+            ),
+        );
+        await user.click(screen.getByRole("button", { name: "Create another set" }));
+
+        await waitFor(() => expect(onStaleArtifact).toHaveBeenCalledOnce());
+        expect(screen.queryByText(/3 created, 2 different/)).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: "Download questions (JSON)" }),
+        ).not.toBeInTheDocument();
+        expect(
+            await screen.findByText(/changed or is no longer usable/i),
+        ).toBeInTheDocument();
+    });
+
     it("rejects an out-of-range seed inline without sending a request", async () => {
         renderPanel();
         const user = userEvent.setup();
