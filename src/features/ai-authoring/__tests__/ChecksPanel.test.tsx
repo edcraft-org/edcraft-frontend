@@ -86,6 +86,45 @@ describe("ChecksPanel", () => {
         ).toBeInTheDocument();
     });
 
+    it("shows a shared preflight failure once and references it from later checks", () => {
+        const shared = {
+            code: "TEMPLATE_INVALID",
+            field: "answer_expression",
+            message:
+                'answer_expression "a + b": template expression exceeds 500 characters. ' +
+                "Expressions use bare parameter names.",
+        };
+        const explanation =
+            "template expression exceeds 500 characters. Expressions use bare parameter names.";
+
+        render(
+            <ChecksPanel
+                checks={[
+                    {
+                        tool: "code_verify_template_structure",
+                        status: "failed",
+                        advisory: false,
+                        findings: [shared],
+                        error: null,
+                    },
+                    {
+                        tool: "code_validate_answers_and_distractors",
+                        status: "failed",
+                        advisory: false,
+                        findings: [shared],
+                        error: null,
+                    },
+                ]}
+            />,
+        );
+
+        expect(screen.getAllByText(explanation)).toHaveLength(1);
+        expect(
+            screen.getByText("Same underlying issue as Question template."),
+        ).toBeInTheDocument();
+        expect(screen.getByText("2 of 2 technical checks need attention.")).toBeInTheDocument();
+    });
+
     it("does not list advisory checks or the old correctness disclaimer", () => {
         render(<ChecksPanel checks={checks} />);
 

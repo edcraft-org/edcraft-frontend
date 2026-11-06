@@ -19,6 +19,10 @@ interface ChecksPanelProps {
 export function ChecksPanel({ checks }: ChecksPanelProps) {
     const technical = checks.filter((check) => !check.advisory);
     const needsAttention = technical.filter((check) => check.status !== "passed");
+    // The structure and answer checks both parse the template expressions, so
+    // one parse failure is reported by both. Show the explanation once and let
+    // later checks point back to the first one that raised it.
+    const firstCheckByFinding = new Map<string, string>();
 
     const summary =
         technical.length === 0
@@ -35,6 +39,7 @@ export function ChecksPanel({ checks }: ChecksPanelProps) {
                     {technical.map((check, index) => {
                         const passed = check.status === "passed";
                         const description = checkDescription(check);
+                        const label = checkLabel(check);
                         const findings = check.findings ?? [];
 
                         return (
@@ -58,7 +63,7 @@ export function ChecksPanel({ checks }: ChecksPanelProps) {
                                         <span className="sr-only">
                                             {statusLabel(check.status)}:{" "}
                                         </span>
-                                        {checkLabel(check)}
+                                        {label}
                                     </p>
                                     {description && (
                                         <p className="text-xs text-muted-foreground">
@@ -69,14 +74,25 @@ export function ChecksPanel({ checks }: ChecksPanelProps) {
                                         <p className="text-xs text-destructive">{check.error}</p>
                                     )}
                                     {!passed &&
-                                        findings.map((finding, findingIndex) => (
-                                            <p
-                                                key={`${finding.code}-${findingIndex}`}
-                                                className="text-xs text-muted-foreground"
-                                            >
-                                                {findingText(finding)}
-                                            </p>
-                                        ))}
+                                        findings.map((finding, findingIndex) => {
+                                            const text = findingText(finding);
+                                            const findingKey = `${finding.code}\u0000${text}`;
+                                            const firstLabel = firstCheckByFinding.get(findingKey);
+                                            if (!firstLabel) {
+                                                firstCheckByFinding.set(findingKey, label);
+                                            }
+
+                                            return (
+                                                <p
+                                                    key={`${finding.code}-${findingIndex}`}
+                                                    className="text-xs text-muted-foreground"
+                                                >
+                                                    {firstLabel
+                                                        ? `Same underlying issue as ${firstLabel}.`
+                                                        : text}
+                                                </p>
+                                            );
+                                        })}
                                 </div>
                             </li>
                         );
