@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { queryKeys } from "@/api";
 import { ROUTES } from "@/router/paths";
 import { GeneratePanel } from "../components/GeneratePanel";
+import { PageShell } from "../components/PageShell";
 import { getAuthoringErrorMessage, isNotFoundError } from "../errors";
 import {
     useAuthoringCapabilities,
@@ -47,7 +48,7 @@ export default function AiAuthoringGeneratePage() {
 
     if (!jobId) {
         return (
-            <div className="mx-auto w-full max-w-[1440px] p-4 md:p-6">
+            <PageShell>
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No question selected</AlertTitle>
@@ -57,7 +58,7 @@ export default function AiAuthoringGeneratePage() {
                         </Link>
                     </AlertDescription>
                 </Alert>
-            </div>
+            </PageShell>
         );
     }
 
@@ -66,7 +67,7 @@ export default function AiAuthoringGeneratePage() {
     const terminal = reviewTerminal;
 
     return (
-        <div className="mx-auto w-full max-w-[1440px] space-y-6 p-4 md:p-6">
+        <PageShell>
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
                     <Link
@@ -224,6 +225,6 @@ export default function AiAuthoringGeneratePage() {
                     onStaleArtifact={handleStaleArtifact}
                 />
             )}
-        </div>
+        </PageShell>
     );
 }

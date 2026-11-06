@@ -36,8 +36,8 @@ export function TemplateQuestionPreview({ template }: TemplateQuestionPreviewPro
             </div>
 
             <p className="text-xs text-muted-foreground">
-                The reusable template. Placeholders are filled using the values shown in the
-                sample question&apos;s Inputs table.
+                The reusable template. Placeholders are filled from each generated question&apos;s
+                inputs.
             </p>
 
             <ReadOnlyCode code={candidate.code} label="Template code" />

@@ -3,6 +3,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AuthorForm } from "../components/AuthorForm";
+import { PageShell } from "../components/PageShell";
 import { RecentJobs } from "../components/RecentJobs";
 import { getAuthoringErrorMessage } from "../errors";
 import { useAuthoringCapabilities } from "../hooks/useAiAuthoring";
@@ -11,7 +12,7 @@ export default function AiAuthoringPage() {
     const capabilitiesQuery = useAuthoringCapabilities();
 
     return (
-        <div className="mx-auto w-full max-w-[1440px] space-y-6 p-4 md:p-6">
+        <PageShell>
             <header className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h1 className="flex items-center gap-2 text-2xl font-semibold">
@@ -62,6 +63,6 @@ export default function AiAuthoringPage() {
                     <RecentJobs />
                 </>
             )}
-        </div>
+        </PageShell>
     );
 }

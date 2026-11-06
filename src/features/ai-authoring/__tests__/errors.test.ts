@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApiError } from "@/api/axiosInstance";
-import { getAuthoringErrorMessage } from "../errors";
+import { getAuthoringErrorMessage, isStaleArtifactError } from "../errors";
 
 function validationError(detail: unknown): ApiError {
     const error = new ApiError(422, "Unprocessable Entity");
@@ -44,5 +44,33 @@ describe("getAuthoringErrorMessage", () => {
         expect(getAuthoringErrorMessage(new ApiError(404, "nope"), "Fallback")).toBe(
             "This question was not found or is not yours.",
         );
+    });
+});
+
+describe("isStaleArtifactError", () => {
+    it("recognises the artifact-change conflicts", () => {
+        expect(
+            isStaleArtifactError(
+                new ApiError(409, "The artifact changed; refresh the review before deciding."),
+            ),
+        ).toBe(true);
+        expect(
+            isStaleArtifactError(
+                new ApiError(409, "The stored artifact failed its integrity check; refresh the review."),
+            ),
+        ).toBe(true);
+    });
+
+    it("does not treat other 409 conflicts as stale artifacts", () => {
+        expect(
+            isStaleArtifactError(
+                new ApiError(409, "The exact artifact must be approved before generating questions."),
+            ),
+        ).toBe(false);
+        expect(
+            isStaleArtifactError(
+                new ApiError(409, "The artifact could not produce a question for this seed."),
+            ),
+        ).toBe(false);
     });
 });

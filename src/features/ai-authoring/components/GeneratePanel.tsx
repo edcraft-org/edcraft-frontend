@@ -13,7 +13,7 @@ import { isApproved } from "../getApprovalBlockers";
 import { useGenerateAuthoringBatch } from "../hooks/useAiAuthoring";
 import type { AuthoringBatch, AuthoringReview, GenerationMetadata } from "../types";
 import { MAX_SEED, seedRangeError } from "../validation";
-import { filterActionableWarnings } from "../warnings";
+import { filterMismatchWarnings } from "../warnings";
 import { PreviewQuestion } from "./PreviewQuestion";
 import { WarningsPanel } from "./WarningsPanel";
 
@@ -33,6 +33,10 @@ export function GeneratePanel({
     onStaleArtifact,
 }: GeneratePanelProps) {
     const approved = isApproved(review);
+    const currentGeneration =
+        approved && lastGeneration?.artifact_sha256 === review.artifact_sha256
+            ? lastGeneration
+            : null;
     const [quantityInput, setQuantityInput] = useState(String(Math.min(5, maxQuantity)));
     const [seedInput, setSeedInput] = useState("0");
     const [inputError, setInputError] = useState<string | null>(null);
@@ -166,12 +170,13 @@ export function GeneratePanel({
                     </div>
                 )}
 
-                {lastGeneration && (
+                {currentGeneration && (
                     <div className="rounded-md border bg-muted/30 p-3 text-sm">
                         <p className="font-medium">Last generated set</p>
                         <p className="text-muted-foreground">
-                            {formatCountSummary(lastGeneration)} · seed{" "}
-                            {lastGeneration.base_seed} · {formatDate(lastGeneration.created_at)}
+                            {formatCountSummary(currentGeneration)} · seed{" "}
+                            {currentGeneration.base_seed} ·{" "}
+                            {formatDate(currentGeneration.created_at)}
                         </p>
                     </div>
                 )}
@@ -221,12 +226,8 @@ export function GeneratePanel({
                     </Button>
                 </div>
 
-                {lastGeneration && !batch && (
-                    <WarningsPanel
-                        warnings={filterActionableWarnings(lastGeneration.warnings, {
-                            approved: true,
-                        })}
-                    />
+                {currentGeneration && !batch && (
+                    <WarningsPanel warnings={filterMismatchWarnings(currentGeneration.warnings)} />
                 )}
 
                 {inputError && (
@@ -265,9 +266,8 @@ export function GeneratePanel({
                         </div>
 
                         <WarningsPanel
-                            warnings={filterActionableWarnings(batch.warnings, {
-                                approved: true,
-                            })}
+                            warnings={filterMismatchWarnings(batch.warnings)}
+                            headingLevel="h3"
                         />
 
                         {batch.questions.length === 0 ? (

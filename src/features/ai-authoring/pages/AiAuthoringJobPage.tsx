@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { queryKeys } from "@/api";
 import { ROUTES } from "@/router/paths";
+import { PageShell } from "../components/PageShell";
 import { ProgressPanel } from "../components/ProgressPanel";
 import { RetryPanel } from "../components/RetryPanel";
 import { ReviewPanel } from "../components/ReviewPanel";
@@ -52,7 +53,7 @@ export default function AiAuthoringJobPage() {
 
     if (!jobId) {
         return (
-            <div className="mx-auto w-full max-w-[1440px] p-4 md:p-6">
+            <PageShell>
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No question selected</AlertTitle>
@@ -62,7 +63,7 @@ export default function AiAuthoringJobPage() {
                         </Link>
                     </AlertDescription>
                 </Alert>
-            </div>
+            </PageShell>
         );
     }
 
@@ -76,7 +77,7 @@ export default function AiAuthoringJobPage() {
     const recoverable = job?.state === "failed" || needsReview;
 
     return (
-        <div className="mx-auto w-full max-w-[1440px] space-y-6 p-4 md:p-6">
+        <PageShell>
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
                     <Link
@@ -266,6 +267,6 @@ export default function AiAuthoringJobPage() {
                     )}
                 </>
             )}
-        </div>
+        </PageShell>
     );
 }

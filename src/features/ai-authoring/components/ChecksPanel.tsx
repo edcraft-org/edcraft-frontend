@@ -1,17 +1,10 @@
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import type { AuthoringCheck } from "../types";
-import { checkLabel, statusLabel } from "../getApprovalBlockers";
+import { checkDescription, checkLabel, statusLabel } from "../checkMetadata";
 
 interface ChecksPanelProps {
     checks: AuthoringCheck[];
 }
-
-const CHECK_DESCRIPTIONS: Record<string, string> = {
-    code_verify_template_structure: "The template is structurally valid and renders.",
-    code_validate_answers_and_distractors:
-        "The answer and every wrong choice evaluate correctly and are distinct.",
-    code_require_features: "The requested Python features are present.",
-};
 
 /**
  * Lists every technical check with a plain-language description of what it
@@ -36,7 +29,7 @@ export function ChecksPanel({ checks }: ChecksPanelProps) {
                 <ul className="space-y-3">
                     {technical.map((check, index) => {
                         const passed = check.status === "passed";
-                        const description = CHECK_DESCRIPTIONS[check.tool];
+                        const description = checkDescription(check);
                         const findings = check.findings ?? [];
 
                         return (

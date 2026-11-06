@@ -51,8 +51,15 @@ export function getAuthoringErrorMessage(error: unknown, fallback: string): stri
     return fallback;
 }
 
+// These conflicts all mean the cached review no longer describes the stored
+// artifact. Seed or approval conflicts must not clear valid review state.
+const STALE_ARTIFACT_DETAIL =
+    /artifact (changed|failed its integrity check|is not usable|identity does not match)|validated artifact is unavailable/i;
+
 export function isStaleArtifactError(error: unknown): boolean {
-    return error instanceof ApiError && error.status === 409;
+    if (!(error instanceof ApiError) || error.status !== 409) return false;
+    const detail = detailToString(error.detail);
+    return detail ? STALE_ARTIFACT_DETAIL.test(detail) : false;
 }
 
 export function isNotFoundError(error: unknown): boolean {

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { filterActionableWarnings } from "../warnings";
+import { filterMismatchWarnings, warningText } from "../warnings";
 
-describe("filterActionableWarnings", () => {
-    it("drops mismatch-only warnings once approved", () => {
+describe("filterMismatchWarnings", () => {
+    it("drops mismatch-only warnings", () => {
         const warnings = [
             "DIFFICULTY_MISMATCH",
             "difficulty_mismatch_low_confidence",
@@ -11,7 +11,7 @@ describe("filterActionableWarnings", () => {
             "RELEVANCE_MISMATCH requested topic not found",
         ];
 
-        expect(filterActionableWarnings(warnings, { approved: true })).toEqual([]);
+        expect(filterMismatchWarnings(warnings)).toEqual([]);
     });
 
     it("keeps generation warnings even when they mention a mismatch code", () => {
@@ -21,7 +21,7 @@ describe("filterActionableWarnings", () => {
             "DIFFICULTY_MISMATCH_SEED",
         ];
 
-        expect(filterActionableWarnings(warnings, { approved: true })).toEqual(warnings);
+        expect(filterMismatchWarnings(warnings)).toEqual(warnings);
     });
 
     it("keeps duplicate and seed warnings that are separate from mismatches", () => {
@@ -31,22 +31,23 @@ describe("filterActionableWarnings", () => {
             "SEED_REUSED",
         ];
 
-        expect(filterActionableWarnings(duplicates, { approved: true })).toEqual(duplicates);
-    });
-
-    it("keeps every warning when the review is not approved", () => {
-        const warnings = [
-            "DIFFICULTY_MISMATCH",
-            "RELEVANCE_MISMATCH",
-            "Estimated difficulty is harder: DIFFICULTY_MISMATCH",
-            "Finite parameter domain produced 1 duplicate.",
-        ];
-
-        expect(filterActionableWarnings(warnings, { approved: false })).toEqual(warnings);
+        expect(filterMismatchWarnings(duplicates)).toEqual(duplicates);
     });
 
     it("handles missing warnings", () => {
-        expect(filterActionableWarnings(null, { approved: true })).toEqual([]);
-        expect(filterActionableWarnings(undefined, { approved: false })).toEqual([]);
+        expect(filterMismatchWarnings(null)).toEqual([]);
+        expect(filterMismatchWarnings(undefined)).toEqual([]);
+    });
+});
+
+describe("warningText", () => {
+    it("turns known review warning codes into readable text", () => {
+        expect(warningText("JUDGE_TRANSPORT")).toContain("could not be reached");
+        expect(warningText("judge_transport")).toContain("could not be reached");
+    });
+
+    it("leaves generation prose unchanged", () => {
+        const warning = "Finite parameter domain produced 1 duplicate.";
+        expect(warningText(warning)).toBe(warning);
     });
 });

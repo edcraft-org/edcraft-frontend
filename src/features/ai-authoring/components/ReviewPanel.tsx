@@ -4,7 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { capitalize, modelLabel } from "../format";
-import { filterActionableWarnings } from "../warnings";
+import { filterMismatchWarnings } from "../warnings";
 import { getApprovalBlockers } from "../getApprovalBlockers";
 import { getReviewStatus } from "../status";
 import type {
@@ -262,11 +262,7 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
     return (
         <div className="grid gap-6 xl:grid-cols-12">
             <div className="space-y-6 xl:col-span-8">
-                <WarningsPanel
-                    warnings={filterActionableWarnings(review.warnings, {
-                        approved: true,
-                    })}
-                />
+                <WarningsPanel warnings={filterMismatchWarnings(review.warnings)} />
                 <RequestSection review={review} />
                 <TemplateSection template={draftTemplate} draft={showingDraft} />
                 <ReviewQuestionPreview

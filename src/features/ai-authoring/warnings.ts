@@ -6,6 +6,20 @@ const MISMATCH_CODES = [
 
 const GENERATION_WARNING_TERMS = ["DUPLICATE", "SEED"];
 
+const WARNING_TEXT: Record<string, string> = {
+    ADVISORY_ASSESSMENT_UNAVAILABLE:
+        "An advisory assessment was unavailable, so that result is missing.",
+    CHECK_TIMEOUT: "A check timed out before it could finish.",
+    DIFFICULTY_UNABLE_TO_ASSESS: "The difficulty check could not estimate a level.",
+    JUDGE_TRANSPORT: "The advisory judge could not be reached, so that check did not run.",
+    RELEVANCE_FAILED: "The relevance check could not complete.",
+};
+
+/** Review warnings arrive as codes; generation warnings are already prose. */
+export function warningText(warning: string): string {
+    return WARNING_TEXT[warning.trim().toUpperCase()] ?? warning;
+}
+
 function isMismatchOnly(normalized: string): boolean {
     return MISMATCH_CODES.some(
         (code) =>
@@ -16,18 +30,12 @@ function isMismatchOnly(normalized: string): boolean {
 }
 
 /**
- * Warnings that only restate an advisory mismatch are noise once the exact
- * artifact has been approved. A warning that also mentions a duplicate or a
- * seed describes generation output and must always stay visible.
+ * Advisory mismatches are shown in the Advisories card, so their duplicate
+ * warning codes are noise on the authoring pages. A warning that also mentions
+ * a duplicate or a seed describes generation output and must stay visible.
  */
-export function filterActionableWarnings(
-    warnings: string[] | null | undefined,
-    { approved }: { approved: boolean },
-): string[] {
-    const list = warnings ?? [];
-    if (!approved) return [...list];
-
-    return list.filter((warning) => {
+export function filterMismatchWarnings(warnings: string[] | null | undefined): string[] {
+    return (warnings ?? []).filter((warning) => {
         const normalized = warning.trim().toUpperCase();
         if (GENERATION_WARNING_TERMS.some((term) => normalized.includes(term))) {
             return true;

@@ -235,6 +235,15 @@ describe("GeneratePanel", () => {
         expect(screen.getByText(/seed 7/)).toBeInTheDocument();
     });
 
+    it("hides a last set that belongs to a rejected artifact", () => {
+        renderPanel({
+            review: rejectedReview,
+            lastGenerationMetadata: lastGeneration,
+        });
+
+        expect(screen.queryByText("Last generated set")).not.toBeInTheDocument();
+    });
+
     it("shows last-set warnings without a disclosure and hides approved mismatches", () => {
         renderPanel({
             lastGenerationMetadata: {
@@ -247,7 +256,9 @@ describe("GeneratePanel", () => {
             },
         });
 
-        expect(screen.getByRole("heading", { name: "Warnings" })).toBeInTheDocument();
+        expect(
+            screen.getByRole("heading", { name: "Warnings", level: 2 }),
+        ).toBeInTheDocument();
         const warning = screen.getByText("Finite parameter domain produced 1 duplicate.");
         expect(warning).toBeVisible();
         expect(warning.closest("details")).toBeNull();
@@ -291,6 +302,8 @@ describe("GeneratePanel", () => {
         expect(
             screen.queryByText("Old duplicate warning for the last set."),
         ).not.toBeInTheDocument();
-        expect(screen.getAllByRole("heading", { name: "Warnings" })).toHaveLength(1);
+        expect(
+            screen.getByRole("heading", { name: "Warnings", level: 3 }),
+        ).toBeInTheDocument();
     });
 });

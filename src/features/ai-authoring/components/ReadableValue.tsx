@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 interface ReadableValueProps {
     value: unknown;
     className?: string;
@@ -33,17 +35,19 @@ export function ReadableValue({
 }: ReadableValueProps) {
     if (Array.isArray(value)) {
         if (value.length === 0) {
-            return <p className={`text-sm text-muted-foreground ${className ?? ""}`}>Empty list</p>;
+            return (
+                <p className={cn("text-sm text-muted-foreground", className)}>Empty list</p>
+            );
         }
         if (inlineScalarArrays && value.every((item) => !Array.isArray(item) && !isRecord(item))) {
             return (
-                <span className={`whitespace-pre-wrap break-words text-sm ${className ?? ""}`}>
+                <span className={cn("whitespace-pre-wrap break-words text-sm", className)}>
                     [{value.map(scalarLabel).join(", ")}]
                 </span>
             );
         }
         return (
-            <ul className={`list-disc space-y-1 pl-4 text-sm ${className ?? ""}`}>
+            <ul className={cn("list-disc space-y-1 pl-4 text-sm", className)}>
                 {value.map((item, index) => (
                     <li key={index} className="pl-1">
                         <ReadableValue value={item} />
@@ -56,10 +60,10 @@ export function ReadableValue({
     if (isRecord(value)) {
         const entries = Object.entries(value);
         if (entries.length === 0) {
-            return <p className={`text-sm text-muted-foreground ${className ?? ""}`}>Empty</p>;
+            return <p className={cn("text-sm text-muted-foreground", className)}>Empty</p>;
         }
         return (
-            <dl className={`space-y-1 text-sm ${className ?? ""}`}>
+            <dl className={cn("space-y-1 text-sm", className)}>
                 {entries.map(([key, item]) => (
                     <div key={key} className="space-y-0.5">
                         <dt className="text-xs font-medium text-muted-foreground">{key}</dt>
@@ -73,7 +77,7 @@ export function ReadableValue({
     }
 
     return (
-        <span className={`whitespace-pre-wrap break-words text-sm ${className ?? ""}`}>
+        <span className={cn("whitespace-pre-wrap break-words text-sm", className)}>
             {scalarLabel(value)}
         </span>
     );

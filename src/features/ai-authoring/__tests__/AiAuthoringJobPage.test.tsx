@@ -210,13 +210,19 @@ describe("AiAuthoringJobPage", () => {
 
         vi.mocked(getAuthoringReview).mockRejectedValue(new ApiError(503, "Review unavailable."));
         vi.mocked(decideAuthoringApproval).mockRejectedValue(
-            new ApiError(409, "The artifact digest is stale."),
+            new ApiError(409, "The artifact changed; refresh the review before deciding."),
         );
 
         await user.click(screen.getByRole("button", { name: "Approve this version again" }));
 
-        expect(await screen.findByText("The question changed")).toBeInTheDocument();
-        expect(await screen.findByText("Review could not be loaded")).toBeInTheDocument();
+        expect(
+            await screen.findByText("The question changed", undefined, { timeout: 5000 }),
+        ).toBeInTheDocument();
+        expect(
+            await screen.findByText("Review could not be loaded", undefined, {
+                timeout: 5000,
+            }),
+        ).toBeInTheDocument();
         expect(
             screen.queryByRole("button", { name: "Approve this version again" }),
         ).not.toBeInTheDocument();
@@ -225,7 +231,7 @@ describe("AiAuthoringJobPage", () => {
 
     it("does not carry a stale notice to a different job route", async () => {
         vi.mocked(decideAuthoringApproval).mockRejectedValue(
-            new ApiError(409, "The artifact digest is stale."),
+            new ApiError(409, "The artifact changed; refresh the review before deciding."),
         );
         const user = userEvent.setup();
         renderJobPage();

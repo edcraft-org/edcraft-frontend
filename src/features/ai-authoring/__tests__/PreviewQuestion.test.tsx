@@ -90,6 +90,28 @@ describe("PreviewQuestion", () => {
         expect(inputs).not.toHaveTextContent("1, 2, 3, 4");
     });
 
+    it("nests the Inputs heading one level below the question heading", () => {
+        const { rerender } = render(<PreviewQuestion instance={structuredInstance} />);
+
+        expect(
+            screen.getByRole("heading", {
+                name: structuredInstance.question.question,
+                level: 2,
+            }),
+        ).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: "Inputs", level: 3 })).toBeInTheDocument();
+
+        rerender(<PreviewQuestion instance={structuredInstance} headingLevel="h3" />);
+
+        expect(
+            screen.getByRole("heading", {
+                name: structuredInstance.question.question,
+                level: 3,
+            }),
+        ).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: "Inputs", level: 4 })).toBeInTheDocument();
+    });
+
     it("shows a flat record as an input and value table", () => {
         const flatInstance: CodeQuestionInstance = {
             ...structuredInstance,

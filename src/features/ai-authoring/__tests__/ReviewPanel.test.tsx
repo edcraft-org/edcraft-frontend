@@ -155,7 +155,7 @@ describe("ReviewPanel", () => {
 
     it("reports a stale digest and asks the page to refresh", async () => {
         vi.mocked(decideAuthoringApproval).mockRejectedValue(
-            new ApiError(409, "The artifact digest is stale."),
+            new ApiError(409, "The artifact changed; refresh the review before deciding."),
         );
         const user = userEvent.setup();
         const { onStaleArtifact } = renderPanel(approvedReview);
@@ -202,7 +202,7 @@ describe("ReviewPanel", () => {
         expect(await screen.findByText(previewInstanceQuestion())).toBeInTheDocument();
 
         vi.mocked(getAuthoringPreview).mockRejectedValue(
-            new ApiError(409, "The artifact digest is stale."),
+            new ApiError(409, "The artifact changed; refresh the review before deciding."),
         );
         await user.click(screen.getByRole("button", { name: "Load" }));
 
