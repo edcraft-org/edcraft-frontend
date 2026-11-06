@@ -41,6 +41,10 @@ interface ConnectionDialogProps {
     connection?: ProviderConnection | null;
 }
 
+function normalizeBaseUrl(value: string | null | undefined): string {
+    return (value ?? "").trim().replace(/\/+$/, "");
+}
+
 export function ConnectionDialog({
     open,
     onOpenChange,
@@ -79,6 +83,12 @@ export function ConnectionDialog({
         name.trim().length > 0 &&
         defaultModel.trim().length > 0 &&
         (connection !== null || apiKey.trim().length > 0);
+    // Testing a stored connection uses the saved endpoint and key. Once the
+    // endpoint changes, that probe would describe the old provider.
+    const connectionSettingsChanged =
+        connection !== null &&
+        (kind !== connection.kind ||
+            normalizeBaseUrl(baseUrl) !== normalizeBaseUrl(connection.base_url));
 
     const applyModels = (result: DiscoveredModels) => {
         setModels(result.models);
@@ -90,11 +100,16 @@ export function ConnectionDialog({
 
     const handleProbe = () => {
         setError(null);
-        if (!apiKey.trim() && !connection) {
+        const hasNewKey = apiKey.trim().length > 0;
+        if (!hasNewKey && !connection) {
             setError("Enter an API key before loading models.");
             return;
         }
-        if (!apiKey.trim() && connection) {
+        if (!hasNewKey && connection) {
+            if (connectionSettingsChanged) {
+                setError("Enter the API key again to test the updated base URL.");
+                return;
+            }
             testStored.mutate(connection.id, {
                 onSuccess: (result) => {
                     applyModels(result);
@@ -218,9 +233,10 @@ export function ConnectionDialog({
                             <Label htmlFor="connection-kind">Provider</Label>
                             <Select
                                 value={kind}
-                                onValueChange={(value) =>
-                                    setKind(value as ProviderConnectionKind)
-                                }
+                                onValueChange={(value) => {
+                                    setKind(value as ProviderConnectionKind);
+                                    setModels([]);
+                                }}
                                 disabled={Boolean(connection)}
                             >
                                 <SelectTrigger id="connection-kind" className="w-full">
@@ -241,7 +257,10 @@ export function ConnectionDialog({
                             <Input
                                 id="connection-base-url"
                                 value={baseUrl}
-                                onChange={(event) => setBaseUrl(event.target.value)}
+                                onChange={(event) => {
+                                    setBaseUrl(event.target.value);
+                                    setModels([]);
+                                }}
                                 placeholder={
                                     kind === "openai"
                                         ? "https://api.openai.com/v1"
