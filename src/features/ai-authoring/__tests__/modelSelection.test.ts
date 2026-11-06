@@ -3,6 +3,7 @@ import {
     connectionSource,
     INHERIT_SOURCE,
     profileSource,
+    resolveModelSelection,
     resolveStoredJudgeSelection,
     resolveStoredModelSelection,
 } from "../modelSelection";
@@ -71,6 +72,47 @@ describe("stored model selection", () => {
                 model: "gpt-removed",
             }),
         ).toEqual({ source: "", model: "", missing: true });
+    });
+
+    it("accepts a saved manual model when the connection has no discovered list", () => {
+        const manualConnection = {
+            ...connection,
+            default_model: "manual-model",
+            models: [],
+        };
+
+        expect(
+            resolveStoredModelSelection({
+                connections: [manualConnection],
+                profiles,
+                connectionId: manualConnection.id,
+                model: "manual-model",
+            }),
+        ).toEqual({
+            source: connectionSource(manualConnection.id),
+            model: "manual-model",
+            missing: false,
+        });
+    });
+
+    it("prefills a saved manual model when the connection has no discovered list", () => {
+        const manualConnection = {
+            ...connection,
+            default_model: "fallback-model",
+            models: [],
+        };
+
+        expect(
+            resolveModelSelection({
+                connections: [manualConnection],
+                profiles,
+                connectionId: manualConnection.id,
+                model: "manual-model",
+            }),
+        ).toEqual({
+            source: connectionSource(manualConnection.id),
+            model: "manual-model",
+        });
     });
 
     it("falls back to a default model when nothing is stored", () => {

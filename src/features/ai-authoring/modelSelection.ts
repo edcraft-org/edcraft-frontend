@@ -125,7 +125,9 @@ export function resolveModelSelection({
         return {
             source: connectionSource(requestedConnection.id),
             model:
-                model && requestedConnection.models.includes(model)
+                model &&
+                (requestedConnection.models.length === 0 ||
+                    requestedConnection.models.includes(model))
                     ? model
                     : connectionModel(requestedConnection),
         };
@@ -168,7 +170,13 @@ export function resolveStoredModelSelection({
         const connection = connections.find((item) => item.id === connectionId);
         if (connection) {
             const storedModel = model ?? "";
-            if (!storedModel || connection.models.includes(storedModel)) {
+            // An empty model list means discovery has not run, so a manually
+            // configured model is valid rather than missing.
+            if (
+                !storedModel ||
+                connection.models.length === 0 ||
+                connection.models.includes(storedModel)
+            ) {
                 return {
                     source: connectionSource(connection.id),
                     model: storedModel,
