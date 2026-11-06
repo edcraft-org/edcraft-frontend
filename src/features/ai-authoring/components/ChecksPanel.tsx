@@ -1,6 +1,11 @@
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import type { AuthoringCheck } from "../types";
-import { checkDescription, checkLabel, statusLabel } from "../checkMetadata";
+import {
+    checkDescription,
+    checkLabel,
+    findingText,
+    statusLabel,
+} from "../checkMetadata";
 
 interface ChecksPanelProps {
     checks: AuthoringCheck[];
@@ -69,7 +74,7 @@ export function ChecksPanel({ checks }: ChecksPanelProps) {
                                                 key={`${finding.code}-${findingIndex}`}
                                                 className="text-xs text-muted-foreground"
                                             >
-                                                {finding.message}
+                                                {findingText(finding)}
                                             </p>
                                         ))}
                                 </div>

@@ -27,6 +27,30 @@ export function checkDescription(check: AuthoringCheck): string | null {
     return CHECK_DESCRIPTIONS[check.tool] ?? null;
 }
 
+interface FindingLike {
+    message: string;
+    field?: string | null;
+}
+
+function escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Validator findings prefix the explanation with the offending field and its
+ * value, for example `answer_expression "a + b": ...`. The full template is
+ * already shown above, so repeating a long value only hides the actionable
+ * sentence. Keep the explanation and drop the echoed value.
+ */
+export function findingText({ message, field }: FindingLike): string {
+    if (!field) return message;
+    const prefix = new RegExp(
+        `^${escapeRegExp(field)}(?:\\s+(?:'[^']*'|"[^"]*"))?\\s*:\\s*`,
+    );
+    const detail = message.replace(prefix, "").trim();
+    return detail || message;
+}
+
 export function statusLabel(status: AuthoringCheck["status"]): string {
     switch (status) {
         case "passed":
