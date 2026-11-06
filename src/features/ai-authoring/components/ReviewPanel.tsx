@@ -304,7 +304,7 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
                     <Card>
                         <CardHeader className="gap-2 pb-3">
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                                <h3 className="leading-none font-semibold">Technical checks</h3>
+                                <h2 className="leading-none font-semibold">Technical checks</h2>
                                 <Badge variant={status.variant}>{status.label}</Badge>
                             </div>
                             <p className="text-xs text-muted-foreground">

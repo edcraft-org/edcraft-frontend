@@ -16,6 +16,13 @@ describe("QuestionInputs", () => {
         expect(screen.getByText("5")).toBeInTheDocument();
     });
 
+    it("keeps a flat scalar array on one line inside the value cell", () => {
+        render(<QuestionInputs inputs={{ values: [40, 41, 42, 43], index: 2 }} />);
+
+        expect(screen.getByText("[40, 41, 42, 43]")).toBeInTheDocument();
+        expect(screen.queryByRole("list")).not.toBeInTheDocument();
+    });
+
     it("shows a muted message for an empty object", () => {
         render(<QuestionInputs inputs={{}} />);
 
@@ -26,8 +33,7 @@ describe("QuestionInputs", () => {
     it("falls back to the readable value for arrays and scalars", () => {
         const { rerender } = render(<QuestionInputs inputs={[1, 2]} />);
 
-        expect(screen.getByText("1")).toBeInTheDocument();
-        expect(screen.getByText("2")).toBeInTheDocument();
+        expect(screen.getByText("[1, 2]")).toBeInTheDocument();
 
         rerender(<QuestionInputs inputs="value" />);
         expect(screen.getByText('"value"')).toBeInTheDocument();

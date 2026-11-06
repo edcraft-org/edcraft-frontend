@@ -61,9 +61,9 @@ export function ApprovalControls({
     return (
         <section aria-labelledby="approval-heading" className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 id="approval-heading" className="font-medium">
+                <h2 id="approval-heading" className="font-medium">
                     Review decision
-                </h3>
+                </h2>
                 {approval ? (
                     <Badge variant={approval.decision === "approved" ? "default" : "destructive"}>
                         {approval.decision === "approved" ? "Approved" : "Rejected"}

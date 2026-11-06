@@ -24,7 +24,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
  */
 export function QuestionInputs({ inputs }: QuestionInputsProps) {
     if (!isPlainObject(inputs)) {
-        return <ReadableValue value={inputs} />;
+        return <ReadableValue value={inputs} inlineScalarArrays />;
     }
 
     const entries = Object.entries(inputs);
@@ -45,7 +45,7 @@ export function QuestionInputs({ inputs }: QuestionInputsProps) {
                     <TableRow key={key}>
                         <TableCell className="px-2 font-mono text-xs">{key}</TableCell>
                         <TableCell className="px-2">
-                            <ReadableValue value={value} />
+                            <ReadableValue value={value} inlineScalarArrays />
                         </TableCell>
                     </TableRow>
                 ))}

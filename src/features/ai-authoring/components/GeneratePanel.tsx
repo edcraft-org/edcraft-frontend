@@ -247,9 +247,9 @@ export function GeneratePanel({
                     <section aria-labelledby="batch-heading" className="space-y-4 border-t pt-5">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
-                                <h3 id="batch-heading" className="font-medium">
+                                <h2 id="batch-heading" className="font-medium">
                                     Generated questions
-                                </h3>
+                                </h2>
                                 <p className="text-sm text-muted-foreground">
                                     {formatCountSummary(batch)}
                                 </p>
@@ -286,7 +286,7 @@ export function GeneratePanel({
                                             Question {index + 1} · seed {instance.seed}
                                         </summary>
                                         <div className="pt-3">
-                                            <PreviewQuestion instance={instance} headingLevel="h4" />
+                                            <PreviewQuestion instance={instance} headingLevel="h3" />
                                         </div>
                                     </details>
                                 ))}

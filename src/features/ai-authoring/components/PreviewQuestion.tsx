@@ -8,15 +8,16 @@ import { ReadableValue } from "./ReadableValue";
 
 interface PreviewQuestionProps {
     instance: CodeQuestionInstance;
-    headingLevel?: "h3" | "h4";
+    headingLevel?: "h2" | "h3";
 }
 
 function renderReadableValue(value: unknown) {
     return <ReadableValue value={value} />;
 }
 
-export function PreviewQuestion({ instance, headingLevel = "h4" }: PreviewQuestionProps) {
+export function PreviewQuestion({ instance, headingLevel = "h2" }: PreviewQuestionProps) {
     const Heading = headingLevel;
+    const InputsHeading = headingLevel === "h2" ? "h3" : "h4";
     const { question } = instance;
     const distractors = question.distractors ?? [];
     const distractorReasons = question.distractor_reasons ?? [];
@@ -64,7 +65,7 @@ export function PreviewQuestion({ instance, headingLevel = "h4" }: PreviewQuesti
             />
 
             <section aria-label="Question inputs" className="space-y-1">
-                <h5 className="text-sm font-medium">Inputs</h5>
+                <InputsHeading className="text-sm font-medium">Inputs</InputsHeading>
                 <QuestionInputs inputs={question.inputs} />
             </section>
 

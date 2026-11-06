@@ -1,6 +1,11 @@
 interface ReadableValueProps {
     value: unknown;
     className?: string;
+    /**
+     * Keep a directly rendered scalar array on one line, which reads better
+     * inside table cells. Nested arrays keep their list layout.
+     */
+    inlineScalarArrays?: boolean;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -21,10 +26,21 @@ function scalarLabel(value: unknown): string {
  * preserving their nested structure. Raw JSON stays available in technical
  * disclosures and the exported batch keeps the canonical value unchanged.
  */
-export function ReadableValue({ value, className }: ReadableValueProps) {
+export function ReadableValue({
+    value,
+    className,
+    inlineScalarArrays = false,
+}: ReadableValueProps) {
     if (Array.isArray(value)) {
         if (value.length === 0) {
             return <p className={`text-sm text-muted-foreground ${className ?? ""}`}>Empty list</p>;
+        }
+        if (inlineScalarArrays && value.every((item) => !Array.isArray(item) && !isRecord(item))) {
+            return (
+                <span className={`whitespace-pre-wrap break-words text-sm ${className ?? ""}`}>
+                    [{value.map(scalarLabel).join(", ")}]
+                </span>
+            );
         }
         return (
             <ul className={`list-disc space-y-1 pl-4 text-sm ${className ?? ""}`}>

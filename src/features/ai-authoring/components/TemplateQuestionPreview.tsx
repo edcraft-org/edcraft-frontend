@@ -29,15 +29,15 @@ export function TemplateQuestionPreview({ template }: TemplateQuestionPreviewPro
     return (
         <article className="space-y-4 rounded-lg border p-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
-                <h3 className="min-w-0 text-base font-medium">
+                <h2 className="min-w-0 text-base font-medium">
                     {candidate.question_template}
-                </h3>
+                </h2>
                 <Badge variant="outline">Template</Badge>
             </div>
 
             <p className="text-xs text-muted-foreground">
-                The reusable template. Placeholders use the parameter values shown in technical
-                details.
+                The reusable template. Placeholders are filled using the values shown in the
+                sample question&apos;s Inputs table.
             </p>
 
             <ReadOnlyCode code={candidate.code} label="Template code" />
