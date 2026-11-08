@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { PreviewQuestion } from "../components/PreviewQuestion";
 import { ReadableValue } from "../components/ReadableValue";
 import type { CodeQuestionInstance } from "../types";
@@ -142,5 +143,38 @@ describe("PreviewQuestion", () => {
         expect(details).not.toHaveAttribute("open");
         expect(details).toHaveTextContent(structuredInstance.template_id);
         expect(screen.queryByText("Technical details")).not.toBeInTheDocument();
+    });
+
+    it("keeps review choices neutral until the answer is revealed", async () => {
+        const user = userEvent.setup();
+        render(
+            <PreviewQuestion
+                instance={structuredInstance}
+                headingLevel="h3"
+                variant="review"
+            />,
+        );
+
+        expect(
+            screen.queryByText(/The correct choice is highlighted below/),
+        ).not.toBeInTheDocument();
+        expect(screen.queryByText("✓")).not.toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Show Answer" })).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: "Show Answer" }));
+
+        expect(screen.getByText("✓")).toBeInTheDocument();
+        expect(screen.queryByText("Answer:")).not.toBeInTheDocument();
+        expect(screen.queryByText(/Correct option/)).not.toBeInTheDocument();
+    });
+
+    it("shows review code inline without inputs or raw data", () => {
+        render(<PreviewQuestion instance={structuredInstance} variant="review" />);
+
+        expect(screen.getByLabelText("Question code")).toBeInTheDocument();
+        expect(screen.queryByText("View code")).not.toBeInTheDocument();
+        expect(screen.queryByText("Inputs and raw data")).not.toBeInTheDocument();
+        expect(screen.queryByLabelText("Question inputs")).not.toBeInTheDocument();
+        expect(screen.queryByText("Raw question data")).not.toBeInTheDocument();
     });
 });

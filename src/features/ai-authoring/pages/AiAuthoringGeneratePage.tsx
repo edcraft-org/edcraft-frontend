@@ -3,13 +3,16 @@ import { Link, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { queryKeys } from "@/api";
 import { ROUTES } from "@/router/paths";
 import { GeneratePanel } from "../components/GeneratePanel";
+import { FlowSteps } from "../components/FlowSteps";
 import { PageShell } from "../components/PageShell";
 import { getAuthoringErrorMessage, isNotFoundError } from "../errors";
+import { isApproved } from "../getApprovalBlockers";
 import {
     useAuthoringCapabilities,
     useAuthoringJob,
@@ -19,7 +22,7 @@ import {
 function LoadingCard({ children }: { children: string }) {
     return (
         <Card>
-            <CardContent className="py-6 text-sm text-muted-foreground">{children}</CardContent>
+            <CardContent className="text-sm text-muted-foreground">{children}</CardContent>
         </Card>
     );
 }
@@ -64,10 +67,11 @@ export default function AiAuthoringGeneratePage() {
 
     const job = jobQuery.data;
     const review = reviewQuery.data;
-    const terminal = reviewTerminal;
+    const approved = isApproved(review);
 
     return (
         <PageShell>
+            <FlowSteps current={3} />
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
                     <Link
@@ -77,26 +81,16 @@ export default function AiAuthoringGeneratePage() {
                         <ArrowLeft className="h-4 w-4" />
                         Back to review
                     </Link>
-                    <h1 className="text-2xl font-semibold">Reuse and generate</h1>
+                    <h1 className="text-2xl font-semibold">Create question set</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Every question uses the same approved version.
+                    </p>
                 </div>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                        void jobQuery.refetch();
-                        if (terminal) void reviewQuery.refetch();
-                        void capabilitiesQuery.refetch();
-                    }}
-                    disabled={
-                        jobQuery.isFetching ||
-                        reviewQuery.isFetching ||
-                        capabilitiesQuery.isFetching
-                    }
-                >
-                    <RefreshCw className={jobQuery.isFetching ? "animate-spin" : ""} />
-                    Refresh
-                </Button>
+                {review && (
+                    <Badge variant={approved ? "default" : "outline"}>
+                        {approved ? "Approved" : "Approval needed"}
+                    </Badge>
+                )}
             </div>
 
             {jobQuery.isPending && <LoadingCard>Loading your question…</LoadingCard>}
@@ -221,7 +215,6 @@ export default function AiAuthoringGeneratePage() {
                     jobId={jobId}
                     review={review}
                     maxQuantity={capabilitiesQuery.data.max_quantity}
-                    lastGeneration={job.last_generation ?? null}
                     onStaleArtifact={handleStaleArtifact}
                 />
             )}

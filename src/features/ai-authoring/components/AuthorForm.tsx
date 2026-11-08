@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { AlertCircle, Loader2, Sparkles } from "lucide-react";
+import { AlertCircle, Loader2, RotateCcw, Sparkles } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -161,7 +161,11 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
     const [relevanceMissing, setRelevanceMissing] = useState(
         initialRelevanceSelection.missing,
     );
-    const prefilled = Boolean(prefill);
+    const [advancedOpen, setAdvancedOpen] = useState(
+        initialSelection.missing ||
+            initialDifficultySelection.missing ||
+            initialRelevanceSelection.missing,
+    );
 
     const form = useForm<AuthoringFormValues>({
         resolver: zodResolver(authoringSchema),
@@ -177,7 +181,6 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
             relevance_model: initialRelevanceSelection.model,
         },
     });
-    const prompt = form.watch("prompt");
     const modelSource = form.watch("model_source");
     const model = form.watch("model");
     const difficultySource = form.watch("difficulty_source");
@@ -189,8 +192,20 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
         if (submitError) summaryRef.current?.focus();
     }, [submitError]);
 
-    const onInvalid = () => {
+    const onInvalid = (errors: FieldErrors<AuthoringFormValues>) => {
         setSubmitError("Check the highlighted fields and try again.");
+        const advancedFields: Array<keyof AuthoringFormValues> = [
+            "choices",
+            "model_source",
+            "model",
+            "difficulty_source",
+            "difficulty_model",
+            "relevance_source",
+            "relevance_model",
+        ];
+        if (advancedFields.some((field) => errors[field])) {
+            setAdvancedOpen(true);
+        }
     };
 
     const onSubmit = (values: AuthoringFormValues) => {
@@ -229,7 +244,7 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
     if (!capabilities.enabled_domains.includes("code")) {
         return (
             <Card>
-                <CardHeader>
+                <CardHeader className="pb-3">
                     <CardTitle>Question creation is unavailable</CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -244,7 +259,7 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
     if (connections.length === 0 && profiles.length === 0) {
         return (
             <Card>
-                <CardHeader>
+                <CardHeader className="pb-3">
                     <CardTitle>No question-writing model configured</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -262,13 +277,10 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
 
     return (
         <Card>
-            <CardHeader className="pb-4">
+            <CardHeader className="pb-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <CardTitle>New question</CardTitle>
-                    <div className="flex flex-wrap items-center gap-2">
-                        {prefilled && <Badge variant="secondary">Prefilled</Badge>}
-                        <Badge variant="outline">Code · multiple choice</Badge>
-                    </div>
+                    <Badge variant="outline">Python · multiple choice</Badge>
                 </div>
             </CardHeader>
             <CardContent>
@@ -278,6 +290,18 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                             <AlertCircle className="h-4 w-4" />
                             <AlertTitle>The question could not be started</AlertTitle>
                             <AlertDescription>{submitError}</AlertDescription>
+                        </Alert>
+                    </div>
+                )}
+
+                {prefill && !submitError && (
+                    <div className="mb-4">
+                        <Alert>
+                            <RotateCcw className="h-4 w-4" />
+                            <AlertTitle>Prefilled from your last request</AlertTitle>
+                            <AlertDescription>
+                                Adjust anything, then create the question.
+                            </AlertDescription>
                         </Alert>
                     </div>
                 )}
@@ -297,72 +321,94 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} noValidate>
-                        <div className="grid gap-6 lg:grid-cols-3">
-                            <div className="lg:col-span-2">
-                                <FormField
-                                    control={form.control}
-                                    name="prompt"
-                                    render={({ field }) => (
-                                        <FormItem className="flex h-full flex-col">
-                                            <FormLabel>Prompt</FormLabel>
-                                            <FormControl>
-                                                <Textarea
-                                                    {...field}
-                                                    rows={12}
-                                                    maxLength={4000}
-                                                    className="min-h-64 resize-y"
-                                                    placeholder="Describe the programming concept and what students should reason about."
-                                                />
-                                            </FormControl>
-                                            <FormDescription>
-                                                {prompt.length} / 4000
-                                            </FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                        <div className="space-y-5">
+                            <FormField
+                                control={form.control}
+                                name="prompt"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Prompt</FormLabel>
+                                        <FormControl>
+                                            <Textarea
+                                                {...field}
+                                                rows={6}
+                                                maxLength={4000}
+                                                className="min-h-40 resize-y"
+                                                placeholder="Describe the programming concept and what students should reason about."
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                            <div className="space-y-5 lg:border-l lg:pl-6">
-                                <p className="text-sm font-medium">Settings</p>
-
-                                <FormField
-                                    control={form.control}
-                                    name="difficulty"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel id="difficulty-label">Difficulty</FormLabel>
-                                            <FormControl>
-                                                <RadioGroup
-                                                    value={field.value}
-                                                    onValueChange={field.onChange}
-                                                    aria-labelledby="difficulty-label"
-                                                    className="flex flex-wrap gap-4 lg:flex-col lg:gap-2"
-                                                >
-                                                    {difficultyOptions.map((difficulty) => (
-                                                        <div
-                                                            key={difficulty}
-                                                            className="flex items-center gap-2"
+                            <FormField
+                                control={form.control}
+                                name="difficulty"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel id="difficulty-label">Difficulty</FormLabel>
+                                        <FormControl>
+                                            <RadioGroup
+                                                value={field.value}
+                                                onValueChange={field.onChange}
+                                                aria-labelledby="difficulty-label"
+                                                className="flex flex-wrap gap-4"
+                                            >
+                                                {difficultyOptions.map((difficulty) => (
+                                                    <div
+                                                        key={difficulty}
+                                                        className="flex items-center gap-2"
+                                                    >
+                                                        <RadioGroupItem
+                                                            id={`difficulty-${difficulty}`}
+                                                            value={difficulty}
+                                                        />
+                                                        <Label
+                                                            htmlFor={`difficulty-${difficulty}`}
+                                                            className="font-normal"
                                                         >
-                                                            <RadioGroupItem
-                                                                id={`difficulty-${difficulty}`}
-                                                                value={difficulty}
-                                                            />
-                                                            <Label
-                                                                htmlFor={`difficulty-${difficulty}`}
-                                                                className="font-normal"
-                                                            >
-                                                                {capitalize(difficulty)}
-                                                            </Label>
-                                                        </div>
-                                                    ))}
-                                                </RadioGroup>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                                            {capitalize(difficulty)}
+                                                        </Label>
+                                                    </div>
+                                                ))}
+                                            </RadioGroup>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
 
+                        <div className="mt-6 flex flex-wrap items-center gap-4 border-t pt-4">
+                            <Button
+                                type="submit"
+                                disabled={createJob.isPending || difficultyOptions.length === 0}
+                            >
+                                {createJob.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                                ) : (
+                                    <Sparkles className="h-4 w-4" aria-hidden="true" />
+                                )}
+                                {createJob.isPending ? "Creating…" : "Create question"}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="link"
+                                className="h-auto p-0 text-sm"
+                                aria-expanded={advancedOpen}
+                                aria-controls="advanced-settings"
+                                onClick={() => setAdvancedOpen((open) => !open)}
+                            >
+                                Advanced settings
+                            </Button>
+                        </div>
+
+                        {advancedOpen && (
+                            <div
+                                id="advanced-settings"
+                                className="mt-4 space-y-5 rounded-lg border bg-muted/20 p-4"
+                            >
                                 <FormField
                                     control={form.control}
                                     name="choices"
@@ -418,7 +464,7 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                                     disabled={createJob.isPending}
                                 />
 
-                                <div className="space-y-4 rounded-md border bg-muted/30 p-3">
+                                <div className="space-y-4 rounded-md border bg-background p-3">
                                     <div>
                                         <p className="text-sm font-medium">Advisory checks</p>
                                         <p className="text-xs text-muted-foreground">
@@ -490,33 +536,16 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                                         allowInherit
                                     />
                                 </div>
-                            </div>
-                        </div>
 
-                        <div className="mt-6 flex flex-wrap items-center gap-3 border-t pt-4">
-                            <Button
-                                type="submit"
-                                disabled={createJob.isPending || difficultyOptions.length === 0}
-                            >
-                                {createJob.isPending ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                                ) : (
-                                    <Sparkles className="h-4 w-4" aria-hidden="true" />
-                                )}
-                                {createJob.isPending ? "Creating…" : "Create question"}
-                            </Button>
-                            <p className="text-xs text-muted-foreground">
-                                Connection keys are encrypted at rest.
-                            </p>
-                            <Button
-                                type="button"
-                                variant="link"
-                                className="h-auto p-0 text-xs"
-                                asChild
-                            >
-                                <Link to={ROUTES.MODEL_CONNECTIONS}>Manage connections</Link>
-                            </Button>
-                        </div>
+                                <Link
+                                    to={ROUTES.MODEL_CONNECTIONS}
+                                    className="inline-block text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                                >
+                                    Manage connections
+                                </Link>
+                            </div>
+                        )}
+
                         {difficultyOptions.length === 0 && (
                             <p className="mt-2 text-sm text-destructive">
                                 The server did not publish any difficulty options.

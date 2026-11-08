@@ -4,9 +4,9 @@ import type { AuthoringJob } from "../types";
 import { approvedReview, completedJob, technicalFailureReview } from "./fixtures";
 
 describe("AI authoring status", () => {
-    it("labels a completed review with passing technical checks as Checked", () => {
+    it("labels a completed review with passing technical checks as ready for review", () => {
         expect(getReviewStatus(approvedReview, null)).toMatchObject({
-            label: "Checked",
+            label: "Ready for review",
             summary: "1/1 technical checks passed",
         });
     });

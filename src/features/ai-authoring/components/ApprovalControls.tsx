@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { getAuthoringErrorMessage, isStaleArtifactError } from "../errors";
 import { capitalize, formatDate } from "../format";
 import { useDecideAuthoringApproval } from "../hooks/useAiAuthoring";
@@ -13,7 +10,6 @@ import type { ApprovalDecision, AuthoringReview } from "../types";
 interface ApprovalControlsProps {
     jobId: string;
     review: AuthoringReview;
-    blockers: string[];
     canApprove: boolean;
     onStaleArtifact: () => void;
 }
@@ -21,11 +17,9 @@ interface ApprovalControlsProps {
 export function ApprovalControls({
     jobId,
     review,
-    blockers,
     canApprove,
     onStaleArtifact,
 }: ApprovalControlsProps) {
-    const [note, setNote] = useState("");
     const [actionError, setActionError] = useState<string | null>(null);
     const approval = review.approval;
     const approvalMutation = useDecideAuthoringApproval();
@@ -39,7 +33,7 @@ export function ApprovalControls({
                 input: {
                     artifact_sha256: review.artifact_sha256,
                     decision,
-                    note: note.trim() ? note.trim() : null,
+                    note: null,
                 },
             },
             {
@@ -60,18 +54,9 @@ export function ApprovalControls({
 
     return (
         <section aria-labelledby="approval-heading" className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 id="approval-heading" className="font-medium">
-                    Review decision
-                </h2>
-                {approval ? (
-                    <Badge variant={approval.decision === "approved" ? "default" : "destructive"}>
-                        {approval.decision === "approved" ? "Approved" : "Rejected"}
-                    </Badge>
-                ) : (
-                    <Badge variant="outline">Not reviewed</Badge>
-                )}
-            </div>
+            <h2 id="approval-heading" className="font-medium">
+                Review decision
+            </h2>
 
             {approval && (
                 <div className="rounded-md border bg-muted/30 p-3 text-sm">
@@ -82,31 +67,11 @@ export function ApprovalControls({
                 </div>
             )}
 
-            {blockers.length > 0 && (
-                <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>This question cannot be approved yet</AlertTitle>
-                    <AlertDescription>
-                        <ul className="list-disc space-y-1 pl-4">
-                            {blockers.map((blocker) => (
-                                <li key={blocker}>{blocker}</li>
-                            ))}
-                        </ul>
-                    </AlertDescription>
-                </Alert>
+            {!canApprove && (
+                <p className="text-sm text-muted-foreground">
+                    Approval is unavailable until the technical checks pass.
+                </p>
             )}
-
-            <div className="space-y-2">
-                <Label htmlFor="approval-note">Review note (optional)</Label>
-                <Textarea
-                    id="approval-note"
-                    value={note}
-                    onChange={(event) => setNote(event.target.value)}
-                    placeholder="Optional review note"
-                    maxLength={2000}
-                    rows={3}
-                />
-            </div>
 
             {actionError && (
                 <Alert variant="destructive" role="alert">
@@ -116,32 +81,34 @@ export function ApprovalControls({
                 </Alert>
             )}
 
-            <div className="flex flex-wrap gap-2">
-                <Button
-                    type="button"
-                    onClick={() => decide("approved")}
-                    disabled={!canApprove || approvalMutation.isPending}
-                >
-                    {approvalMutation.isPending && (
-                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                    )}
-                    {approval?.decision === "approved"
-                        ? "Approve this version again"
-                        : "Approve question"}
-                </Button>
-                <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={() => decide("rejected")}
-                    disabled={!canApprove || approvalMutation.isPending}
-                >
-                    {approval?.decision === "rejected"
-                        ? "Confirm rejection"
-                        : "Reject question"}
-                </Button>
+            <div className="space-y-2">
+                {approval?.decision !== "approved" && (
+                    <Button
+                        type="button"
+                        className="w-full"
+                        onClick={() => decide("approved")}
+                        disabled={!canApprove || approvalMutation.isPending}
+                    >
+                        {approvalMutation.isPending && (
+                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        )}
+                        Approve question
+                    </Button>
+                )}
+                {approval?.decision !== "rejected" && (
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        className="w-full"
+                        onClick={() => decide("rejected")}
+                        disabled={!canApprove || approvalMutation.isPending}
+                    >
+                        Reject question
+                    </Button>
+                )}
             </div>
             <p className="text-xs text-muted-foreground">
-                Applies to this exact version. If the question changes, review it again.
+                Approval applies to this exact version.
             </p>
         </section>
     );

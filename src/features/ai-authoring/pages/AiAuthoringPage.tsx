@@ -1,8 +1,9 @@
-import { AlertCircle, RefreshCw, Sparkles } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AuthorForm } from "../components/AuthorForm";
+import { FlowSteps } from "../components/FlowSteps";
 import { PageShell } from "../components/PageShell";
 import { RecentJobs } from "../components/RecentJobs";
 import { getAuthoringErrorMessage } from "../errors";
@@ -13,21 +14,19 @@ export default function AiAuthoringPage() {
 
     return (
         <PageShell>
+            <FlowSteps current={1} />
             <header className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h1 className="flex items-center gap-2 text-2xl font-semibold">
-                        <Sparkles className="h-6 w-6" aria-hidden="true" />
-                        AI Authoring
-                    </h1>
+                    <h1 className="text-2xl font-semibold">Create question</h1>
                     <p className="text-sm text-muted-foreground">
-                        Create, review and reuse code questions.
+                        Describe the question you want, then review what the model wrote.
                     </p>
                 </div>
             </header>
 
             {capabilitiesQuery.isPending && (
                 <Card>
-                    <CardContent className="py-6 text-sm text-muted-foreground">
+                    <CardContent className="text-sm text-muted-foreground">
                         Loading question settings…
                     </CardContent>
                 </Card>

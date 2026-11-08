@@ -35,7 +35,7 @@ export function getReviewStatus(
         return { label: "Needs review", variant: "secondary", summary };
     }
     if (review.state === "completed") {
-        return { label: "Checked", variant: "default", summary };
+        return { label: "Ready for review", variant: "default", summary };
     }
     return { label: "Checking", variant: "outline", summary };
 }

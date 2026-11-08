@@ -76,6 +76,11 @@ export function TechnicalDetails({ review, result }: TechnicalDetailsProps) {
                 )}
 
                 <EvidenceDetails
+                    summary="Request"
+                    value={review.request}
+                    variant="structured"
+                />
+                <EvidenceDetails
                     summary={`Automated checks (${checks.length})`}
                     value={checks}
                     variant="structured"

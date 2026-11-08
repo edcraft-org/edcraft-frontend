@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { GeneratePanel } from "../components/GeneratePanel";
 import { generateAuthoringBatch } from "../services/ai-authoring.service";
-import type { AuthoringReview, GenerationMetadata } from "../types";
+import type { AuthoringReview } from "../types";
 import { approvedReview, batch, unapprovedReview } from "./fixtures";
 
 vi.mock("../services/ai-authoring.service", () => ({
@@ -36,25 +36,12 @@ const rejectedReview: AuthoringReview = {
     },
 };
 
-const lastGeneration: GenerationMetadata = {
-    base_seed: 7,
-    requested_quantity: 2,
-    actual_quantity: 2,
-    distinct_count: 2,
-    duplicates: 0,
-    created_at: "2026-11-03T00:02:00Z",
-    warnings: [],
-    artifact_sha256: "a".repeat(64),
-};
-
 function renderPanel({
     review = approvedReview,
     onStaleArtifact = vi.fn(),
-    lastGenerationMetadata = null,
 }: {
     review?: AuthoringReview;
     onStaleArtifact?: () => void;
-    lastGenerationMetadata?: GenerationMetadata | null;
 } = {}) {
     const client = new QueryClient({
         defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -66,7 +53,6 @@ function renderPanel({
                     jobId="job-1"
                     review={currentReview}
                     maxQuantity={50}
-                    lastGeneration={lastGenerationMetadata}
                     onStaleArtifact={onStaleArtifact}
                 />
             </MemoryRouter>
@@ -86,11 +72,12 @@ describe("GeneratePanel", () => {
 
     afterEach(cleanup);
 
-    it("keeps the number of questions and starting seed visible", () => {
+    it("keeps the quantity and starting seed visible", () => {
         renderPanel();
 
-        expect(screen.getByLabelText("Number of questions")).toBeVisible();
+        expect(screen.getByLabelText("How many questions?")).toBeVisible();
         expect(screen.getByLabelText("Starting seed")).toBeVisible();
+        expect(screen.queryByText("Advanced settings")).not.toBeInTheDocument();
     });
 
     it("keeps generation disabled until the exact artifact is approved", () => {
@@ -100,13 +87,14 @@ describe("GeneratePanel", () => {
             screen.getByText(/Approve this question before creating more versions/i),
         ).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "Create questions" })).toBeDisabled();
+        expect(screen.queryByLabelText("Starting seed")).not.toBeInTheDocument();
     });
 
     it("sends the approved digest, deterministic seed and quantity unchanged", async () => {
         renderPanel();
         const user = userEvent.setup();
 
-        const quantity = screen.getByLabelText("Number of questions");
+        const quantity = screen.getByLabelText("How many questions?");
         const seed = screen.getByLabelText("Starting seed");
         await user.clear(quantity);
         await user.type(quantity, "3");
@@ -123,12 +111,11 @@ describe("GeneratePanel", () => {
             });
         });
         expect(
-            await screen.findByText(/3 created, 2 different, 1 repeated/),
+            await screen.findByText(/Finite parameter domain produced 1 duplicate/),
         ).toBeInTheDocument();
-        expect(
-            screen.getByText(/Finite parameter domain produced 1 duplicate/),
-        ).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Download questions (JSON)" })).toBeEnabled();
+        expect(screen.getByRole("button", { name: "Download JSON" })).toBeEnabled();
+        expect(screen.queryByText("Last generated set")).not.toBeInTheDocument();
+        expect(screen.queryByText("Deterministic")).not.toBeInTheDocument();
     });
 
     it("hides a generated batch when the same artifact is rejected", async () => {
@@ -136,14 +123,11 @@ describe("GeneratePanel", () => {
         const { rerender } = renderPanel();
 
         await user.click(screen.getByRole("button", { name: "Create questions" }));
-        expect(await screen.findByText(/3 created, 2 different/)).toBeInTheDocument();
+        expect(await screen.findByRole("button", { name: "Download JSON" })).toBeInTheDocument();
 
         rerender(rejectedReview);
 
-        expect(screen.queryByText(/3 created, 2 different/)).not.toBeInTheDocument();
-        expect(
-            screen.queryByRole("button", { name: "Download questions (JSON)" }),
-        ).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Download JSON" })).not.toBeInTheDocument();
         expect(
             screen.getByText(/Approve this question before creating more versions/i),
         ).toBeInTheDocument();
@@ -167,10 +151,7 @@ describe("GeneratePanel", () => {
             resolveGeneration(batch);
         });
 
-        expect(screen.queryByText(/3 created, 2 different/)).not.toBeInTheDocument();
-        expect(
-            screen.queryByRole("button", { name: "Download questions (JSON)" }),
-        ).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Download JSON" })).not.toBeInTheDocument();
         expect(
             screen.getByText(/Approve this question before creating more versions/i),
         ).toBeInTheDocument();
@@ -182,7 +163,7 @@ describe("GeneratePanel", () => {
         const { onStaleArtifact } = renderPanel();
 
         await user.click(screen.getByRole("button", { name: "Create questions" }));
-        expect(await screen.findByText(/3 created, 2 different/)).toBeInTheDocument();
+        expect(await screen.findByRole("button", { name: "Download JSON" })).toBeInTheDocument();
 
         vi.mocked(generateAuthoringBatch).mockRejectedValue(
             new ApiError(409, "The artifact changed."),
@@ -190,7 +171,7 @@ describe("GeneratePanel", () => {
         await user.click(screen.getByRole("button", { name: "Create another set" }));
 
         await waitFor(() => expect(onStaleArtifact).toHaveBeenCalledOnce());
-        expect(screen.queryByText(/3 created, 2 different/)).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Download JSON" })).not.toBeInTheDocument();
         expect(
             await screen.findByText(/changed or is no longer usable/i),
         ).toBeInTheDocument();
@@ -202,7 +183,7 @@ describe("GeneratePanel", () => {
         const { onStaleArtifact } = renderPanel();
 
         await user.click(screen.getByRole("button", { name: "Create questions" }));
-        expect(await screen.findByText(/3 created, 2 different/)).toBeInTheDocument();
+        expect(await screen.findByRole("button", { name: "Download JSON" })).toBeInTheDocument();
 
         vi.mocked(generateAuthoringBatch).mockRejectedValue(
             new ApiError(
@@ -213,10 +194,7 @@ describe("GeneratePanel", () => {
         await user.click(screen.getByRole("button", { name: "Create another set" }));
 
         await waitFor(() => expect(onStaleArtifact).toHaveBeenCalledOnce());
-        expect(screen.queryByText(/3 created, 2 different/)).not.toBeInTheDocument();
-        expect(
-            screen.queryByRole("button", { name: "Download questions (JSON)" }),
-        ).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Download JSON" })).not.toBeInTheDocument();
         expect(
             await screen.findByText(/changed or is no longer usable/i),
         ).toBeInTheDocument();
@@ -239,7 +217,7 @@ describe("GeneratePanel", () => {
         renderPanel();
         const user = userEvent.setup();
 
-        const quantity = screen.getByLabelText("Number of questions");
+        const quantity = screen.getByLabelText("How many questions?");
         const seed = screen.getByLabelText("Starting seed");
         await user.clear(quantity);
         await user.type(quantity, "5");
@@ -253,46 +231,7 @@ describe("GeneratePanel", () => {
         expect(generateAuthoringBatch).not.toHaveBeenCalled();
     });
 
-    it("describes the persisted last set without claiming its questions are stored", () => {
-        renderPanel({ lastGenerationMetadata: lastGeneration });
-
-        expect(screen.getByText("Last generated set")).toBeInTheDocument();
-        expect(screen.getByText(/2 created, all different/)).toBeInTheDocument();
-        expect(screen.getByText(/seed 7/)).toBeInTheDocument();
-    });
-
-    it("hides a last set that belongs to a rejected artifact", () => {
-        renderPanel({
-            review: rejectedReview,
-            lastGenerationMetadata: lastGeneration,
-        });
-
-        expect(screen.queryByText("Last generated set")).not.toBeInTheDocument();
-    });
-
-    it("shows last-set warnings without a disclosure and hides approved mismatches", () => {
-        renderPanel({
-            lastGenerationMetadata: {
-                ...lastGeneration,
-                warnings: [
-                    "Finite parameter domain produced 1 duplicate.",
-                    "DIFFICULTY_MISMATCH",
-                    "RELEVANCE_MISMATCH",
-                ],
-            },
-        });
-
-        expect(
-            screen.getByRole("heading", { name: "Warnings", level: 2 }),
-        ).toBeInTheDocument();
-        const warning = screen.getByText("Finite parameter domain produced 1 duplicate.");
-        expect(warning).toBeVisible();
-        expect(warning.closest("details")).toBeNull();
-        expect(screen.queryByText("DIFFICULTY_MISMATCH")).not.toBeInTheDocument();
-        expect(screen.queryByText("RELEVANCE_MISMATCH")).not.toBeInTheDocument();
-    });
-
-    it("opens generated questions by default and shows batch warnings without a disclosure", async () => {
+    it("shows batch warnings without a disclosure and lists questions collapsed", async () => {
         const user = userEvent.setup();
         renderPanel();
 
@@ -301,35 +240,12 @@ describe("GeneratePanel", () => {
         const warning = await screen.findByText("Finite parameter domain produced 1 duplicate.");
         expect(warning).toBeVisible();
         expect(warning.closest("details")).toBeNull();
-
-        const firstQuestion = screen.getByText(/Question 1 · seed 0/).closest("details");
-        expect(firstQuestion).not.toBeNull();
-        expect(firstQuestion).toHaveAttribute("open");
-    });
-
-    it("does not show last-set warnings alongside a new batch", async () => {
-        const user = userEvent.setup();
-        renderPanel({
-            lastGenerationMetadata: {
-                ...lastGeneration,
-                warnings: ["Old duplicate warning for the last set."],
-            },
-        });
-
-        expect(
-            screen.getByText("Old duplicate warning for the last set."),
-        ).toBeInTheDocument();
-
-        await user.click(screen.getByRole("button", { name: "Create questions" }));
-
-        expect(
-            await screen.findByText("Finite parameter domain produced 1 duplicate."),
-        ).toBeInTheDocument();
-        expect(
-            screen.queryByText("Old duplicate warning for the last set."),
-        ).not.toBeInTheDocument();
         expect(
             screen.getByRole("heading", { name: "Warnings", level: 3 }),
         ).toBeInTheDocument();
+
+        const firstQuestion = screen.getByText("Question 1").closest("details");
+        expect(firstQuestion).not.toBeNull();
+        expect(firstQuestion).not.toHaveAttribute("open");
     });
 });

@@ -42,6 +42,12 @@ function renderForm(
     );
 }
 
+async function openAdvanced() {
+    await userEvent
+        .setup()
+        .click(screen.getByRole("button", { name: "Advanced settings" }));
+}
+
 describe("AuthorForm", () => {
     beforeAll(() => {
         Object.defineProperty(Element.prototype, "hasPointerCapture", {
@@ -62,7 +68,7 @@ describe("AuthorForm", () => {
 
     afterEach(cleanup);
 
-    it("prefills the prompt and settings from a failed request", () => {
+    it("prefills the prompt and settings from a failed request", async () => {
         renderForm({
             prompt: "Write a question about nested loops.",
             difficulty: "hard",
@@ -74,26 +80,31 @@ describe("AuthorForm", () => {
             "Write a question about nested loops.",
         );
         expect(screen.getByRole("radio", { name: "Hard" })).toBeChecked();
+        expect(screen.queryByText("Prefilled")).not.toBeInTheDocument();
+
+        await openAdvanced();
         expect(screen.getByLabelText("Choices")).toHaveValue(3);
-        expect(screen.getByText("Prefilled")).toBeInTheDocument();
         expect(screen.getByRole("combobox", { name: "Question model" })).toHaveTextContent(
             "Default authoring model",
         );
     });
 
-    it("keeps the normal defaults when there is no prefill", () => {
+    it("keeps the normal defaults when there is no prefill", async () => {
         renderForm();
 
         expect(screen.getByLabelText("Prompt")).toHaveValue("");
         expect(screen.getByRole("radio", { name: "Easy" })).toBeChecked();
-        expect(screen.getByLabelText("Choices")).toHaveValue(4);
         expect(screen.queryByText("Prefilled")).not.toBeInTheDocument();
+
+        await openAdvanced();
+        expect(screen.getByLabelText("Choices")).toHaveValue(4);
     });
 
     it("submits with the selected connection and default model", async () => {
         const user = userEvent.setup();
         renderForm(undefined, connectionCapabilities);
 
+        await openAdvanced();
         expect(screen.getByRole("combobox", { name: "Question model" })).toHaveTextContent(
             "My OpenAI",
         );
@@ -120,6 +131,7 @@ describe("AuthorForm", () => {
         const user = userEvent.setup();
         renderForm(undefined, connectionCapabilities);
 
+        await openAdvanced();
         const choices = screen.getByLabelText("Choices");
         await user.clear(choices);
         await user.type(choices, "7");
@@ -137,6 +149,7 @@ describe("AuthorForm", () => {
         const user = userEvent.setup();
         renderForm(undefined, connectionCapabilities);
 
+        await openAdvanced();
         const choices = screen.getByLabelText("Choices");
         await user.clear(choices);
         await user.type(choices, "12");
@@ -153,6 +166,7 @@ describe("AuthorForm", () => {
         const user = userEvent.setup();
         renderForm(undefined, connectionCapabilities);
 
+        await openAdvanced();
         await user.click(screen.getByRole("combobox", { name: "Model" }));
         await user.click(screen.getByRole("option", { name: "gpt-other" }));
         await user.type(screen.getByLabelText("Prompt"), "Create a loop question.");
@@ -168,8 +182,9 @@ describe("AuthorForm", () => {
         });
     });
 
-    it("defaults both advisory checks to the question model", () => {
+    it("defaults both advisory checks to the question model", async () => {
         renderForm(undefined, connectionCapabilities);
+        await openAdvanced();
 
         expect(screen.getByRole("combobox", { name: "Difficulty check" })).toHaveTextContent(
             "Same as question model",
@@ -182,6 +197,7 @@ describe("AuthorForm", () => {
     it("submits a separate model for one advisory check", async () => {
         const user = userEvent.setup();
         renderForm(undefined, connectionCapabilities);
+        await openAdvanced();
 
         await user.click(screen.getByRole("combobox", { name: "Difficulty check" }));
         await user.click(screen.getByRole("option", { name: /My OpenAI/ }));
@@ -207,7 +223,7 @@ describe("AuthorForm", () => {
         });
     });
 
-    it("prefills advisory check models from a failed job", () => {
+    it("prefills advisory check models from a failed job", async () => {
         renderForm(
             {
                 prompt: "Retry this.",
@@ -224,6 +240,7 @@ describe("AuthorForm", () => {
             },
             connectionCapabilities,
         );
+        await openAdvanced();
 
         expect(screen.getByRole("combobox", { name: "Difficulty check" })).toHaveTextContent(
             "Same as question model",
@@ -236,7 +253,7 @@ describe("AuthorForm", () => {
         );
     });
 
-    it("prefills a connection selection from a failed job", () => {
+    it("prefills a connection selection from a failed job", async () => {
         renderForm(
             {
                 prompt: "Retry this.",
@@ -247,6 +264,7 @@ describe("AuthorForm", () => {
             },
             connectionCapabilities,
         );
+        await openAdvanced();
 
         expect(screen.getByRole("combobox", { name: "Model" })).toHaveTextContent(
             "gpt-other",

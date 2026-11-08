@@ -1,28 +1,27 @@
 import { useCallback, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, ArrowLeft, RefreshCw, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { queryKeys } from "@/api";
 import { ROUTES } from "@/router/paths";
+import { FlowSteps } from "../components/FlowSteps";
 import { PageShell } from "../components/PageShell";
 import { ProgressPanel } from "../components/ProgressPanel";
-import { RetryPanel } from "../components/RetryPanel";
+import { RetryRequestLink } from "../components/RetryRequestLink";
 import { ReviewPanel } from "../components/ReviewPanel";
 import { TechnicalDetails } from "../components/TechnicalDetails";
 import { getAuthoringErrorMessage, isNotFoundError } from "../errors";
-import {
-    useAuthoringCapabilities,
-    useAuthoringJob,
-    useAuthoringReview,
-} from "../hooks/useAiAuthoring";
+import { getReviewStatus } from "../status";
+import { useAuthoringJob, useAuthoringReview } from "../hooks/useAiAuthoring";
 
 function LoadingCard({ children }: { children: string }) {
     return (
         <Card>
-            <CardContent className="py-6 text-sm text-muted-foreground">{children}</CardContent>
+            <CardContent className="text-sm text-muted-foreground">{children}</CardContent>
         </Card>
     );
 }
@@ -40,7 +39,6 @@ export default function AiAuthoringJobPage() {
     const reviewTerminal =
         jobQuery.data?.state === "completed" || jobQuery.data?.state === "failed";
     const reviewQuery = useAuthoringReview(jobId, reviewTerminal);
-    const capabilitiesQuery = useAuthoringCapabilities();
 
     const handleStaleArtifact = useCallback(() => {
         setStaleJobId(jobId ?? null);
@@ -75,9 +73,18 @@ export default function AiAuthoringJobPage() {
         job.result?.status === "needs_review" &&
         !review?.artifact_sha256;
     const recoverable = job?.state === "failed" || needsReview;
+    const reviewStatus = job && review ? getReviewStatus(review, job.result ?? null) : null;
+    const decision = review?.approval?.decision;
+    const headerStatus = decision
+        ? {
+              label: decision === "approved" ? "Approved" : "Rejected",
+              variant: decision === "approved" ? ("default" as const) : ("destructive" as const),
+          }
+        : reviewStatus;
 
     return (
         <PageShell>
+            <FlowSteps current={2} />
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
                     <Link
@@ -87,30 +94,12 @@ export default function AiAuthoringJobPage() {
                         <ArrowLeft className="h-4 w-4" />
                         New request
                     </Link>
-                    <h1 className="text-2xl font-semibold">AI Authoring</h1>
+                    <h1 className="text-2xl font-semibold">Review question</h1>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                    {job?.state === "completed" && (
-                        <Button asChild type="button" size="sm">
-                            <Link to={ROUTES.AI_AUTHORING_GENERATE(jobId)}>
-                                <Sparkles />
-                                Reuse and generate
-                            </Link>
-                        </Button>
+                    {headerStatus && (
+                        <Badge variant={headerStatus.variant}>{headerStatus.label}</Badge>
                     )}
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                            void jobQuery.refetch();
-                            if (terminal) void reviewQuery.refetch();
-                        }}
-                        disabled={jobQuery.isFetching}
-                    >
-                        <RefreshCw className={jobQuery.isFetching ? "animate-spin" : ""} />
-                        Refresh
-                    </Button>
                 </div>
             </div>
 
@@ -175,7 +164,7 @@ export default function AiAuthoringJobPage() {
 
                     {recoverable && (
                         <>
-                            {job.state === "failed" ? (
+                            {job.state === "failed" && (
                                 <Alert variant="destructive">
                                     <AlertCircle className="h-4 w-4" />
                                     <AlertTitle>Question creation failed</AlertTitle>
@@ -186,41 +175,9 @@ export default function AiAuthoringJobPage() {
                                             "The question could not be created."}
                                     </AlertDescription>
                                 </Alert>
-                            ) : (
-                                <Alert>
-                                    <AlertCircle className="h-4 w-4" />
-                                    <AlertTitle>Technical checks did not pass</AlertTitle>
-                                    <AlertDescription>
-                                        {job.result?.error?.message ??
-                                            "The model did not produce a template that passes technical checks. Retry, or rephrase the request."}
-                                    </AlertDescription>
-                                </Alert>
                             )}
 
-                            {review?.request && capabilitiesQuery.isPending && (
-                                <LoadingCard>Loading model settings…</LoadingCard>
-                            )}
-
-                            {review?.request && capabilitiesQuery.isError && (
-                                <Alert variant="destructive">
-                                    <AlertCircle className="h-4 w-4" />
-                                    <AlertTitle>Question settings unavailable</AlertTitle>
-                                    <AlertDescription>
-                                        {getAuthoringErrorMessage(
-                                            capabilitiesQuery.error,
-                                            "The question settings could not be loaded.",
-                                        )}
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-
-                            {review?.request && capabilitiesQuery.data && (
-                                <RetryPanel
-                                    key={`retry-${jobId}`}
-                                    request={review.request}
-                                    capabilities={capabilitiesQuery.data}
-                                />
-                            )}
+                            {review?.request && <RetryRequestLink request={review.request} />}
 
                             {job.state === "failed" && review && !reviewQuery.isError && (
                                 <TechnicalDetails review={review} result={job.result ?? null} />

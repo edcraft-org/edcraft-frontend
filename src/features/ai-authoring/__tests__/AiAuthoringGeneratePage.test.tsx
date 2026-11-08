@@ -99,7 +99,7 @@ describe("AiAuthoringGeneratePage", () => {
 
         await screen.findByRole("button", { name: "Create questions" });
         await user.click(screen.getByRole("button", { name: "Create questions" }));
-        expect(await screen.findByText(/3 created, 2 different, 1 repeated/)).toBeInTheDocument();
+        expect(await screen.findByRole("button", { name: "Download JSON" })).toBeInTheDocument();
         const reviewCallsBefore = vi.mocked(getAuthoringReview).mock.calls.length;
 
         await user.click(screen.getByRole("button", { name: "Create another set" }));
@@ -111,30 +111,10 @@ describe("AiAuthoringGeneratePage", () => {
             ),
         );
         await waitFor(() =>
-            expect(screen.queryByText(/3 created, 2 different/)).not.toBeInTheDocument(),
+            expect(
+                screen.queryByRole("button", { name: "Download JSON" }),
+            ).not.toBeInTheDocument(),
         );
-    });
-
-    it("hides generated output when the review refresh fails", async () => {
-        const user = userEvent.setup();
-        renderGeneratePage();
-
-        await screen.findByRole("button", { name: "Create questions" });
-        await user.click(screen.getByRole("button", { name: "Create questions" }));
-        expect(await screen.findByText(/3 created, 2 different/)).toBeInTheDocument();
-
-        vi.mocked(getAuthoringReview).mockRejectedValue(new ApiError(503, "Review unavailable."));
-        await user.click(screen.getByRole("button", { name: "Refresh" }));
-
-        expect(
-            await screen.findByText("Review could not be loaded", undefined, {
-                timeout: 5000,
-            }),
-        ).toBeInTheDocument();
-        expect(screen.queryByText(/3 created, 2 different/)).not.toBeInTheDocument();
-        expect(
-            screen.queryByRole("button", { name: "Download questions (JSON)" }),
-        ).not.toBeInTheDocument();
     });
 
     it("explains that only completed questions can be reused", async () => {

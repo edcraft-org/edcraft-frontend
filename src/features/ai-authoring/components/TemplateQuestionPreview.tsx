@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { QuestionContent } from "@/features/questions/components/QuestionContent";
 import type { ReviewTemplate } from "../types";
 import { ReadOnlyCode } from "./ReadOnlyCode";
@@ -27,18 +26,8 @@ export function TemplateQuestionPreview({ template }: TemplateQuestionPreviewPro
         })),
     ];
     return (
-        <article className="space-y-4 rounded-lg border p-4">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-                <h2 className="min-w-0 text-base font-medium">
-                    {candidate.question_template}
-                </h2>
-                <Badge variant="outline">Template</Badge>
-            </div>
-
-            <p className="text-xs text-muted-foreground">
-                The reusable template. Placeholders are filled from each generated question&apos;s
-                inputs.
-            </p>
+        <article className="space-y-4">
+            <h3 className="min-w-0 text-base font-medium">{candidate.question_template}</h3>
 
             <ReadOnlyCode code={candidate.code} label="Template code" />
 

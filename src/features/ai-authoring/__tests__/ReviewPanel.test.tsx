@@ -12,6 +12,7 @@ import {
 import type { AuthoringApproval, AuthoringReview } from "../types";
 import {
     approvedReview,
+    needsReviewReview,
     preview,
     technicalFailureReview,
     unapprovedReview,
@@ -89,8 +90,7 @@ describe("ReviewPanel", () => {
         renderPanel(unapprovedReview);
 
         expect(await screen.findByText(previewInstanceQuestion())).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Next variation" })).toBeEnabled();
-        expect(screen.getByText("4 choices")).toBeInTheDocument();
+        expect(screen.getByText("Example question")).toBeInTheDocument();
         expect(screen.getByText("Difficulty differs")).toBeInTheDocument();
         expect(screen.getByText("Relevance not checked")).toBeInTheDocument();
 
@@ -126,29 +126,64 @@ describe("ReviewPanel", () => {
         expect(details).toHaveTextContent(approval.reviewer);
     });
 
-    it("blocks approval and explains why when a technical check fails", async () => {
+    it("blocks approval and points to the failing checks without repeating them", async () => {
         renderPanel(technicalFailureReview);
 
         expect(
-            await screen.findByText(
-                /The technical check "Answers and wrong choices" needs attention.*Create a new question/i,
-            ),
+            await screen.findByText(/Approval is unavailable until the technical checks pass/i),
         ).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "Approve question" })).toBeDisabled();
+        expect(screen.getByText("Answers and wrong choices")).toBeInTheDocument();
     });
 
-    it("sends the exact artifact digest and optional note", async () => {
+    it("shows the original request with its settings", () => {
+        renderPanel(approvedReview);
+
+        expect(screen.getByText("Your request")).toBeInTheDocument();
+        const card = screen
+            .getByText("Your request")
+            .closest('[data-slot="card"]') as HTMLElement;
+        expect(
+            within(card).getByText("Write a question about summing a list."),
+        ).toBeInTheDocument();
+        expect(within(card).getByText("Easy · 4 choices · default")).toBeInTheDocument();
+    });
+
+    it("shows only the reject action when the version is already approved", () => {
+        renderPanel(approvedReview);
+
+        expect(screen.getByText(/Approved on/)).toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: /Approve/i }),
+        ).not.toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Reject question" })).toBeInTheDocument();
+    });
+
+    it("shows only the approve action when the version is already rejected", () => {
+        renderPanel({
+            ...approvedReview,
+            approval: { ...approval, decision: "rejected" },
+        });
+
+        expect(screen.getByText(/Rejected on/)).toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: /Reject/i }),
+        ).not.toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Approve question" })).toBeInTheDocument();
+    });
+
+    it("sends the exact artifact digest without a review note", async () => {
         const user = userEvent.setup();
         renderPanel(unapprovedReview);
 
-        await user.type(screen.getByLabelText(/review note/i), "  Looks good  ");
+        expect(screen.queryByLabelText(/review note/i)).not.toBeInTheDocument();
         await user.click(screen.getByRole("button", { name: "Approve question" }));
 
         await waitFor(() => {
             expect(decideAuthoringApproval).toHaveBeenCalledWith("job-1", {
                 artifact_sha256: unapprovedReview.artifact_sha256,
                 decision: "approved",
-                note: "Looks good",
+                note: null,
             });
         });
     });
@@ -160,7 +195,7 @@ describe("ReviewPanel", () => {
         const user = userEvent.setup();
         const { onStaleArtifact } = renderPanel(approvedReview);
 
-        await user.click(screen.getByRole("button", { name: "Approve this version again" }));
+        await user.click(screen.getByRole("button", { name: "Reject question" }));
 
         await waitFor(() => expect(onStaleArtifact).toHaveBeenCalledOnce());
         expect(
@@ -193,7 +228,7 @@ describe("ReviewPanel", () => {
         expect(
             screen.queryByRole("button", { name: "Refresh evidence" }),
         ).not.toBeInTheDocument();
-        expect(screen.getByRole("heading", { name: "Technical checks" })).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: "Checks" })).toBeInTheDocument();
     });
 
     it("clears a cached preview and offers only evidence refresh for a stale 409", async () => {
@@ -204,7 +239,7 @@ describe("ReviewPanel", () => {
         vi.mocked(getAuthoringPreview).mockRejectedValue(
             new ApiError(409, "The artifact changed; refresh the review before deciding."),
         );
-        await user.click(screen.getByRole("button", { name: "Load" }));
+        await user.click(screen.getByRole("button", { name: "Randomize" }));
 
         expect(
             await screen.findByText("Sample could not be loaded", undefined, { timeout: 5000 }),
@@ -218,21 +253,21 @@ describe("ReviewPanel", () => {
         expect(onStaleArtifact).toHaveBeenCalledOnce();
     });
 
-    it("rejects an out-of-range exact preview seed without sending a request", async () => {
+    it("requests another variation when Randomize is clicked", async () => {
         const user = userEvent.setup();
         renderPanel(approvedReview);
         await screen.findByText(previewInstanceQuestion());
 
-        const callsBefore = vi.mocked(getAuthoringPreview).mock.calls.length;
+        expect(getAuthoringPreview).toHaveBeenCalledWith("job-1", 0);
+        expect(screen.getByText("Seed 0")).toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: "Randomize" }));
 
-        const seedInput = screen.getByLabelText("Seed");
-        await user.clear(seedInput);
-        await user.type(seedInput, "2147483648");
-        await user.click(screen.getByRole("button", { name: "Load" }));
-
-        expect(screen.getByText(/Enter a seed from 0 to 2147483647/)).toBeInTheDocument();
-        expect(vi.mocked(getAuthoringPreview).mock.calls.length).toBe(callsBefore);
-        expect(screen.getByRole("heading", { name: "Technical checks" })).toBeInTheDocument();
+        await waitFor(() => {
+            const seeds = vi.mocked(getAuthoringPreview).mock.calls.map((call) => call[1]);
+            expect(seeds.some((seed) => seed !== 0)).toBe(true);
+        });
+        expect(screen.queryByText("Seed 0")).not.toBeInTheDocument();
+        expect(screen.queryByText("Preview options")).not.toBeInTheDocument();
     });
 
     it("shows the relevance score in the advisory and keeps the reason in technical details", async () => {
@@ -301,22 +336,20 @@ describe("ReviewPanel", () => {
         ).toBeInTheDocument();
     });
 
-    it("renders the template as a question with code, question text and choices", async () => {
-        renderPanel(approvedReview);
-        await screen.findByText(previewInstanceQuestion());
+    it("renders a draft template as a question with code and choices", async () => {
+        renderPanel(needsReviewReview);
+        expect(await screen.findByText("Draft · checks failed")).toBeInTheDocument();
 
-        const templateCard = screen
-            .getByText("Template", { selector: "[data-slot='card-title']" })
-            .closest("[data-slot='card']");
-        expect(templateCard).not.toBeNull();
-        const template = within(templateCard as HTMLElement);
+        const card = screen.getByText("Example question").closest("[data-slot='card']");
+        expect(card).not.toBeNull();
+        const template = within(card as HTMLElement);
+        const candidate = needsReviewReview.candidate!;
 
-        expect(template.getByLabelText("Template code").textContent).toBe(
-            approvedReview.template!.candidate.code,
-        );
         expect(
-            template.getByText(approvedReview.template!.candidate.question_template),
+            template.getByText(/This draft did not pass technical checks/),
         ).toBeInTheDocument();
+        expect(template.getByLabelText("Template code").textContent).toBe(candidate.code);
+        expect(template.getByText(candidate.question_template)).toBeInTheDocument();
         expect(template.getAllByText("sum(values)").length).toBeGreaterThan(0);
         expect(template.getAllByText("len(values)").length).toBeGreaterThan(0);
         expect(template.getByText("Confuses the list length with its sum.")).toBeInTheDocument();
@@ -359,14 +392,14 @@ describe("ReviewPanel", () => {
         ).toBeInTheDocument();
     });
 
-    it("shows exactly one Technical checks heading", async () => {
+    it("shows exactly one Checks heading", async () => {
         renderPanel(approvedReview);
 
         expect(
-            await screen.findByRole("heading", { name: "Technical checks" }),
+            await screen.findByRole("heading", { name: "Checks" }),
         ).toBeInTheDocument();
         expect(
-            screen.getAllByRole("heading", { name: "Technical checks" }),
+            screen.getAllByRole("heading", { name: "Checks" }),
         ).toHaveLength(1);
     });
 

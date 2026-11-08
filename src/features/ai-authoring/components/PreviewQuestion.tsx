@@ -9,13 +9,23 @@ import { ReadableValue } from "./ReadableValue";
 interface PreviewQuestionProps {
     instance: CodeQuestionInstance;
     headingLevel?: "h2" | "h3";
+    /**
+     * Review shows the student view with the code always visible and no answer
+     * revealed. Generated questions also show their inputs and raw data inline.
+     */
+    variant?: "review" | "generated";
 }
 
 function renderReadableValue(value: unknown) {
     return <ReadableValue value={value} />;
 }
 
-export function PreviewQuestion({ instance, headingLevel = "h2" }: PreviewQuestionProps) {
+export function PreviewQuestion({
+    instance,
+    headingLevel = "h2",
+    variant = "generated",
+}: PreviewQuestionProps) {
+    const review = variant === "review";
     const Heading = headingLevel;
     const InputsHeading = headingLevel === "h2" ? "h3" : "h4";
     const { question } = instance;
@@ -37,18 +47,40 @@ export function PreviewQuestion({ instance, headingLevel = "h2" }: PreviewQuesti
         reason: undefined,
         correct: true,
     });
+
+    const code = <ReadOnlyCode code={question.code} label="Question code" />;
+    const inputs = (
+        <section aria-label="Question inputs" className="space-y-1">
+            <InputsHeading className="text-sm font-medium">Inputs</InputsHeading>
+            <QuestionInputs inputs={question.inputs} />
+        </section>
+    );
+
     return (
-        <article className="space-y-4 rounded-lg border p-4">
+        <article className={review ? "space-y-4" : "space-y-4 rounded-lg border p-4"}>
             <div className="flex flex-wrap items-start justify-between gap-2">
                 <Heading className="min-w-0 text-base font-medium">{question.question}</Heading>
-                <Badge variant="outline">Draft for review</Badge>
+                {!review && <Badge variant="outline">Draft for review</Badge>}
             </div>
 
-            <p className="text-xs text-muted-foreground">
-                The correct choice is highlighted below.
-            </p>
+            {!review && (
+                <p className="text-xs text-muted-foreground">
+                    The correct choice is highlighted below.
+                </p>
+            )}
 
-            <ReadOnlyCode code={question.code} label="Question code" />
+            {review ? (
+                <div className="space-y-1">
+                    {question.entry_function && (
+                        <p className="font-mono text-xs text-muted-foreground">
+                            {question.entry_function}.py
+                        </p>
+                    )}
+                    {code}
+                </div>
+            ) : (
+                code
+            )}
 
             <QuestionContent
                 questionType={question.question_type ?? "mcq"}
@@ -58,18 +90,22 @@ export function PreviewQuestion({ instance, headingLevel = "h2" }: PreviewQuesti
                 )}
                 correctIndices={[correctIndex]}
                 answer={question.proposed_answer}
-                hideAnswerButton
-                showAnswerByDefault
+                hideAnswerButton={!review}
+                showAnswerByDefault={!review}
                 hideAnswerSummary
                 renderValue={renderReadableValue}
             />
 
-            <section aria-label="Question inputs" className="space-y-1">
-                <InputsHeading className="text-sm font-medium">Inputs</InputsHeading>
-                <QuestionInputs inputs={question.inputs} />
-            </section>
-
-            <EvidenceDetails summary="Raw question data" value={instance} variant="structured" />
+            {!review && (
+                <>
+                    {inputs}
+                    <EvidenceDetails
+                        summary="Raw question data"
+                        value={instance}
+                        variant="structured"
+                    />
+                </>
+            )}
         </article>
     );
 }

@@ -53,7 +53,7 @@ export function RecentJobs() {
 
     return (
         <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
                 <CardTitle>Recent questions</CardTitle>
             </CardHeader>
             <CardContent>

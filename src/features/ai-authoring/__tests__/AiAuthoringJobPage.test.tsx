@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { ApiError } from "@/api/axiosInstance";
 import AiAuthoringJobPage from "../pages/AiAuthoringJobPage";
 import {
@@ -56,6 +56,14 @@ function OpenJob2Button() {
     );
 }
 
+function CreatePageProbe() {
+    const location = useLocation();
+    const prefill = (
+        location.state as { authoringPrefill?: { prompt?: string } } | null
+    )?.authoringPrefill;
+    return <div>Create page prefill: {prefill?.prompt}</div>;
+}
+
 function renderJobPage() {
     const client = new QueryClient({
         defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -65,6 +73,7 @@ function renderJobPage() {
             <MemoryRouter initialEntries={["/ai-authoring/job-1"]}>
                 <OpenJob2Button />
                 <Routes>
+                    <Route path="/ai-authoring" element={<CreatePageProbe />} />
                     <Route path="/ai-authoring/:jobId" element={<AiAuthoringJobPage />} />
                 </Routes>
             </MemoryRouter>
@@ -92,128 +101,60 @@ describe("AiAuthoringJobPage", () => {
     it("resumes the job from the URL without creating another job", async () => {
         renderJobPage();
 
-        expect(await screen.findByText("Ready for evidence review")).toBeInTheDocument();
-        expect(await screen.findByRole("heading", { name: "Technical checks" })).toBeInTheDocument();
-        expect(screen.getByRole("link", { name: "Reuse and generate" })).toBeInTheDocument();
+        expect(await screen.findByRole("heading", { name: "Checks" })).toBeInTheDocument();
+        expect(screen.getAllByText("Approved").length).toBeGreaterThan(0);
+        expect(screen.getByRole("link", { name: "Create question set" })).toBeInTheDocument();
         expect(getAuthoringJob).toHaveBeenCalledWith("job-1");
         expect(getAuthoringReview).toHaveBeenCalledWith("job-1");
         expect(createAuthoringJob).not.toHaveBeenCalled();
-        expect(screen.getByText("/ai-authoring/job-1")).toBeInTheDocument();
+        expect(screen.queryByText("/ai-authoring/job-1")).not.toBeInTheDocument();
     });
 
-    it("offers retry with the original request after a failure", async () => {
+    it("sends a failed request back to the create page with its fields prefilled", async () => {
         vi.mocked(getAuthoringJob).mockResolvedValue(failedJob);
         vi.mocked(getAuthoringReview).mockResolvedValue(failedReview);
-        vi.mocked(createAuthoringJob).mockResolvedValue({
-            job_id: "job-2",
-            status_url: "/ai-authoring/jobs/job-2",
-        });
         const user = userEvent.setup();
         renderJobPage();
 
         expect(await screen.findByText("Question creation failed")).toBeInTheDocument();
-        expect(await screen.findByText("Retry request")).toBeInTheDocument();
+        await user.click(await screen.findByRole("link", { name: "Retry request" }));
 
-        await user.click(screen.getByRole("button", { name: "Retry question" }));
-
-        await waitFor(() => {
-            expect(createAuthoringJob).toHaveBeenCalledWith({
-                domain: "code",
-                prompt: failedReview.request.prompt,
-                difficulty: failedReview.request.difficulty,
-                num_distractors: failedReview.request.num_distractors,
-                model_profile: "default",
-            });
-        });
+        expect(
+            await screen.findByText(`Create page prefill: ${failedReview.request.prompt}`),
+        ).toBeInTheDocument();
+        expect(createAuthoringJob).not.toHaveBeenCalled();
     });
 
     it("offers retry when a completed job still needs review", async () => {
         vi.mocked(getAuthoringJob).mockResolvedValue(needsReviewJob);
         vi.mocked(getAuthoringReview).mockResolvedValue(needsReviewReview);
-        vi.mocked(createAuthoringJob).mockResolvedValue({
-            job_id: "job-2",
-            status_url: "/ai-authoring/jobs/job-2",
-        });
-        const user = userEvent.setup();
         renderJobPage();
 
-        expect(await screen.findByText("Technical checks did not pass")).toBeInTheDocument();
+        expect(await screen.findByRole("link", { name: "Retry request" })).toBeInTheDocument();
+        expect(
+            screen.queryByText("Technical checks did not pass"),
+        ).not.toBeInTheDocument();
         expect(screen.getAllByText("Needs review").length).toBeGreaterThan(0);
-        expect(await screen.findByText("Retry request")).toBeInTheDocument();
         expect(
             screen.getAllByText("The generated template failed technical checks.").length,
         ).toBeGreaterThan(0);
         expect(screen.getByText("Draft · checks failed")).toBeInTheDocument();
         expect(screen.getByText(/This draft did not pass technical checks/)).toBeInTheDocument();
         expect(screen.getByLabelText("Template code")).toHaveTextContent("def list_sum");
-
-        await user.click(screen.getByRole("button", { name: "Retry question" }));
-
-        await waitFor(() => {
-            expect(createAuthoringJob).toHaveBeenCalledWith({
-                domain: "code",
-                prompt: needsReviewReview.request.prompt,
-                difficulty: needsReviewReview.request.difficulty,
-                num_distractors: needsReviewReview.request.num_distractors,
-                model_profile: "default",
-            });
-        });
-    });
-
-    it("updates the retry picker when navigating between jobs", async () => {
-        const alternateProfile = {
-            id: "alternate",
-            label: "Alternate authoring model",
-            provider: "openai",
-            model: "other-model",
-        };
-        vi.mocked(getAuthoringCapabilities).mockResolvedValue({
-            ...capabilities,
-            model_profiles: [...capabilities.model_profiles, alternateProfile],
-        });
-        vi.mocked(getAuthoringJob).mockImplementation(async (id) =>
-            id === "job-1" ? failedJob : { ...failedJob, job_id: "job-2" },
-        );
-        vi.mocked(getAuthoringReview).mockImplementation(async (id) =>
-            id === "job-1"
-                ? failedReview
-                : {
-                      ...failedReview,
-                      job_id: "job-2",
-                      request: {
-                          ...failedReview.request,
-                          model_profile: "alternate",
-                      },
-                  },
-        );
-        const user = userEvent.setup();
-        renderJobPage();
-
-        expect(await screen.findByRole("combobox", { name: "Question model" })).toHaveTextContent(
-            "Default authoring model",
-        );
-
-        await user.click(screen.getByRole("button", { name: "Open job 2" }));
-
-        await waitFor(() =>
-            expect(screen.getByRole("combobox", { name: "Question model" })).toHaveTextContent(
-                "Alternate authoring model",
-            ),
-        );
     });
 
     it("hides cached review actions when the review refresh fails", async () => {
         const user = userEvent.setup();
         renderJobPage();
 
-        await screen.findByRole("heading", { name: "Technical checks" });
+        await screen.findByRole("heading", { name: "Checks" });
 
         vi.mocked(getAuthoringReview).mockRejectedValue(new ApiError(503, "Review unavailable."));
         vi.mocked(decideAuthoringApproval).mockRejectedValue(
             new ApiError(409, "The artifact changed; refresh the review before deciding."),
         );
 
-        await user.click(screen.getByRole("button", { name: "Approve this version again" }));
+        await user.click(screen.getByRole("button", { name: "Reject question" }));
 
         expect(
             await screen.findByText("The question changed", undefined, { timeout: 5000 }),
@@ -224,7 +165,7 @@ describe("AiAuthoringJobPage", () => {
             }),
         ).toBeInTheDocument();
         expect(
-            screen.queryByRole("button", { name: "Approve this version again" }),
+            screen.queryByRole("button", { name: "Reject question" }),
         ).not.toBeInTheDocument();
         expect(screen.queryByText("Preview for seed 0")).not.toBeInTheDocument();
     });
@@ -236,8 +177,8 @@ describe("AiAuthoringJobPage", () => {
         const user = userEvent.setup();
         renderJobPage();
 
-        await screen.findByRole("button", { name: "Approve this version again" });
-        await user.click(screen.getByRole("button", { name: "Approve this version again" }));
+        await screen.findByRole("button", { name: "Reject question" });
+        await user.click(screen.getByRole("button", { name: "Reject question" }));
         expect(await screen.findByText("The question changed")).toBeInTheDocument();
 
         await user.click(screen.getByRole("button", { name: "Open job 2" }));

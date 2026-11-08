@@ -52,7 +52,9 @@ describe("ChecksPanel", () => {
     it("lists every technical check with labels, screen-reader statuses and descriptions", () => {
         render(<ChecksPanel checks={checks} />);
 
-        expect(screen.getByText("1 of 3 technical checks need attention.")).toBeInTheDocument();
+        expect(
+            screen.getByText("1 of 3 technical checks need attention."),
+        ).toBeInTheDocument();
 
         expect(screen.getByText("Question template")).toBeInTheDocument();
         expect(screen.getByText("Required features")).toBeInTheDocument();
@@ -122,7 +124,9 @@ describe("ChecksPanel", () => {
         expect(
             screen.getByText("Same underlying issue as Question template."),
         ).toBeInTheDocument();
-        expect(screen.getByText("2 of 2 technical checks need attention.")).toBeInTheDocument();
+        expect(
+            screen.getByText("2 of 2 technical checks need attention."),
+        ).toBeInTheDocument();
     });
 
     it("does not list advisory checks or the old correctness disclaimer", () => {
@@ -135,5 +139,64 @@ describe("ChecksPanel", () => {
         expect(
             screen.queryByText(/They cannot prove the question is correct/),
         ).not.toBeInTheDocument();
+    });
+
+    const advisories = [
+        {
+            id: "difficulty",
+            title: "Difficulty differs",
+            description: "Estimated hard; requested easy.",
+            passed: false,
+            meter: { label: "Confidence", display: "72%", percent: 72, caption: "Source: Reasoning judge" },
+        },
+        {
+            id: "relevance",
+            title: "Relevance looks good",
+            description: "Related to the request.",
+            passed: true,
+            meter: null,
+        },
+    ];
+
+    it("lists difficulty and relevance in a separate advisory group", () => {
+        render(<ChecksPanel checks={checks} advisories={advisories} collapsible />);
+
+        expect(
+            screen.getByText(
+                "1 of 3 technical checks need attention. 1 of 2 advisories need attention.",
+            ),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("heading", { name: /Technical checks/i }),
+        ).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: /Advisories/i })).toBeInTheDocument();
+        expect(screen.getByText("Difficulty differs")).toBeInTheDocument();
+        expect(screen.getByText("Estimated hard; requested easy.")).toBeInTheDocument();
+        expect(screen.getByText("72%")).toBeInTheDocument();
+        expect(screen.getByText("Source: Reasoning judge")).toBeInTheDocument();
+        expect(screen.getByText("Relevance looks good")).toBeInTheDocument();
+    });
+
+    it("opens by default when a check does not pass", () => {
+        render(<ChecksPanel checks={checks} advisories={advisories} collapsible />);
+
+        const details = screen.getByRole("heading", { name: "Checks" }).closest("details");
+        expect(details).toHaveAttribute("open");
+    });
+
+    it("stays closed by default when every check passes", () => {
+        render(
+            <ChecksPanel
+                checks={checks.filter((check) => check.status === "passed" && !check.advisory)}
+                advisories={[advisories[1]]}
+                collapsible
+            />,
+        );
+
+        expect(
+            screen.getByText("All 2 technical checks passed. Advisory passed."),
+        ).toBeInTheDocument();
+        const details = screen.getByRole("heading", { name: "Checks" }).closest("details");
+        expect(details).not.toHaveAttribute("open");
     });
 });
