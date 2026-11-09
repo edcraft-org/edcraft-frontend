@@ -142,7 +142,7 @@ export function GeneratePanel({
                         </Alert>
                     )}
 
-                    <div className="flex flex-wrap items-end gap-4">
+                    <div className="flex flex-wrap items-start gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="generation-quantity">How many questions?</Label>
                             <Input
@@ -179,16 +179,29 @@ export function GeneratePanel({
                             </div>
                         )}
 
-                        <Button
-                            type="button"
-                            onClick={generate}
-                            disabled={!approved || generation.isPending}
-                        >
-                            {generation.isPending && (
-                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                            )}
-                            {batch ? "Create another set" : "Create questions"}
-                        </Button>
+                        {/* Reserve the label row so the button lines up with the
+                            inputs rather than the helper text underneath them. */}
+                        <div className="space-y-2">
+                            <div
+                                aria-hidden="true"
+                                className="text-sm font-medium leading-none invisible"
+                            >
+                                Create
+                            </div>
+                            <Button
+                                type="button"
+                                onClick={generate}
+                                disabled={!approved || generation.isPending}
+                            >
+                                {generation.isPending && (
+                                    <Loader2
+                                        className="h-4 w-4 animate-spin"
+                                        aria-hidden="true"
+                                    />
+                                )}
+                                {batch ? "Create another set" : "Create questions"}
+                            </Button>
+                        </div>
                     </div>
 
                     {inputError && (
