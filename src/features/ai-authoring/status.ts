@@ -1,6 +1,11 @@
 import type { AuthoringJob, AuthoringResult, AuthoringReview } from "./types";
 
-export type StatusVariant = "default" | "secondary" | "destructive" | "outline";
+export type StatusVariant =
+    | "default"
+    | "secondary"
+    | "destructive"
+    | "success"
+    | "outline";
 
 export interface StatusView {
     label: string;
@@ -32,12 +37,12 @@ export function getReviewStatus(
         checks.length === 0 ||
         checks.some((check) => check.status !== "passed")
     ) {
-        return { label: "Needs review", variant: "secondary", summary };
+        return { label: "Needs review", variant: "default", summary };
     }
     if (review.state === "completed") {
-        return { label: "Ready for review", variant: "default", summary };
+        return { label: "Ready for review", variant: "success", summary };
     }
-    return { label: "Checking", variant: "outline", summary };
+    return { label: "Checking", variant: "default", summary };
 }
 
 export function getJobStatus(job: AuthoringJob): StatusView {
@@ -45,30 +50,30 @@ export function getJobStatus(job: AuthoringJob): StatusView {
         return { label: "Failed", variant: "destructive", summary: "Question creation stopped" };
     }
     if (job.state === "queued") {
-        return { label: "Waiting", variant: "outline", summary: "Waiting for a free authoring slot" };
+        return { label: "Waiting", variant: "default", summary: "Waiting for a free authoring slot" };
     }
     if (job.state === "running") {
         switch (job.progress?.phase) {
             case "generating":
-                return { label: "Writing", variant: "secondary", summary: "Writing the question" };
+                return { label: "Writing", variant: "default", summary: "Writing the question" };
             case "checking":
-                return { label: "Checking", variant: "secondary", summary: "Running technical checks" };
+                return { label: "Checking", variant: "default", summary: "Running technical checks" };
             case "correcting":
-                return { label: "Correcting", variant: "secondary", summary: "Improving the question" };
+                return { label: "Correcting", variant: "default", summary: "Improving the question" };
             case "finalizing":
-                return { label: "Finishing", variant: "secondary", summary: "Finishing the question" };
+                return { label: "Finishing", variant: "default", summary: "Finishing the question" };
             default:
-                return { label: "Creating", variant: "secondary", summary: "Creating the question" };
+                return { label: "Creating", variant: "default", summary: "Creating the question" };
         }
     }
     if (job.result?.status === "needs_review") {
-        return { label: "Needs review", variant: "secondary", summary: "Technical checks need attention" };
+        return { label: "Needs review", variant: "default", summary: "Technical checks need attention" };
     }
     if (job.result?.status === "error") {
         return { label: "Failed", variant: "destructive", summary: "Question creation stopped" };
     }
     if (job.result?.status === "checked") {
-        return { label: "Checked", variant: "default", summary: "Ready for evidence review" };
+        return { label: "Checked", variant: "success", summary: "Ready for evidence review" };
     }
-    return { label: "Completed", variant: "outline", summary: "Question creation finished" };
+    return { label: "Completed", variant: "success", summary: "Question creation finished" };
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { getAuthoringErrorMessage, isStaleArtifactError } from "../errors";
@@ -59,7 +60,14 @@ export function ApprovalControls({
             </h2>
 
             {approval && (
-                <div className="rounded-md border bg-muted/30 p-3 text-sm">
+                <div
+                    className={cn(
+                        "rounded-md border p-3 text-sm",
+                        approval.decision === "approved"
+                            ? "border-success/40 bg-success/10"
+                            : "border-destructive/40 bg-destructive/10",
+                    )}
+                >
                     <p>
                         {capitalize(approval.decision)} on {formatDate(approval.decided_at)}
                     </p>
@@ -85,6 +93,7 @@ export function ApprovalControls({
                 {approval?.decision !== "approved" && (
                     <Button
                         type="button"
+                        variant="success"
                         className="w-full"
                         onClick={() => decide("approved")}
                         disabled={!canApprove || approvalMutation.isPending}

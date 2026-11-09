@@ -87,7 +87,7 @@ export default function AiAuthoringGeneratePage() {
                     </p>
                 </div>
                 {review && (
-                    <Badge variant={approved ? "default" : "outline"}>
+                    <Badge variant={approved ? "success" : "default"}>
                         {approved ? "Approved" : "Approval needed"}
                     </Badge>
                 )}

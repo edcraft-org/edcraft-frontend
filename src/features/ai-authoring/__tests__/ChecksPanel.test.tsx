@@ -175,6 +175,11 @@ describe("ChecksPanel", () => {
         expect(screen.getByText("72%")).toBeInTheDocument();
         expect(screen.getByText("Source: Reasoning judge")).toBeInTheDocument();
         expect(screen.getByText("Relevance looks good")).toBeInTheDocument();
+
+        // Advisories never gate approval, so a mismatch stays neutral rather
+        // than using the amber warning color.
+        const advisory = screen.getByText("Difficulty differs").closest("[data-advisory]");
+        expect(advisory).toHaveClass("bg-muted/30");
     });
 
     it("opens by default when a check does not pass", () => {

@@ -16,33 +16,32 @@ import { ROUTES } from "@/router/paths";
 import { getAuthoringErrorMessage } from "../errors";
 import { capitalize, formatDate } from "../format";
 import { useAuthoringJobs } from "../hooks/useAiAuthoring";
+import type { StatusVariant } from "../status";
 import type { AuthoringJobSummary } from "../types";
 
-type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
-
-function summaryStatus(job: AuthoringJobSummary): { label: string; variant: BadgeVariant } {
+function summaryStatus(job: AuthoringJobSummary): { label: string; variant: StatusVariant } {
     if (job.result_status === "needs_review") {
-        return { label: "Needs review", variant: "secondary" };
+        return { label: "Needs review", variant: "default" };
     }
     if (job.result_status === "error") {
         return { label: "Failed", variant: "destructive" };
     }
     switch (job.state) {
         case "completed":
-            return { label: "Completed", variant: "default" };
+            return { label: "Completed", variant: "success" };
         case "failed":
             return { label: "Failed", variant: "destructive" };
         case "running":
-            return { label: "Creating", variant: "secondary" };
+            return { label: "Creating", variant: "default" };
         case "queued":
-            return { label: "Waiting", variant: "outline" };
+            return { label: "Waiting", variant: "default" };
     }
 }
 
 function decisionBadge(job: AuthoringJobSummary) {
     if (!job.approval) return <span className="text-muted-foreground">—</span>;
     return (
-        <Badge variant={job.approval.decision === "approved" ? "default" : "destructive"}>
+        <Badge variant={job.approval.decision === "approved" ? "success" : "destructive"}>
             {job.approval.decision === "approved" ? "Approved" : "Rejected"}
         </Badge>
     );

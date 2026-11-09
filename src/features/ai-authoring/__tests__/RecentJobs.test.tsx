@@ -65,10 +65,11 @@ describe("RecentJobs", () => {
         renderRecentJobs();
 
         expect(await screen.findByText("Needs review")).toBeInTheDocument();
+        expect(screen.getByText("Needs review")).toHaveClass("bg-primary");
         expect(screen.queryByText("Completed")).not.toBeInTheDocument();
     });
 
-    it("keeps Completed for a checked job", async () => {
+    it("keeps Completed for a checked job and shows it in green", async () => {
         vi.mocked(listAuthoringJobs).mockResolvedValue([
             jobSummary({ result_status: "checked" }),
         ]);
@@ -76,6 +77,37 @@ describe("RecentJobs", () => {
         renderRecentJobs();
 
         expect(await screen.findByText("Completed")).toBeInTheDocument();
+        expect(screen.getByText("Completed")).toHaveClass("bg-success");
         expect(screen.queryByText("Needs review")).not.toBeInTheDocument();
+    });
+
+    it("shows an approved decision in green and a rejected decision in red", async () => {
+        vi.mocked(listAuthoringJobs).mockResolvedValue([
+            jobSummary({
+                job_id: "job-approved",
+                approval: {
+                    decision: "approved",
+                    artifact_sha256: "a".repeat(64),
+                    reviewer: "teacher@example.com",
+                    note: null,
+                    decided_at: "2026-11-03T00:00:00Z",
+                },
+            }),
+            jobSummary({
+                job_id: "job-rejected",
+                approval: {
+                    decision: "rejected",
+                    artifact_sha256: "b".repeat(64),
+                    reviewer: "teacher@example.com",
+                    note: null,
+                    decided_at: "2026-11-03T00:00:00Z",
+                },
+            }),
+        ]);
+
+        renderRecentJobs();
+
+        expect(await screen.findByText("Approved")).toHaveClass("bg-success");
+        expect(screen.getByText("Rejected")).toHaveClass("bg-destructive");
     });
 });

@@ -60,7 +60,7 @@ export function PreviewQuestion({
         <article className={review ? "space-y-4" : "space-y-4 rounded-lg border p-4"}>
             <div className="flex flex-wrap items-start justify-between gap-2">
                 <Heading className="min-w-0 text-base font-medium">{question.question}</Heading>
-                {!review && <Badge variant="outline">Draft for review</Badge>}
+                {!review && <Badge variant="default">Draft for review</Badge>}
             </div>
 
             {!review && (

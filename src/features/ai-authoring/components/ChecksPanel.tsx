@@ -40,21 +40,17 @@ function AdvisoryItem({ advisory }: { advisory: ChecksAdvisory }) {
     return (
         <li
             data-advisory={passed ? undefined : "true"}
-            className={
-                passed
-                    ? "space-y-2 rounded-md border bg-muted/30 p-3"
-                    : "space-y-2 rounded-md border border-amber-500/40 bg-amber-50 p-3 dark:bg-amber-950/20"
-            }
+            className="space-y-2 rounded-md border bg-muted/30 p-3"
         >
             <div className="flex items-start gap-2">
                 {passed ? (
                     <CheckCircle2
-                        className="mt-0.5 h-4 w-4 shrink-0 text-green-600"
+                        className="mt-0.5 h-4 w-4 shrink-0 text-success"
                         aria-hidden="true"
                     />
                 ) : (
                     <AlertCircle
-                        className="mt-0.5 h-4 w-4 shrink-0 text-amber-600"
+                        className="mt-0.5 h-4 w-4 shrink-0 text-foreground"
                         aria-hidden="true"
                     />
                 )}
@@ -78,8 +74,8 @@ function AdvisoryItem({ advisory }: { advisory: ChecksAdvisory }) {
                         <div
                             className={
                                 passed
-                                    ? "h-full rounded-full bg-green-600"
-                                    : "h-full rounded-full bg-amber-500"
+                                    ? "h-full rounded-full bg-success"
+                                    : "h-full rounded-full bg-foreground"
                             }
                             style={{ width: `${clampPercent(meter.percent)}%` }}
                         />
@@ -147,7 +143,7 @@ export function ChecksPanel({ checks, advisories = [], collapsible = false }: Ch
                     <li key={`${check.tool}-${index}`} className="flex items-start gap-2">
                         {passed ? (
                             <CheckCircle2
-                                className="mt-0.5 h-4 w-4 shrink-0 text-green-600"
+                                className="mt-0.5 h-4 w-4 shrink-0 text-success"
                                 aria-hidden="true"
                             />
                         ) : (
@@ -238,7 +234,7 @@ export function ChecksPanel({ checks, advisories = [], collapsible = false }: Ch
             <summary className="flex cursor-pointer list-none items-start gap-3 p-4 [&::-webkit-details-marker]:hidden">
                 {technicalOk ? (
                     <CheckCircle2
-                        className={`mt-0.5 h-4 w-4 shrink-0 ${advisoryWarning ? "text-amber-600" : "text-green-600"}`}
+                        className={`mt-0.5 h-4 w-4 shrink-0 ${advisoryWarning ? "text-foreground" : "text-success"}`}
                         aria-hidden="true"
                     />
                 ) : (

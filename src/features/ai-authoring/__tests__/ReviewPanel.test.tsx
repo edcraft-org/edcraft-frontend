@@ -86,7 +86,7 @@ describe("ReviewPanel", () => {
 
     afterEach(cleanup);
 
-    it("allows approval when advisory feedback differs and keeps it amber", async () => {
+    it("allows approval when advisory feedback differs and keeps it neutral", async () => {
         renderPanel(unapprovedReview);
 
         expect(await screen.findByText(previewInstanceQuestion())).toBeInTheDocument();
@@ -95,7 +95,7 @@ describe("ReviewPanel", () => {
         expect(screen.getByText("Relevance not checked")).toBeInTheDocument();
 
         const advisory = screen.getByText("Difficulty differs").closest("[data-advisory]");
-        expect(advisory).toHaveClass("border-amber-500/40");
+        expect(advisory).toHaveClass("bg-muted/30");
         expect(screen.getByRole("button", { name: "Approve question" })).toBeEnabled();
     });
 

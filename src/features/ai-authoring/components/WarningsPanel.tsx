@@ -23,12 +23,12 @@ export function WarningsPanel({
     return (
         <div
             className={cn(
-                "space-y-1 rounded-md border border-amber-500/40 bg-amber-50 p-3 text-sm dark:bg-amber-950/20",
+                "space-y-1 rounded-md border bg-muted/30 p-3 text-sm",
                 className,
             )}
         >
             <Heading className="flex items-center gap-2 font-medium">
-                <AlertTriangle className="h-4 w-4 text-amber-600" aria-hidden="true" />
+                <AlertTriangle className="h-4 w-4 text-foreground" aria-hidden="true" />
                 Warnings
             </Heading>
             <ul className="list-disc space-y-1 pl-4 text-muted-foreground">
