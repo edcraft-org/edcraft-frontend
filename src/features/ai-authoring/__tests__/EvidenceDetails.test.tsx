@@ -160,6 +160,26 @@ describe("EvidenceDetails", () => {
         expect(screen.getByText(/"question": "2 \+ 2\?"/)).toBeInTheDocument();
     });
 
+    it("does not treat a generic candidate with a code key as a code item", () => {
+        render(
+            <EvidenceDetails
+                summary="Candidates"
+                variant="structured"
+                value={[
+                    {
+                        code: "M-1",
+                        question: "Solve x + 1 = 2",
+                        metadata: { source: "math" },
+                    },
+                ]}
+            />,
+        );
+
+        expect(screen.getByText("Item 1")).toBeInTheDocument();
+        expect(screen.getByText("M-1")).toBeInTheDocument();
+        expect(screen.getByText("Solve x + 1 = 2")).toBeInTheDocument();
+    });
+
     it("renders nothing when the payload is empty", () => {
         const { container } = render(
             <EvidenceDetails summary="Automated checks (0)" variant="structured" value={[]} />,

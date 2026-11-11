@@ -54,10 +54,20 @@ function labelFor(key: string): string {
     return FIELD_LABELS[key] ?? humanizeKey(key);
 }
 
+function looksLikeCodeCandidate(item: Record<string, unknown>): boolean {
+    // A `code` key alone does not make an item a code candidate: other domains
+    // may use the same key. Require the surrounding code template shape.
+    return (
+        typeof item.code === "string" &&
+        (typeof item.entry_function === "string" ||
+            typeof item.question_template === "string")
+    );
+}
+
 function itemTitleKey(item: Record<string, unknown>): string | null {
     if (typeof item.tool === "string") return "tool";
     if (typeof item.number === "number") return "number";
-    if (typeof item.code === "string") return "code";
+    if (looksLikeCodeCandidate(item)) return "code";
     if (typeof item.name === "string") return "name";
     return null;
 }
@@ -100,8 +110,9 @@ function formatInline(value: unknown, fieldKey: string): string {
 
 function ScalarValue({ fieldKey, value }: { fieldKey?: string; value: unknown }): ReactNode {
     if (typeof value === "string") {
-        const isLongText =
-            value.includes("\n") || value.length > 160 || fieldKey === "code";
+        // Format by content, not by field name: another domain may also have a
+        // `code` key, and short labels should stay inline.
+        const isLongText = value.includes("\n") || value.length > 160;
         if (isLongText) {
             return (
                 <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-words font-mono text-xs">

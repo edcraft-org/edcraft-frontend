@@ -1,65 +1,45 @@
 import { Badge } from "@/components/ui/badge";
-import { QuestionContent } from "@/features/questions/components/QuestionContent";
-import type { CodeQuestionInstance } from "../types";
+import type { AuthoringQuestionPayload } from "../types";
+import { CodeQuestionView } from "./CodeQuestionView";
 import { EvidenceDetails } from "./EvidenceDetails";
-import { QuestionInputs } from "./QuestionInputs";
-import { ReadOnlyCode } from "./ReadOnlyCode";
-import { ReadableValue } from "./ReadableValue";
+import { GenericQuestionView } from "./GenericQuestionView";
+import { buildQuestionFields, isCodeQuestionPayload } from "./questionPayload";
 
 interface PreviewQuestionProps {
-    instance: CodeQuestionInstance;
+    instance: AuthoringQuestionPayload;
+    /** Authoring domain from the preview or batch envelope. */
+    domain?: string;
     headingLevel?: "h2" | "h3";
     /**
-     * Review shows the student view with the code always visible and no answer
-     * revealed. Generated questions also show their inputs and raw data inline.
+     * Review shows the student view and no answer revealed. Generated questions
+     * also show their inputs and raw data inline.
      */
     variant?: "review" | "generated";
 }
 
-function renderReadableValue(value: unknown) {
-    return <ReadableValue value={value} />;
-}
-
+/**
+ * Domain dispatcher for a generated question. The code renderer is one view;
+ * unknown domains get the shared question/choice fallback.
+ */
 export function PreviewQuestion({
     instance,
+    domain,
     headingLevel = "h2",
     variant = "generated",
 }: PreviewQuestionProps) {
     const review = variant === "review";
     const Heading = headingLevel;
     const InputsHeading = headingLevel === "h2" ? "h3" : "h4";
-    const { question } = instance;
-    const distractors = question.distractors ?? [];
-    const distractorReasons = question.distractor_reasons ?? [];
-    // Keep the correct choice deterministic but not always first. This is
-    // presentation only; the exported instance keeps the canonical answer.
-    const correctIndex =
-        distractors.length > 0 ? instance.seed % (distractors.length + 1) : 0;
-    const choices: Array<{ value: unknown; reason?: string; correct: boolean }> = distractors.map(
-        (value, index) => ({
-            value,
-            reason: distractorReasons[index],
-            correct: false,
-        }),
-    );
-    choices.splice(correctIndex, 0, {
-        value: question.proposed_answer,
-        reason: undefined,
-        correct: true,
-    });
-
-    const code = <ReadOnlyCode code={question.code} label="Question code" />;
-    const inputs = (
-        <section aria-label="Question inputs" className="space-y-1">
-            <InputsHeading className="text-sm font-medium">Inputs</InputsHeading>
-            <QuestionInputs inputs={question.inputs} />
-        </section>
-    );
+    const fields = buildQuestionFields(instance);
+    const codeInstance = isCodeQuestionPayload(instance) ? instance : null;
+    // No domain means a legacy code payload; only show the code view when the
+    // payload actually has the code envelope.
+    const showCode = codeInstance !== null && (domain === undefined || domain === "code");
 
     return (
         <article className={review ? "space-y-4" : "space-y-4 rounded-lg border p-4"}>
             <div className="flex flex-wrap items-start justify-between gap-2">
-                <Heading className="min-w-0 text-base font-medium">{question.question}</Heading>
+                <Heading className="min-w-0 text-base font-medium">{fields.text}</Heading>
                 {!review && <Badge variant="default">Draft for review</Badge>}
             </div>
 
@@ -69,42 +49,22 @@ export function PreviewQuestion({
                 </p>
             )}
 
-            {review ? (
-                <div className="space-y-1">
-                    {question.entry_function && (
-                        <p className="font-mono text-xs text-muted-foreground">
-                            {question.entry_function}.py
-                        </p>
-                    )}
-                    {code}
-                </div>
+            {showCode ? (
+                <CodeQuestionView
+                    instance={codeInstance}
+                    review={review}
+                    inputsHeadingLevel={InputsHeading}
+                />
             ) : (
-                code
+                <GenericQuestionView payload={instance} review={review} />
             )}
 
-            <QuestionContent
-                questionType={question.question_type ?? "mcq"}
-                options={choices.map((choice) => choice.value)}
-                optionExplanations={choices.map((choice) =>
-                    choice.correct ? undefined : choice.reason,
-                )}
-                correctIndices={[correctIndex]}
-                answer={question.proposed_answer}
-                hideAnswerButton={!review}
-                showAnswerByDefault={!review}
-                hideAnswerSummary
-                renderValue={renderReadableValue}
-            />
-
             {!review && (
-                <>
-                    {inputs}
-                    <EvidenceDetails
-                        summary="Raw question data"
-                        value={instance}
-                        variant="structured"
-                    />
-                </>
+                <EvidenceDetails
+                    summary="Raw question data"
+                    value={instance}
+                    variant="structured"
+                />
             )}
         </article>
     );

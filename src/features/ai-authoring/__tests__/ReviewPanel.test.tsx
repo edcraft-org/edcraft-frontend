@@ -4,16 +4,22 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { ApiError } from "@/api/axiosInstance";
+import type { CodeTemplateCandidate } from "@/api/models";
 import { ReviewPanel } from "../components/ReviewPanel";
 import {
     decideAuthoringApproval,
     getAuthoringPreview,
 } from "../services/ai-authoring.service";
-import type { AuthoringApproval, AuthoringReview } from "../types";
+import type {
+    AuthoringApproval,
+    AuthoringReview,
+    CodeQuestionInstance,
+} from "../types";
 import {
     approvedReview,
     needsReviewReview,
     preview,
+    stubReview,
     technicalFailureReview,
     unapprovedReview,
 } from "./fixtures";
@@ -146,7 +152,26 @@ describe("ReviewPanel", () => {
         expect(
             within(card).getByText("Write a question about summing a list."),
         ).toBeInTheDocument();
-        expect(within(card).getByText("Easy · 4 choices · default")).toBeInTheDocument();
+        expect(within(card).getByText("Code · Easy · 4 choices · default")).toBeInTheDocument();
+    });
+
+    it("shows a stub-domain request and generic template without code assumptions", () => {
+        renderPanel(stubReview);
+
+        const requestCard = screen
+            .getByText("Your request")
+            .closest('[data-slot="card"]') as HTMLElement;
+        expect(
+            within(requestCard).getByText("Stub · Easy · 4 choices · default"),
+        ).toBeInTheDocument();
+
+        const previewCard = screen
+            .getByText("Example question")
+            .closest('[data-slot="card"]') as HTMLElement;
+        expect(within(previewCard).getByText("Template fields")).toBeInTheDocument();
+        expect(
+            within(previewCard).queryByLabelText("Template code"),
+        ).not.toBeInTheDocument();
     });
 
     it("shows only the reject action when the version is already approved", () => {
@@ -376,7 +401,7 @@ describe("ReviewPanel", () => {
         const card = screen.getByText("Example question").closest("[data-slot='card']");
         expect(card).not.toBeNull();
         const template = within(card as HTMLElement);
-        const candidate = needsReviewReview.candidate!;
+        const candidate = needsReviewReview.candidate as CodeTemplateCandidate;
 
         expect(
             template.getByText(/This draft did not pass technical checks/),
@@ -478,5 +503,5 @@ describe("ReviewPanel", () => {
 });
 
 function previewInstanceQuestion(): string {
-    return preview.question.question.question;
+    return (preview.question as CodeQuestionInstance).question.question;
 }

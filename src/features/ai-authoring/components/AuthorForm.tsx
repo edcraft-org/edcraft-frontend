@@ -11,6 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
     Form,
@@ -23,7 +30,7 @@ import {
 } from "@/components/ui/form";
 import { ROUTES } from "@/router/paths";
 import { getAuthoringErrorMessage } from "../errors";
-import { capitalize } from "../format";
+import { capitalize, domainLabel } from "../format";
 import { useCreateAuthoringJob } from "../hooks/useAiAuthoring";
 import {
     buildJudgeSelections,
@@ -48,6 +55,7 @@ function createAuthoringSchema(minChoices: number, maxChoices: number) {
                 .trim()
                 .min(1, "Describe the question you want to create.")
                 .max(4000, "Keep the request to 4000 characters or fewer."),
+            domain: z.string().min(1, "Choose a question domain."),
             difficulty: z.enum(["easy", "medium", "hard"]),
             choices: z
                 .number()
@@ -97,6 +105,30 @@ type AuthoringFormValues = z.infer<ReturnType<typeof createAuthoringSchema>>;
 
 const DIFFICULTY_ORDER: AuthoringDifficulty[] = ["easy", "medium", "hard"];
 
+interface DomainCopy {
+    badge: string;
+    promptPlaceholder: string;
+}
+
+// Only the code domain has domain-specific wording today. Other domains use
+// the neutral copy below without adding branches in the form itself.
+const DOMAIN_COPY: Record<string, DomainCopy> = {
+    code: {
+        badge: "Python · multiple choice",
+        promptPlaceholder:
+            "Describe the programming concept and what students should reason about.",
+    },
+};
+
+const GENERIC_DOMAIN_COPY: DomainCopy = {
+    badge: "Multiple choice",
+    promptPlaceholder: "Describe the question and what students should reason about.",
+};
+
+function domainCopy(domain: string): DomainCopy {
+    return DOMAIN_COPY[domain] ?? GENERIC_DOMAIN_COPY;
+}
+
 interface AuthorFormProps {
     capabilities: AuthoringCapabilities;
 }
@@ -111,6 +143,8 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
     const difficultyOptions = DIFFICULTY_ORDER.filter((difficulty) =>
         capabilities.difficulty_labels.includes(difficulty),
     );
+    const domains = capabilities.enabled_domains;
+    const defaultDomain = domains.includes("code") ? "code" : (domains[0] ?? "");
     const defaultDifficulty = difficultyOptions[0] ?? "easy";
     const connections = capabilities.connections ?? [];
     const profiles = capabilities.model_profiles;
@@ -171,6 +205,7 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
         resolver: zodResolver(authoringSchema),
         defaultValues: {
             prompt: prefilledPrompt,
+            domain: defaultDomain,
             difficulty: prefilledDifficulty,
             choices: prefilledChoices,
             model_source: initialSelection.source,
@@ -183,6 +218,8 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
     });
     const modelSource = form.watch("model_source");
     const model = form.watch("model");
+    const selectedDomain = form.watch("domain");
+    const copy = domainCopy(selectedDomain || defaultDomain);
     const difficultySource = form.watch("difficulty_source");
     const difficultyModel = form.watch("difficulty_model");
     const relevanceSource = form.watch("relevance_source");
@@ -212,7 +249,7 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
         setSubmitError(null);
         createJob.mutate(
             {
-                domain: "code",
+                domain: values.domain,
                 prompt: values.prompt,
                 difficulty: values.difficulty,
                 num_distractors: values.choices - 1,
@@ -241,7 +278,7 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
         );
     };
 
-    if (!capabilities.enabled_domains.includes("code")) {
+    if (domains.length === 0) {
         return (
             <Card>
                 <CardHeader className="pb-3">
@@ -249,7 +286,7 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground">
-                        Code questions are not enabled on this server.
+                        Authoring is not enabled on this server.
                     </p>
                 </CardContent>
             </Card>
@@ -280,7 +317,7 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
             <CardHeader className="pb-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <CardTitle>New question</CardTitle>
-                    <Badge variant="outline">Python · multiple choice</Badge>
+                    <Badge variant="outline">{copy.badge}</Badge>
                 </div>
             </CardHeader>
             <CardContent>
@@ -322,6 +359,40 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} noValidate>
                         <div className="space-y-5">
+                            {domains.length > 1 && (
+                                <FormField
+                                    control={form.control}
+                                    name="domain"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Domain</FormLabel>
+                                            <Select
+                                                value={field.value}
+                                                onValueChange={field.onChange}
+                                                disabled={createJob.isPending}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger className="w-full sm:w-64">
+                                                        <SelectValue placeholder="Choose a domain" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {domains.map((domain) => (
+                                                        <SelectItem
+                                                            key={domain}
+                                                            value={domain}
+                                                        >
+                                                            {domainLabel(domain)}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
+
                             <FormField
                                 control={form.control}
                                 name="prompt"
@@ -334,7 +405,7 @@ export function AuthorForm({ capabilities }: AuthorFormProps) {
                                                 rows={6}
                                                 maxLength={4000}
                                                 className="min-h-40 resize-y"
-                                                placeholder="Describe the programming concept and what students should reason about."
+                                                placeholder={copy.promptPlaceholder}
                                             />
                                         </FormControl>
                                         <FormMessage />

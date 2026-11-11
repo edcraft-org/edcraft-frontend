@@ -140,6 +140,11 @@ function relevanceAdvisory(
     };
 }
 
+function candidateTemplateId(candidate: AuthoringReview["candidate"]): string {
+    const templateId = candidate?.template_id;
+    return typeof templateId === "string" ? templateId : "draft";
+}
+
 export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPanelProps) {
     const canApprove = getApprovalBlockers(review).length === 0;
     const difficulty = review.difficulty ?? result?.difficulty;
@@ -150,9 +155,8 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
         review.template ??
         (review.candidate
             ? {
-                  template_id: review.candidate.template_id,
+                  template_id: candidateTemplateId(review.candidate),
                   candidate: review.candidate,
-                  language: "python",
               }
             : null);
     const showingDraft = !review.template && Boolean(review.candidate);
@@ -167,6 +171,7 @@ export function ReviewPanel({ jobId, review, result, onStaleArtifact }: ReviewPa
                     <WarningsPanel warnings={filterMismatchWarnings(review.warnings)} />
                     <ReviewQuestionPreview
                         jobId={jobId}
+                        domain={review.request.domain}
                         artifactSha256={review.artifact_sha256}
                         draftTemplate={draftTemplate}
                         showingDraft={showingDraft}

@@ -13,6 +13,7 @@ import type {
     AuthoringReviewResponse,
     AuthoringSummary,
     CodeQuestionInstance as ApiCodeQuestionInstance,
+    CodeTemplateCandidate,
     DifficultyOutcome,
     GenerateRequest,
     GeneratedQuestionsBatch,
@@ -32,9 +33,13 @@ export type AuthoringDifficulty = SubmitAuthoringJobRequestDifficulty;
 export type AuthoringJobState = AuthoringJobStatusResponseState;
 export type ApprovalDecision = StoredReviewerApproval["decision"];
 
-export type AuthoringCapabilities = AuthoringCapabilitiesResponse;
+export type AuthoringCapabilities = Omit<AuthoringCapabilitiesResponse, "enabled_domains"> & {
+    enabled_domains: string[];
+};
 export type AuthoringModelProfile = ApiAuthoringModelProfile;
-export type CreateAuthoringJobRequest = SubmitAuthoringJobRequest;
+export type CreateAuthoringJobRequest = Omit<SubmitAuthoringJobRequest, "domain"> & {
+    domain: string;
+};
 export type CreatedAuthoringJob = AuthoringJobSubmittedResponse;
 export type AuthoringApproval = StoredReviewerApproval;
 export type AuthoringCheck = ReviewCheck;
@@ -43,13 +48,38 @@ export type AuthoringRelevanceOutcome = RelevanceOutcome;
 export type AuthoringResult = AuthoringSummary;
 export type AuthoringJob = AuthoringJobStatusResponse;
 export type AuthoringJobSummary = ApiAuthoringJobSummary;
-export type ReviewAttempt = ApiReviewAttempt;
-export type ReviewTemplate = ApiReviewTemplate;
+export type ReviewAttempt = Omit<ApiReviewAttempt, "candidate"> & {
+    candidate?: AuthoringTemplateCandidate | null;
+};
+/** A code template or an opaque candidate from another domain. */
+export type AuthoringTemplateCandidate = CodeTemplateCandidate | Record<string, unknown>;
+export type ReviewTemplate = Omit<ApiReviewTemplate, "candidate"> & {
+    candidate: AuthoringTemplateCandidate;
+};
 export type ValidationLimits = ApiValidationLimits;
-export type AuthoringReview = AuthoringReviewResponse;
+export type AuthoringRequest = Omit<AuthoringReviewResponse["request"], "domain"> & {
+    domain: string;
+};
+export type AuthoringReview = Omit<
+    AuthoringReviewResponse,
+    "request" | "candidate" | "attempts" | "template"
+> & {
+    request: AuthoringRequest;
+    candidate?: AuthoringTemplateCandidate | null;
+    attempts?: ReviewAttempt[];
+    template?: ReviewTemplate | null;
+};
 export type CodeQuestionInstance = ApiCodeQuestionInstance;
-export type AuthoringPreview = PreviewResponse;
-export type AuthoringBatch = GeneratedQuestionsBatch;
+/** A deterministic question from any domain; the code instance is one shape. */
+export type AuthoringQuestionPayload = CodeQuestionInstance | Record<string, unknown>;
+export type AuthoringPreview = Omit<PreviewResponse, "question"> & {
+    domain: string;
+    question: AuthoringQuestionPayload;
+};
+export type AuthoringBatch = Omit<GeneratedQuestionsBatch, "questions"> & {
+    domain: string;
+    questions: AuthoringQuestionPayload[];
+};
 export type ApprovalInput = ApprovalRequest;
 export type GenerateInput = GenerateRequest;
 export type GenerationMetadata = ApiGenerationMetadata;

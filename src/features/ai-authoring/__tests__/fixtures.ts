@@ -5,6 +5,7 @@ import type {
     AuthoringCheck,
     AuthoringJob,
     AuthoringPreview,
+    AuthoringQuestionPayload,
     AuthoringReview,
     CodeQuestionInstance,
 } from "../types";
@@ -121,10 +122,34 @@ export const previewInstance: CodeQuestionInstance = {
 
 export const preview: AuthoringPreview = {
     job_id: "job-1",
+    domain: "code",
     artifact_id: "artifact-1",
     artifact_sha256: digest,
     seed: 0,
     question: previewInstance,
+};
+
+/**
+ * A non-code payload used to exercise the generic renderer seam. It only uses
+ * the shared question/choice envelope; no code block or inputs.
+ */
+export const stubQuestionInstance: AuthoringQuestionPayload = {
+    template_id: "stub-evens",
+    artifact_id: "artifact-stub",
+    seed: 2,
+    question: {
+        question: "Which of these numbers is even?",
+        question_type: "mcq",
+        proposed_answer: 4,
+        distractors: [3, 5],
+        distractor_reasons: ["Three is odd.", "Five is odd."],
+    },
+};
+
+export const stubPreview: AuthoringPreview = {
+    ...preview,
+    domain: "stub",
+    question: stubQuestionInstance,
 };
 
 export const approvedReview: AuthoringReview = {
@@ -225,6 +250,39 @@ export const approvedReview: AuthoringReview = {
         decided_at: "2026-11-03T00:00:00Z",
     },
     error: null,
+};
+
+/**
+ * Stub-domain review with a generic template candidate. The payload
+ * deliberately contains a `code` key to prove the generic view does not treat
+ * arbitrary fields as code.
+ */
+export const stubReview: AuthoringReview = {
+    ...approvedReview,
+    artifact_id: null,
+    artifact_sha256: null,
+    request: {
+        ...approvedReview.request,
+        domain: "stub",
+        prompt: "Write a question about even numbers.",
+    },
+    template: {
+        template_id: "stub-evens",
+        candidate: {
+            template_id: "stub-evens",
+            question_template: "Which of these numbers is even?",
+            answer_expression: "4",
+            code: "even(4)",
+            distractors: [
+                {
+                    expression: "3",
+                    reason_template: "Three is odd.",
+                },
+            ],
+        } as Record<string, unknown>,
+    },
+    candidate: null,
+    approval: null,
 };
 
 export const technicalFailureReview: AuthoringReview = {
@@ -350,6 +408,7 @@ export const needsReviewReview: AuthoringReview = {
 export const batch: AuthoringBatch = {
     format_version: "1",
     job_id: "job-1",
+    domain: "code",
     artifact_id: "artifact-1",
     artifact_sha256: digest,
     base_seed: 7,
@@ -363,4 +422,13 @@ export const batch: AuthoringBatch = {
         { ...previewInstance, seed: 9 },
     ],
     warnings: ["Finite parameter domain produced 1 duplicate."],
+};
+
+export const stubBatch: AuthoringBatch = {
+    ...batch,
+    domain: "stub",
+    questions: [
+        stubQuestionInstance,
+        { ...stubQuestionInstance, seed: 3 } as AuthoringQuestionPayload,
+    ],
 };

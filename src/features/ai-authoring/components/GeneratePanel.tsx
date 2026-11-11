@@ -247,23 +247,27 @@ export function GeneratePanel({
                             </p>
                         ) : (
                             <div className="space-y-3">
-                                {batch.questions.map((instance, index) => (
-                                    <details
-                                        key={`${instance.template_id}-${instance.seed}`}
-                                        className="rounded-md border p-3"
-                                    >
-                                        <summary className="cursor-pointer text-sm font-medium">
-                                            Question {index + 1}
-                                        </summary>
-                                        <div className="pt-3">
-                                            <PreviewQuestion
-                                                instance={instance}
-                                                headingLevel="h3"
-                                                variant="review"
-                                            />
-                                        </div>
-                                    </details>
-                                ))}
+                                {batch.questions.map((instance, index) => {
+                                    const key =
+                                        typeof instance.template_id === "string"
+                                            ? `${instance.template_id}-${String(instance.seed)}`
+                                            : `question-${index}`;
+                                    return (
+                                        <details key={key} className="rounded-md border p-3">
+                                            <summary className="cursor-pointer text-sm font-medium">
+                                                Question {index + 1}
+                                            </summary>
+                                            <div className="pt-3">
+                                                <PreviewQuestion
+                                                    instance={instance}
+                                                    domain={batch.domain}
+                                                    headingLevel="h3"
+                                                    variant="review"
+                                                />
+                                            </div>
+                                        </details>
+                                    );
+                                })}
                             </div>
                         )}
                     </CardContent>
