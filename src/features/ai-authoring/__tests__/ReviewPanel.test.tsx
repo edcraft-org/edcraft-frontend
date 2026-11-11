@@ -69,7 +69,7 @@ function renderPanel(review: AuthoringReview, onStaleArtifact = vi.fn()) {
 }
 
 async function openTechnicalDetails() {
-    const summary = await screen.findByText("Technical details");
+    const summary = await screen.findByText("Technical details", { selector: "summary" });
     const details = summary.closest("details");
     expect(details).not.toBeNull();
     if (!details) throw new Error("Technical details disclosure was not rendered.");
@@ -102,7 +102,7 @@ describe("ReviewPanel", () => {
     it("keeps raw identifiers inside a closed technical disclosure", async () => {
         renderPanel(unapprovedReview);
 
-        const summary = await screen.findByText("Technical details");
+        const summary = await screen.findByText("Technical details", { selector: "summary" });
         const details = summary.closest("details");
         expect(details).not.toHaveAttribute("open");
         expect(
@@ -115,7 +115,7 @@ describe("ReviewPanel", () => {
         renderPanel(approvedReview);
 
         expect(await screen.findByText(/Approved on/)).toBeInTheDocument();
-        const technical = screen.getByText("Technical details").closest("details");
+        const technical = screen.getByText("Technical details", { selector: "summary" }).closest("details");
         expect(technical).not.toBeNull();
         expect(
             within(technical as HTMLElement).getAllByText(approval.reviewer),
@@ -188,6 +188,38 @@ describe("ReviewPanel", () => {
         });
     });
 
+    it("sends an optional rejection reason with the exact digest", async () => {
+        const user = userEvent.setup();
+        renderPanel(unapprovedReview);
+
+        await user.click(screen.getByRole("button", { name: "Reject question" }));
+        await user.type(
+            screen.getByLabelText("Reason (optional)"),
+            "The difficulty label says medium but I asked for easy.",
+        );
+        await user.click(screen.getByRole("button", { name: "Confirm rejection" }));
+
+        await waitFor(() => {
+            expect(decideAuthoringApproval).toHaveBeenCalledWith("job-1", {
+                artifact_sha256: unapprovedReview.artifact_sha256,
+                decision: "rejected",
+                note: "The difficulty label says medium but I asked for easy.",
+            });
+        });
+    });
+
+    it("shows the decided version beside the decision and links to technical details", () => {
+        renderPanel(approvedReview);
+
+        expect(screen.getByText(/Approved version/)).toBeInTheDocument();
+        expect(
+            screen.getByText(`${approvedReview.artifact_sha256!.slice(0, 12)}…`),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("link", { name: "Technical details" }),
+        ).toHaveAttribute("href", "#technical-details");
+    });
+
     it("reports a stale digest and asks the page to refresh", async () => {
         vi.mocked(decideAuthoringApproval).mockRejectedValue(
             new ApiError(409, "The artifact changed; refresh the review before deciding."),
@@ -196,6 +228,7 @@ describe("ReviewPanel", () => {
         const { onStaleArtifact } = renderPanel(approvedReview);
 
         await user.click(screen.getByRole("button", { name: "Reject question" }));
+        await user.click(screen.getByRole("button", { name: "Confirm rejection" }));
 
         await waitFor(() => expect(onStaleArtifact).toHaveBeenCalledOnce());
         expect(

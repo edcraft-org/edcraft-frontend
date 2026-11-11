@@ -155,6 +155,7 @@ describe("AiAuthoringJobPage", () => {
         );
 
         await user.click(screen.getByRole("button", { name: "Reject question" }));
+        await user.click(screen.getByRole("button", { name: "Confirm rejection" }));
 
         expect(
             await screen.findByText("The question changed", undefined, { timeout: 5000 }),
@@ -179,6 +180,7 @@ describe("AiAuthoringJobPage", () => {
 
         await screen.findByRole("button", { name: "Reject question" });
         await user.click(screen.getByRole("button", { name: "Reject question" }));
+        await user.click(screen.getByRole("button", { name: "Confirm rejection" }));
         expect(await screen.findByText("The question changed")).toBeInTheDocument();
 
         await user.click(screen.getByRole("button", { name: "Open job 2" }));

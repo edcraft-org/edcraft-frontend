@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { AuthoringResult, AuthoringReview } from "../types";
 import { modelLabel } from "../format";
 import { AttemptsEvidence } from "./AttemptsEvidence";
@@ -19,6 +20,19 @@ function present(value: string | number | null | undefined): string | null {
  * is parsed into readable fields with the exact JSON one level deeper.
  */
 export function TechnicalDetails({ review, result }: TechnicalDetailsProps) {
+    const detailsRef = useRef<HTMLDetailsElement>(null);
+
+    useEffect(() => {
+        const openIfTargeted = () => {
+            if (window.location.hash === "#technical-details" && detailsRef.current) {
+                detailsRef.current.open = true;
+            }
+        };
+        openIfTargeted();
+        window.addEventListener("hashchange", openIfTargeted);
+        return () => window.removeEventListener("hashchange", openIfTargeted);
+    }, []);
+
     const metadata = [
         ["Artifact ID", review.artifact_id],
         ["Artifact digest (SHA-256)", review.artifact_sha256],
@@ -55,7 +69,11 @@ export function TechnicalDetails({ review, result }: TechnicalDetailsProps) {
     const attempts = review.attempts ?? [];
 
     return (
-        <details className="rounded-lg border bg-muted/30 p-4 text-sm">
+        <details
+            id="technical-details"
+            ref={detailsRef}
+            className="scroll-mt-6 rounded-lg border bg-muted/30 p-4 text-sm"
+        >
             <summary className="cursor-pointer font-medium">Technical details</summary>
             <div className="mt-4 space-y-3">
                 <dl className="grid gap-2 text-xs sm:grid-cols-2">
