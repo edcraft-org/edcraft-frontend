@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { PreviewQuestion } from "../components/PreviewQuestion";
 import { ReadableValue } from "../components/ReadableValue";
 import type { CodeQuestionInstance } from "../types";
-import { previewInstance } from "./fixtures";
+import { previewInstance, stubQuestionInstance } from "./fixtures";
 
 vi.mock("../components/ReadOnlyCode", () => ({
     ReadOnlyCode: ({ code, label }: { code: string; label: string }) => (
@@ -176,5 +176,23 @@ describe("PreviewQuestion", () => {
         expect(screen.queryByText("Inputs and raw data")).not.toBeInTheDocument();
         expect(screen.queryByLabelText("Question inputs")).not.toBeInTheDocument();
         expect(screen.queryByText("Raw question data")).not.toBeInTheDocument();
+    });
+
+    it("renders a stub-domain payload through the generic fallback", () => {
+        render(<PreviewQuestion instance={stubQuestionInstance} domain="stub" />);
+
+        expect(
+            screen.getByRole("heading", {
+                name: "Which of these numbers is even?",
+            }),
+        ).toBeInTheDocument();
+        expect(screen.getAllByText("4").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("3").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("5").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("Three is odd.").length).toBeGreaterThan(0);
+        expect(screen.queryByLabelText("Question code")).not.toBeInTheDocument();
+        expect(screen.queryByLabelText("Question inputs")).not.toBeInTheDocument();
+        expect(screen.queryByText("Inputs")).not.toBeInTheDocument();
+        expect(screen.queryByText(/\.py$/)).not.toBeInTheDocument();
     });
 });

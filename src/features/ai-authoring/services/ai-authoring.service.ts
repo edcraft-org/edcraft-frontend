@@ -1,4 +1,5 @@
 import { api } from "@/api/client";
+import type { SubmitAuthoringJobRequest } from "@/api/models";
 import type {
     ApprovalInput,
     AuthoringApproval,
@@ -21,7 +22,11 @@ export async function getAuthoringCapabilities(): Promise<AuthoringCapabilities>
 export async function createAuthoringJob(
     request: CreateAuthoringJobRequest,
 ): Promise<CreatedAuthoringJob> {
-    const response = await api.submitJobAiAuthoringJobsPost(request);
+    // The generated model still narrows domain to "code"; the adaptation layer
+    // widens it so the UI can offer any domain the server advertises.
+    const response = await api.submitJobAiAuthoringJobsPost(
+        request as SubmitAuthoringJobRequest,
+    );
     return response.data;
 }
 
@@ -45,7 +50,9 @@ export async function getAuthoringPreview(
     seed: number,
 ): Promise<AuthoringPreview> {
     const response = await api.previewJobAiAuthoringJobsJobIdPreviewPost(jobId, { seed });
-    return response.data;
+    // The generated payload is still the code-specific shape; the adaptation
+    // layer adds the domain discriminator and generic question payload.
+    return response.data as AuthoringPreview;
 }
 
 export async function decideAuthoringApproval(
@@ -61,5 +68,6 @@ export async function generateAuthoringBatch(
     input: GenerateInput,
 ): Promise<AuthoringBatch> {
     const response = await api.generateJobAiAuthoringJobsJobIdGeneratePost(jobId, input);
-    return response.data;
+    // See getAuthoringPreview: the adapter adds domain and widens the questions.
+    return response.data as AuthoringBatch;
 }

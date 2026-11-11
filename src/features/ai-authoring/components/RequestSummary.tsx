@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { capitalize, modelLabel } from "../format";
+import { capitalize, domainLabel, modelLabel } from "../format";
 import type { AuthoringReview } from "../types";
 
 /** The prompt and settings the reviewer used, shown alongside the result. */
@@ -12,8 +12,8 @@ export function RequestSummary({ request }: { request: AuthoringReview["request"
             <CardContent className="space-y-2">
                 <p className="whitespace-pre-wrap text-sm">{request.prompt}</p>
                 <p className="text-xs text-muted-foreground">
-                    {capitalize(request.difficulty)} · {request.num_distractors + 1} choices ·{" "}
-                    {modelLabel(request)}
+                    {domainLabel(request.domain)} · {capitalize(request.difficulty)} ·{" "}
+                    {request.num_distractors + 1} choices · {modelLabel(request)}
                 </p>
             </CardContent>
         </Card>

@@ -127,6 +127,38 @@ describe("AuthorForm", () => {
         });
     });
 
+    it("offers enabled domains and submits the selected one", async () => {
+        const user = userEvent.setup();
+        renderForm(undefined, {
+            ...connectionCapabilities,
+            enabled_domains: ["code", "stub"],
+        });
+
+        expect(screen.getByRole("combobox", { name: "Domain" })).toHaveTextContent("Code");
+        await user.click(screen.getByRole("combobox", { name: "Domain" }));
+        await user.click(screen.getByRole("option", { name: "Stub" }));
+
+        await user.type(screen.getByLabelText("Prompt"), "Create an even-number question.");
+        await user.click(screen.getByRole("button", { name: "Create question" }));
+
+        await waitFor(() => {
+            expect(createAuthoringJob).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    domain: "stub",
+                    prompt: "Create an even-number question.",
+                }),
+            );
+        });
+    });
+
+    it("hides the domain selector when only one domain is enabled", () => {
+        renderForm();
+
+        expect(
+            screen.queryByRole("combobox", { name: "Domain" }),
+        ).not.toBeInTheDocument();
+    });
+
     it("submits a user-entered choice count", async () => {
         const user = userEvent.setup();
         renderForm(undefined, connectionCapabilities);

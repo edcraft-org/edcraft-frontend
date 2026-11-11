@@ -13,6 +13,8 @@ import { TemplateQuestionPreview } from "./TemplateQuestionPreview";
 
 interface ReviewQuestionPreviewProps {
     jobId: string;
+    /** Authoring domain from the review request; preview and template use it. */
+    domain?: string;
     artifactSha256: string | null | undefined;
     draftTemplate?: ReviewTemplate | null;
     showingDraft?: boolean;
@@ -21,6 +23,7 @@ interface ReviewQuestionPreviewProps {
 
 export function ReviewQuestionPreview({
     jobId,
+    domain,
     artifactSha256,
     draftTemplate,
     showingDraft = false,
@@ -81,7 +84,7 @@ export function ReviewQuestionPreview({
                                 with a revised request or another model.
                             </p>
                         )}
-                        <TemplateQuestionPreview template={draftTemplate} />
+                        <TemplateQuestionPreview template={draftTemplate} domain={domain} />
                     </>
                 )}
 
@@ -133,6 +136,7 @@ export function ReviewQuestionPreview({
                 {artifactSha256 && previewQuery.data && !previewQuery.isError && (
                     <PreviewQuestion
                         instance={previewQuery.data.question}
+                        domain={domain ?? previewQuery.data.domain}
                         headingLevel="h3"
                         variant="review"
                     />
