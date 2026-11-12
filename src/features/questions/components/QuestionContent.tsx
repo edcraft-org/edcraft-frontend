@@ -1,24 +1,40 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 
 interface QuestionContentProps {
     questionText?: string;
     questionType: string;
     options?: unknown[];
+    /** Optional per-option explanation, shown under each option once revealed. */
+    optionExplanations?: Array<string | undefined>;
     correctIndices?: number[];
     answer?: unknown;
     hideAnswerButton?: boolean;
+    /** Start with the answer revealed. Useful for review-only previews. */
+    showAnswerByDefault?: boolean;
+    /** Skip the separate answer box; the correct options stay highlighted. */
+    hideAnswerSummary?: boolean;
+    /**
+     * Optional display hook for structured values. Callers can supply their own
+     * renderer while this shared component stays unaware of domain-specific
+     * answer shapes. Without it, values keep the original text/JSON display.
+     */
+    renderValue?: (value: unknown) => ReactNode;
 }
 
 export function QuestionContent({
     questionText,
     questionType,
     options,
+    optionExplanations,
     correctIndices,
     answer,
     hideAnswerButton = false,
+    showAnswerByDefault = false,
+    hideAnswerSummary = false,
+    renderValue,
 }: QuestionContentProps) {
-    const [showAnswer, setShowAnswer] = useState(false);
+    const [showAnswer, setShowAnswer] = useState(showAnswerByDefault);
 
     // Convert option to string for display
     const formatOption = (option: unknown): string => {
@@ -68,18 +84,25 @@ export function QuestionContent({
                                     : "bg-muted/50 border-border"
                             }`}
                         >
-                            <span className="font-semibold mr-2">{getOptionLabel(index)}.</span>
-                            <span
-                                className={
-                                    showAnswer && isCorrectOption(index)
-                                        ? "text-green-700 dark:text-green-400 font-medium"
-                                        : "text-foreground"
-                                }
-                            >
-                                {formatOption(option)}
-                            </span>
-                            {showAnswer && isCorrectOption(index) && (
-                                <span className="ml-2 text-green-600 dark:text-green-400">✓</span>
+                            <div className="flex flex-wrap items-start gap-2">
+                                <span className="font-semibold">{getOptionLabel(index)}.</span>
+                                <div
+                                    className={
+                                        showAnswer && isCorrectOption(index)
+                                            ? "text-green-700 dark:text-green-400 font-medium"
+                                            : "text-foreground"
+                                    }
+                                >
+                                    {renderValue ? renderValue(option) : formatOption(option)}
+                                </div>
+                                {showAnswer && isCorrectOption(index) && (
+                                    <span className="text-green-600 dark:text-green-400">✓</span>
+                                )}
+                            </div>
+                            {showAnswer && optionExplanations?.[index] && (
+                                <p className="mt-2 border-t border-border/60 pt-2 text-xs text-muted-foreground">
+                                    {optionExplanations[index]}
+                                </p>
                             )}
                         </div>
                     ))}
@@ -100,7 +123,7 @@ export function QuestionContent({
             )}
 
             {/* Answer Section */}
-            {showAnswer && (
+            {showAnswer && !hideAnswerSummary && (
                 <div className="p-3 bg-green-50 dark:bg-green-950 border border-green-500 dark:border-green-700 rounded-md">
                     <h4 className="text-sm font-semibold text-green-800 dark:text-green-300 mb-2">
                         Answer:
@@ -119,9 +142,9 @@ export function QuestionContent({
                     {/* Show the actual answer text */}
                     {answer !== undefined && (
                         <div className="bg-background p-2 rounded border border-green-200 dark:border-green-800">
-                            <p className="text-foreground text-sm whitespace-pre-wrap">
-                                {formatAnswer(answer)}
-                            </p>
+                            <div className="text-foreground text-sm whitespace-pre-wrap">
+                                {renderValue ? renderValue(answer) : formatAnswer(answer)}
+                            </div>
                         </div>
                     )}
                 </div>

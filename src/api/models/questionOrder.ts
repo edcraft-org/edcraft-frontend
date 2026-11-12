@@ -10,6 +10,6 @@
  * Schema for a single question order item.
  */
 export interface QuestionOrder {
-  question_id: string;
   order: number;
+  question_id: string;
 }
